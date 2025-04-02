@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudentHub</title>
+    <link rel="stylesheet" href="/frontend/static/css/styles.css">
+</head>
+<body>
+    <div class="app">
+        <nav class="sidebar">
+            <h1 class="logo">StudentHub</h1>
+            <ul class="nav-menu">
+                <li class="nav-item active">
+                    <span class="nav-icon">🏠</span>
+                    <span class="nav-label">Dashboard</span>
+                </li>
+                <li class="nav-item">
+                    <span class="nav-icon">📊</span>
+                    <a href="/frontend/template/progresstracker.html"><span class="nav-label">Progress Tracker</span></a>
+                </li>
+                <li class="nav-item">
+                    <span class="nav-icon">💼</span>
+                    <span class="nav-label">Jobs</span>
+                </li>
+                <li class="nav-item">
+                    <span class="nav-icon">📚</span>
+                    <span class="nav-label">Courses</span>
+                </li>
+                <li class="nav-item">
+                    <span class="nav-icon">✅</span>
+                    <span class="nav-label">Todo</span>
+                </li>
+                <li class="nav-item">
+                    <span class="nav-icon">💰</span>
+                    <span class="nav-label">Passive Income</span>
+                </li>
+            </ul>
+        </nav>
+
+        <main class="main-content">
+            <header class="header">
+                <div class="user-info">
+                    <h2>Welcome, Alex Rodriguez</h2>
+                    <p>Computer Science | Global Tech University</p>
+                </div>
+                <div class="header-actions">
+                    <button class="notification-btn">
+                        <span class="notification-badge">2</span>
+                        🔔
+                    </button>
+                    <button class="profile-btn">👤</button>
+                </div>
+            </header>
+
+            <div class="dashboard-grid">
+                <div class="card job-opportunities">
+                    <h3>Job Opportunities</h3>
+                    <ul>
+                        <li>Software Intern</li>
+                        <li>Data Analyst</li>
+                        <li>ML Research Assistant</li>
+                    </ul>
+                </div>
+
+                <div class="card achievements">
+                    <h3>Achievements</h3>
+                    <ul>
+                        <li>
+                            <span>Hackathon Winner</span>
+                            <small>2024-03-15</small>
+                        </li>
+                        <li>
+                            <span>Machine Learning Certification</span>
+                            <small>2024-01-22</small>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="card notifications">
+                    <h3>Notifications</h3>
+                    <ul>
+                        <li>
+                            <span>New Internship Opportunity</span>
+                            <small>Tech Innovations Inc.</small>
+                        </li>
+                        <li>
+                            <span>Advanced AI Course Available</span>
+                            <small>Coursera</small>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/frontend/static/js/script.js"></script>
+</body>
+</html>

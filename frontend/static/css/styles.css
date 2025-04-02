@@ -1,0 +1,543 @@
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+
+}
+body a{
+    text-decoration: none;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    background-color: #060B14;
+    color: #ffffff;
+}
+
+.app {
+    display: flex;
+    height: 100vh;
+}
+
+/* Sidebar Styles */
+.sidebar {
+    width: 250px;
+    background-color: #0A1128;
+    padding: 20px;
+    border-right: 1px solid #1A2541;
+    transition: transform 0.3s ease, width 0.3s ease;
+}
+
+.logo {
+    color: #4ADE80;
+    font-size: 24px;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.nav-menu {
+    list-style: none;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.nav-item:hover {
+    background-color: #1A2541;
+}
+
+.nav-item.active {
+    background-color: #1A2541;
+    color: #4ADE80;
+}
+
+.nav-icon {
+    margin-right: 10px;
+    font-size: 20px;
+}
+
+.nav-label {
+    font-size: 16px;
+}
+
+/* Main Content Styles */
+.main-content {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.user-info h2 {
+    font-size: 24px;
+    margin-bottom: 5px;
+}
+
+.user-info p {
+    color: #8C94A6;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.notification-btn {
+    position: relative;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: #EF4444;
+    color: white;
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 50%;
+}
+
+.profile-btn {
+    background-color: #1A2541;
+    border: none;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 50%;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+/* Dashboard Grid */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.card {
+    background-color: #0A1128;
+    border: 1px solid #1A2541;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.card h3 {
+    color: #4ADE80;
+    margin-bottom: 15px;
+    font-size: 20px;
+}
+
+.card ul {
+    list-style: none;
+}
+
+.card li {
+    background-color: #1A2541;
+    padding: 12px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card li small {
+    color: #8C94A6;
+    font-size: 12px;
+}
+
+/* Job Opportunities Card */
+.job-opportunities li {
+    color: #ffffff;
+}
+
+/* Achievements Card */
+.achievements li span {
+    font-weight: 500;
+}
+
+/* Notifications Card */
+.notifications li span {
+    font-weight: 500;
+}
+
+/* Mobile Responsiveness */
+@media screen and (max-width: 1024px) {
+    .app {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+    }
+
+    .nav-menu {
+        display: flex;
+        overflow-x: auto;
+        padding: 10px 0;
+    }
+
+    .nav-item {
+        flex-shrink: 0;
+        margin: 0 5px;
+    }
+
+    .main-content {
+        padding: 15px;
+    }
+
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+        margin-bottom: 20px;
+    }
+
+    .header-actions {
+        width: 100%;
+        justify-content: flex-end;
+        margin-top: 10px;
+    }
+
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Very Small Screens */
+@media screen and (max-width: 375px) {
+    .nav-item {
+        padding: 10px;
+    }
+
+    .nav-icon {
+        margin-right: 5px;
+        font-size: 16px;
+    }
+
+    .nav-label {
+        font-size: 14px;
+    }
+
+    .card {
+        padding: 15px;
+    }
+
+    .card h3 {
+        font-size: 18px;
+    }
+
+    .card li {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .card li small {
+        margin-top: 5px;
+    }
+}
+
+/* Scrollbar Styling for Webkit browsers */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #0A1128;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #1A2541;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #4ADE80;
+}
+
+/* Additional Styles for Progress Tracker */
+.progress-tracker {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+.progress-section {
+    background-color: #1A2541;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.progress-section h2 {
+    font-size: 24px;
+    margin-bottom: 20px;
+    background: linear-gradient(to right, transparent 0%, transparent 100%);
+}
+
+/* Skill Development Section */
+.skill-development h2 {
+    color: #9B51E0;
+}
+
+.skill-category {
+    margin-bottom: 20px;
+}
+
+.skill-category h3 {
+    color: #8C94A6;
+    margin-bottom: 10px;
+    font-size: 18px;
+}
+
+.skill-bar {
+    background-color: #0A1128;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    height: 30px;
+    position: relative;
+}
+
+.skill-bar-fill {
+    height: 100%;
+    border-radius: 10px;
+    background: linear-gradient(to right, #4ADE80, #00B4D8);
+}
+
+.skill-bar-info {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 10px;
+    color: white;
+    font-size: 14px;
+}
+
+/* Certificates Section */
+.certificates-card {
+    background-color: #1A2541;
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.certificates-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.certificates-header span:first-child {
+    font-weight: 600;
+}
+
+.verified-badge {
+    color: #4ADE80;
+}
+
+.certificates-details {
+    color: #8C94A6;
+    font-size: 14px;
+}
+
+/* Academic Progress Section */
+.academic-progress-item {
+    background-color: #1A2541;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.academic-progress-bar {
+    height: 8px;
+    background-color: #0A1128;
+    border-radius: 4px;
+    margin-top: 10px;
+}
+
+.academic-progress-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+}
+
+.academic-progress-bar-fill.gpa {
+    background: linear-gradient(to right, #4ADE80, #00B4D8);
+}
+
+.academic-progress-bar-fill.credits {
+    background: linear-gradient(to right, #4ADE80, #00B4D8);
+}
+
+/* Professional Journey Section */
+.professional-journey-card {
+    background-color: #1A2541;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 10px;
+}
+
+.professional-journey-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.professional-journey-status {
+    font-weight: bold;
+}
+
+.professional-journey-status.completed {
+    color: #4ADE80;
+}
+
+.professional-journey-status.applied {
+    color: #F7B32D;
+}
+
+.professional-journey-status.interview {
+    color: #4ADE80;
+}
+
+/* Adjust gradient titles with full WebKit support */
+.progress-section h2.skill-development-title {
+    background: linear-gradient(to right, #9B51E0, #9B51E0);
+    -webkit-background-clip: text;
+    -moz-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    -moz-text-fill-color: transparent;
+    color: transparent;
+}
+
+.progress-section h2.academic-progress-title {
+    background: linear-gradient(to right, #4ADE80, #4ADE80);
+    -webkit-background-clip: text;
+    -moz-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    -moz-text-fill-color: transparent;
+    color: transparent;
+}
+
+.progress-section h2.professional-journey-title {
+    background: linear-gradient(to right, #00B4D8, #00B4D8);
+    -webkit-background-clip: text;
+    -moz-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    -moz-text-fill-color: transparent;
+    color: transparent;
+}
+
+/* Fallback for browsers that don't support background-clip: text */
+@supports not (-webkit-background-clip: text) {
+    .progress-section h2.skill-development-title {
+      color: #9B51E0;
+    }
+  
+    .progress-section h2.academic-progress-title {
+      color: #4ADE80;
+    }
+  
+    .progress-section h2.professional-journey-title {
+      color: #00B4D8;
+    }
+  }
+  
+  @supports not (background-clip: text) {
+    .progress-section h2.skill-development-title {
+      color: #9B51E0;
+    }
+  
+    .progress-section h2.academic-progress-title {
+      color: #4ADE80;
+    }
+  
+    .progress-section h2.professional-journey-title {
+      color: #00B4D8;
+    }
+  }
+  
+
+  .holographic-card {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #333;
+    border-radius: 0.75rem; /* or whatever radius you prefer */
+    background-color: #111; /* fallback */
+    padding: 1.5rem;
+    transition: background 0.3s ease;
+  }
+  
+  /* 
+     Use ::before for the radial gradient overlay 
+     that changes on hover.
+  */
+  .holographic-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* We set the gradient position via CSS variables --mouse-x and --mouse-y */
+    background: radial-gradient(
+      800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+      rgba(255, 255, 255, 0.1),
+      transparent 40%
+    );
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  
+  .holographic-card:hover::before {
+    opacity: 0.3;
+  }
+  
+  /* Example container/card styling used above. 
+     If you want to tweak the overall background or text colors, 
+     you can do so here. 
+  */
+  
+  /* If you have a custom .dashboard-grid class for layout: */
+  .dashboard-grid {
+    display: grid;
+    gap: 2rem; /* Adjust spacing as needed */
+    grid-template-columns: 1fr; /* Mobile fallback */
+  }
+  
+  /* For larger screens, you might define columns (or rely on Tailwind) */
+  @media (min-width: 768px) {
+    .dashboard-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  
