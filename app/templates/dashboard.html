@@ -21,7 +21,6 @@
                                 </div>
                             </div>
                         {% endfor %}
-                        
                         <div class="text-center mt-3">
                             <a href="{{ url_for('jobs.jobs') }}" class="btn btn-outline-primary">View All Jobs</a>
                         </div>
@@ -47,6 +46,7 @@
                                         <div>
                                             <h5 class="mb-1">{{ achievement.title }}</h5>
                                             <small>{{ achievement.date }}</small>
+                                            {# Consider formatting the date if needed #}
                                         </div>
                                         <span class="badge bg-success rounded-pill">
                                             <i class="fas fa-trophy"></i>
@@ -96,7 +96,9 @@
                         {% for course in current_courses %}
                             <div class="course-item">
                                 <span>{{ course.name }}</span>
-                                <span class="course-grade grade-{{ course.grade.lower() if course.grade else 'a' }}">{{ course.grade if course.grade else 'In Progress' }}</span>
+                                <span class="course-grade grade-{{ course.grade.lower() if course.grade else 'a' }}">
+                                    {{ course.grade if course.grade else 'In Progress' }}
+                                </span>
                             </div>
                         {% endfor %}
                     {% else %}

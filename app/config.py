@@ -7,10 +7,12 @@ load_dotenv()
 SECRET_KEY = os.getenv('SECRET_KEY', 'dev-key-for-development-only')
 DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 't')
 
-# MongoDB Configuration
-MONGO_URI = os.getenv('MONGO_URI', 'mongodb://localhost:27017/studenthub')
+# PostgreSQL (Supabase) Database Configuration
+SQLALCHEMY_DATABASE_URI = os.getenv('SUPABASE_DATABASE_URL')
+if not SQLALCHEMY_DATABASE_URI:
+    raise ValueError("SUPABASE_DATABASE_URL not set in .env file")
 
-# Stripe Configuration (for subscription)
+# Stripe Configuration
 STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '')
 STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY', '')
 STRIPE_ENDPOINT_SECRET = os.getenv('STRIPE_ENDPOINT_SECRET', '')

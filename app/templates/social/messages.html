@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="messages-container">
+    <h1 class="section-title">Messages</h1>
+    
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h2 class="card-title-primary mb-0">Conversations</h2>
+                </div>
+                <div class="card-body p-0">
+                    {% if conversations %}
+                        <div class="list-group list-group-flush">
+                            {% for conv in conversations %}
+                                <a href="{{ url_for('social.view_conversation', conversation_id=conv.id) }}" 
+                                   class="list-group-item list-group-item-action d-flex align-items-center {% if conv.unread_count > 0 %}bg-dark{% endif %}">
+                                    <div class="me-3">
+                                        <div class="avatar rounded-circle bg-secondary d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                            <span>{{ conv.other_user.first_name[0] }}{{ conv.other_user.last_name[0] }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h6 class="mb-0">{{ conv.other_user.first_name }} {{ conv.other_user.last_name }}</h6>
+                                            <small class="text-muted">
+                                                {{ conv.updated_at.strftime('%b %d') if not isinstance(conv.updated_at, str) else conv.updated_at }}
+                                            </small>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <p class="mb-0 small text-truncate">
+                                                {% if conv.latest_message %}
+                                                    {{ conv.latest_message.content[:30] }}{% if conv.latest_message.content|length > 30 %}...{% endif %}
+                                                {% else %}
+                                                    Start a conversation
+                                                {% endif %}
+                                            </p>
+                                            {% if conv.unread_count > 0 %}
+                                                <span class="badge bg-primary rounded-pill">{{ conv.unread_count }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-comments fa-3x mb-3 text-muted"></i>
+                            <h4>No conversations yet</h4>
+                            <p>Connect with other students to start chatting</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8 mb-4">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-comments fa-4x mb-3 text-muted"></i>
+                    <h3>Select a conversation</h3>
+                    <p>Choose a conversation from the list or search for users to start a new one</p>
+                    <a href="{{ url_for('social.search') }}" class="btn btn-primary mt-3">
+                        <i class="fas fa-search me-2"></i> Find Students
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="search-container">
+    <h1 class="section-title">Find Students</h1>
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <form action="{{ url_for('social.search') }}" method="GET" class="d-flex">
+                <input type="text" name="q" class="form-control me-2" placeholder="Search by name, university, or major..." value="{{ query }}" minlength="3" required>
+                <button type="submit" class="btn btn-primary">Search</button>
+            </form>
+        </div>
+    </div>
+    
+    {% if query %}
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title-primary">Search Results</h2>
+            </div>
+            <div class="card-body">
+                {% if results %}
+                    <div class="row">
+                        {% for user in results %}
+                            <div class="col-md-6 col-lg-4 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ user.first_name }} {{ user.last_name }}</h5>
+                                        <p class="card-text text-muted">{{ user.major }} at {{ user.university }}</p>
+                                        <div class="d-grid">
+                                            <a href="{{ url_for('social.view_profile', user_id=user._id) }}" class="btn btn-outline-primary">View Profile</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-search fa-3x mb-3 text-muted"></i>
+                        <h4>No results found</h4>
+                        <p>Try different keywords or less specific terms</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
