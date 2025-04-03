@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+
+{% block extra_head %}
+<script src="https://js.stripe.com/v3/"></script>
+{% endblock %}
+
+{% block content %}
+<div class="subscription-container">
+    <h1 class="section-title">Subscription Plans</h1>
+    
+    <div class="row justify-content-center mb-5">
+        {% for plan_id, plan in plans.items() %}
+            <div class="col-md-6 col-lg-5 mb-4">
+                <div class="card plan-card {% if plan_id == 'premium' %}plan-featured{% endif %}">
+                    <div class="card-header plan-header">
+                        <h2>{{ plan.name }}</h2>
+                        <div class="plan-price">
+                            {% if plan.price == 0 %}
+                                Free
+                            {% else %}
+                                ${{ plan.price }}<small>/month</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <ul class="plan-features">
+                            {% for feature in plan.features %}
+                                <li><i class="fas fa-check"></i> {{ feature }}</li>
+                            {% endfor %}
+                        </ul>
+                        
+                        <div class="d-grid gap-2 mt-4">
+                            {% if plan_id == current_plan %}
+                                <button class="btn btn-success" disabled>Current Plan</button>
+                                {% if plan_id == 'premium' %}
+                                    <form method="POST" action="{{ url_for('subscription.cancel') }}">
+                                        <div class="d-grid">
+                                            <button type="submit" class="btn btn-outline-danger">Cancel Subscription</button>
+                                        </div>
+                                    </form>
+                                {% endif %}
+                            {% elif plan_id == 'free' %}
+                                <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-outline-primary">Continue with Free</a>
+                            {% else %}
+                                <button id="checkout-button" class="btn btn-primary">Upgrade Now</button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title-primary">Premium Features</h2>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="text-center">
+                        <i class="fas fa-briefcase fa-3x mb-3 text-primary"></i>
+                        <h4>Advanced Job Search</h4>
+                        <p>Access to all job listings, early application opportunities, and personalized job recommendations.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="text-center">
+                        <i class="fas fa-chart-line fa-3x mb-3 text-primary"></i>
+                        <h4>Detailed Analytics</h4>
+                        <p>In-depth progress tracking, skill development analysis, and personalized improvement recommendations.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="text-center">
+                        <i class="fas fa-coins fa-3x mb-3 text-primary"></i>
+                        <h4>Passive Income Tools</h4>
+                        <p>Exclusive strategies and resources to help you develop income streams while studying.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="text-center">
+                        <i class="fas fa-graduation-cap fa-3x mb-3 text-primary"></i>
+                        <h4>Premium Courses</h4>
+                        <p>Access all courses including advanced topics taught by industry experts.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="text-center">
+                        <i class="fas fa-tasks fa-3x mb-3 text-primary"></i>
+                        <h4>Advanced Todo Management</h4>
+                        <p>Create project-based task lists, set recurring tasks, and get AI-powered task prioritization.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="text-center">
+                        <i class="fas fa-headset fa-3x mb-3 text-primary"></i>
+                        <h4>Priority Support</h4>
+                        <p>Get fast responses to your questions and dedicated assistance when you need it.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card mt-4">
+        <div class="card-header">
+            <h2 class="card-title-secondary">Frequently Asked Questions</h2>
+        </div>
+        <div class="card-body">
+            <div class="accordion" id="faqAccordion">
+                <div class="accordion-item bg-transparent">
+                    <h2 class="accordion-header" id="headingOne">
+                        <button class="accordion-button bg-dark text-light collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                            Can I cancel my subscription at any time?
+                        </button>
+                    </h2>
+                    <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            Yes, you can cancel your premium subscription at any time. You'll continue to have access to premium features until the end of your current billing period.
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item bg-transparent">
+                    <h2 class="accordion-header" id="headingTwo">
+                        <button class="accordion-button bg-dark text-light collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                            How is payment processed?
+                        </button>
+                    </h2>
+                    <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            We use Stripe to process all payments securely. Your payment information is never stored on our servers.
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item bg-transparent">
+                    <h2 class="accordion-header" id="headingThree">
+                        <button class="accordion-button bg-dark text-light collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                            Is there a student discount?
+                        </button>
+                    </h2>
+                    <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            StudentHub is already designed to be affordable for students. We offer a generous free tier and competitively priced premium features.
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item bg-transparent">
+                    <h2 class="accordion-header" id="headingFour">
+                        <button class="accordion-button bg-dark text-light collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                            What happens to my data if I downgrade?
+                        </button>
+                    </h2>
+                    <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            Your data is never deleted when you downgrade. You'll simply lose access to premium features, but if you upgrade again in the future, you'll regain access to all your previous data.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    $(document).ready(function() {
+        // Stripe payment processing
+        var stripe = Stripe('{{ stripe_key }}');
+        var checkoutButton = document.getElementById('checkout-button');
+        
+        checkoutButton.addEventListener('click', function() {
+            // Create checkout session on server
+            fetch('/subscription/create-checkout-session', {
+                method: 'POST',
+            })
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(session) {
+                return stripe.redirectToCheckout({ sessionId: session.id });
+            })
+            .then(function(result) {
+                if (result.error) {
+                    alert(result.error.message);
+                }
+            })
+            .catch(function(error) {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again later.');
+            });
+        });
+    });
+</script>
+{% endblock %}

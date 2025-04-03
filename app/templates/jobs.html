@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="jobs-container">
+    <h1 class="section-title">Jobs</h1>
+    
+    <div class="row">
+        <!-- Job Opportunities Section -->
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title-primary">Job Opportunities</h2>
+                </div>
+                <div class="card-body">
+                    {% if job_listings %}
+                        <div class="row">
+                            {% for job in job_listings %}
+                                <div class="col-md-6 mb-4">
+                                    <div class="job-card card h-100">
+                                        <div class="card-body">
+                                            <h4 class="card-title">{{ job.title }}</h4>
+                                            <h6 class="card-subtitle mb-2 text-muted">{{ job.company }}</h6>
+                                            <p class="card-text">{{ job.description[:150] }}{% if job.description|length > 150 %}...{% endif %}</p>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="text-muted">
+                                                    <i class="fas fa-map-marker-alt"></i> {{ job.location }}
+                                                </span>
+                                                <span class="text-muted">
+                                                    <i class="fas fa-dollar-sign"></i> {{ job.salary }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="card-footer bg-transparent border-top-0">
+                                            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#jobDetailModal{{ loop.index }}">
+                                                View Details
+                                            </button>
+                                            <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#applyJobModal" 
+                                                    data-job-company="{{ job.company }}" data-job-position="{{ job.title }}">
+                                                Add to Applications
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Job Detail Modal -->
+                                <div class="modal fade" id="jobDetailModal{{ loop.index }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content bg-dark text-light">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">{{ job.title }} at {{ job.company }}</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="mb-4">
+                                                    <h6>Job Description</h6>
+                                                    <p>{{ job.description }}</p>
+                                                </div>
+                                                
+                                                <div class="mb-4">
+                                                    <h6>Requirements</h6>
+                                                    <ul>
+                                                        {% for req in job.requirements %}
+                                                            <li>{{ req }}</li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                </div>
+                                                
+                                                <div class="d-flex justify-content-between text-muted mb-4">
+                                                    <span>
+                                                        <i class="fas fa-map-marker-alt"></i> {{ job.location }}
+                                                    </span>
+                                                    <span>
+                                                        <i class="fas fa-dollar-sign"></i> {{ job.salary }}
+                                                    </span>
+                                                    <span>
+                                                        <i class="fas fa-clock"></i> {{ job.job_type }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#applyJobModal" 
+                                                      data-job-company="{{ job.company }}" data-job-position="{{ job.title }}" data-bs-dismiss="modal">
+                                                    Add to Applications
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-center">No job opportunities available right now.</p>
+                    {% endif %}
+                    
+                    {% if not is_premium and job_listings %}
+                        <div class="card bg-dark border-secondary mt-4">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">Unlock More Job Opportunities</h5>
+                                <p class="card-text">Upgrade to Premium to access all job listings and get early notifications.</p>
+                                <a href="{{ url_for('subscription.plans') }}" class="btn btn-primary">Upgrade Now</a>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Job Applications Section -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title-secondary">My Applications</h2>
+                </div>
+                <div class="card-body">
+                    {% if job_applications %}
+                        <div class="list-group">
+                            {% for job in job_applications %}
+                                <div class="list-group-item bg-transparent border-light">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h5 class="mb-1">{{ job.company }}</h5>
+                                            <p class="mb-1">{{ job.position }}</p>
+                                            <small>Applied: {{ job.applied_date.strftime('%b %d, %Y') if not isinstance(job.applied_date, str) else job.applied_date }}</small>
+                                        </div>
+                                        <div>
+                                            {% if job.status == 'Applied' %}
+                                                <span class="status-label status-applied">Applied</span>
+                                            {% elif job.status == 'Interview' %}
+                                                <span class="status-label status-interview">Interview</span>
+                                            {% elif job.status == 'Offered' %}
+                                                <span class="status-label status-completed">Offered</span>
+                                            {% elif job.status == 'Rejected' %}
+                                                <span class="status-label status-danger">Rejected</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    {% if job.status == 'Interview' and job.interview_date %}
+                                        <div class="mt-2 small">
+                                            <i class="fas fa-calendar-alt"></i> Interview: 
+                                            {{ job.interview_date.strftime('%b %d, %Y') if not isinstance(job.interview_date, str) else job.interview_date }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-center">No job applications yet. Start applying now!</p>
+                    {% endif %}
+                    
+                    <div class="text-center mt-3">
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#applyJobModal">
+                            Add New Application
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Apply Job Modal -->
+<div class="modal fade" id="applyJobModal" tabindex="-1" aria-labelledby="applyJobModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-light">
+            <div class="modal-header">
+                <h5 class="modal-title" id="applyJobModalLabel">Add Job Application</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('jobs.apply_job') }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.company.label(class="form-label") }}
+                        {{ form.company(class="form-control") }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.position.label(class="form-label") }}
+                        {{ form.position(class="form-control") }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.status.label(class="form-label") }}
+                        {{ form.status(class="form-select") }}
+                    </div>
+                    
+                    <div class="mb-3 interview-date-field" style="display: none;">
+                        {{ form.interview_date.label(class="form-label") }}
+                        {{ form.interview_date(class="form-control", type="date") }}
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    $(document).ready(function() {
+        // Show/hide interview date field based on status selection
+        $('#status').change(function() {
+            if ($(this).val() === 'Interview') {
+                $('.interview-date-field').show();
+            } else {
+                $('.interview-date-field').hide();
+            }
+        });
+        
+        // Pre-fill company and position when clicking from job listing
+        $('#applyJobModal').on('show.bs.modal', function(event) {
+            var button = $(event.relatedTarget);
+            var company = button.data('job-company');
+            var position = button.data('job-position');
+            
+            if (company) {
+                $('#company').val(company);
+            }
+            
+            if (position) {
+                $('#position').val(position);
+            }
+        });
+    });
+</script>
+{% endblock %}

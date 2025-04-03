@@ -1,0 +1,235 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="todo-container">
+    <h1 class="section-title">Todo List</h1>
+    
+    <div class="row">
+        <div class="col-md-8 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h2 class="card-title-primary mb-0">My Tasks</h2>
+                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addTodoModal">
+                        <i class="fas fa-plus"></i> Add Task
+                    </button>
+                </div>
+                <div class="card-body">
+                    {% if todos %}
+                        <div class="list-group">
+                            {% for todo in todos %}
+                                <div class="todo-item" id="todo-item-{{ todo.id }}">
+                                    <div class="form-check">
+                                        <input class="form-check-input todo-checkbox" type="checkbox" value="" id="todo-{{ todo.id }}" data-id="{{ todo.id }}" {% if todo.completed %}checked{% endif %}>
+                                        <label class="form-check-label todo-text {% if todo.completed %}todo-completed{% endif %}" for="todo-{{ todo.id }}">
+                                            {{ todo.title }}
+                                        </label>
+                                    </div>
+                                    <div class="todo-meta">
+                                        {% if todo.due_date %}
+                                            <span class="badge {% if todo.completed %}bg-secondary{% else %}bg-info{% endif %} me-2">
+                                                <i class="fas fa-calendar"></i> {{ todo.due_date.strftime('%b %d') if not isinstance(todo.due_date, str) else todo.due_date }}
+                                            </span>
+                                        {% endif %}
+                                        
+                                        {% if todo.priority == 'high' %}
+                                            <span class="badge bg-danger">High</span>
+                                        {% elif todo.priority == 'medium' %}
+                                            <span class="badge bg-warning text-dark">Medium</span>
+                                        {% elif todo.priority == 'low' %}
+                                            <span class="badge bg-success">Low</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="todo-actions">
+                                        <button class="btn btn-sm btn-danger delete-todo" data-id="{{ todo.id }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-tasks fa-4x mb-3 text-muted"></i>
+                            <h4>No tasks yet</h4>
+                            <p>Add your first task to get started!</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title-secondary">Task Overview</h2>
+                </div>
+                <div class="card-body">
+                    {% set completed_count = todos|selectattr('completed', 'equalto', true)|list|length %}
+                    {% set total_count = todos|length %}
+                    {% set completion_pct = (completed_count / total_count * 100) if total_count > 0 else 0 %}
+                    
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span>Task Completion</span>
+                            <span><strong>{{ completed_count }}</strong> / {{ total_count }}</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar progress-bar-success" role="progressbar" style="width: {{ completion_pct }}%" 
+                                 aria-valuenow="{{ completion_pct }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h5>Priority Breakdown</h5>
+                        {% set high_count = todos|selectattr('priority', 'equalto', 'high')|list|length %}
+                        {% set medium_count = todos|selectattr('priority', 'equalto', 'medium')|list|length %}
+                        {% set low_count = todos|selectattr('priority', 'equalto', 'low')|list|length %}
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span>High</span>
+                            <span>{{ high_count }}</span>
+                        </div>
+                        <div class="progress mb-2">
+                            <div class="progress-bar bg-danger" role="progressbar" style="width: {{ (high_count / total_count * 100) if total_count > 0 else 0 }}%"></div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span>Medium</span>
+                            <span>{{ medium_count }}</span>
+                        </div>
+                        <div class="progress mb-2">
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: {{ (medium_count / total_count * 100) if total_count > 0 else 0 }}%"></div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span>Low</span>
+                            <span>{{ low_count }}</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ (low_count / total_count * 100) if total_count > 0 else 0 }}%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button class="btn btn-sm btn-outline-danger" id="clearCompletedBtn">
+                            Clear Completed Tasks
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Todo Modal -->
+<div class="modal fade" id="addTodoModal" tabindex="-1" aria-labelledby="addTodoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-light">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addTodoModalLabel">Add New Task</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('jobs.add_todo_route') }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.title.label(class="form-label") }}
+                        {{ form.title(class="form-control") }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.due_date.label(class="form-label") }}
+                        {{ form.due_date(class="form-control", type="date") }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.priority.label(class="form-label") }}
+                        {{ form.priority(class="form-select") }}
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    $(document).ready(function() {
+        // Todo item checkbox toggling
+        $('.todo-checkbox').change(function() {
+            const todoId = $(this).data('id');
+            const completed = $(this).prop('checked');
+            
+            $.ajax({
+                url: '/todos/update',
+                type: 'POST',
+                data: {
+                    todo_id: todoId,
+                    completed: completed
+                },
+                success: function(response) {
+                    if (completed) {
+                        $(`label[for="todo-${todoId}"]`).addClass('todo-completed');
+                    } else {
+                        $(`label[for="todo-${todoId}"]`).removeClass('todo-completed');
+                    }
+                    
+                    // Refresh the page to update statistics
+                    // In a production app, you'd update the UI dynamically
+                    location.reload();
+                }
+            });
+        });
+        
+        // Delete todo item
+        $('.delete-todo').click(function() {
+            const todoId = $(this).data('id');
+            
+            $.ajax({
+                url: '/todos/delete',
+                type: 'POST',
+                data: {
+                    todo_id: todoId
+                },
+                success: function(response) {
+                    $(`#todo-item-${todoId}`).fadeOut(300, function() {
+                        $(this).remove();
+                        
+                        // Refresh the page to update statistics
+                        location.reload();
+                    });
+                }
+            });
+        });
+        
+        // Clear completed tasks
+        $('#clearCompletedBtn').click(function() {
+            if (confirm('Are you sure you want to clear all completed tasks?')) {
+                const completedIds = [];
+                
+                $('.todo-checkbox:checked').each(function() {
+                    completedIds.push($(this).data('id'));
+                });
+                
+                const deleteRequests = completedIds.map(id => {
+                    return $.ajax({
+                        url: '/todos/delete',
+                        type: 'POST',
+                        data: { todo_id: id }
+                    });
+                });
+                
+                $.when.apply($, deleteRequests).done(function() {
+                    location.reload();
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

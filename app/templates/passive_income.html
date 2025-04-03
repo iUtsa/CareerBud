@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="passive-income-container">
+    <h1 class="section-title">Passive Income Tools</h1>
+    
+    <div class="alert alert-info">
+        <div class="d-flex">
+            <div class="me-3">
+                <i class="fas fa-lightbulb fa-2x"></i>
+            </div>
+            <div>
+                <h4 class="alert-heading">Premium Feature</h4>
+                <p class="mb-0">This is a premium feature. Use these tools to develop passive income streams while you study.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title-primary">Income Ideas for CS Students</h2>
+                </div>
+                <div class="card-body">
+                    <div class="accordion" id="incomeIdeasAccordion">
+                        {% for idea in income_ideas %}
+                            <div class="accordion-item bg-transparent">
+                                <h2 class="accordion-header" id="heading{{ loop.index }}">
+                                    <button class="accordion-button bg-dark text-light collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}" aria-expanded="false" aria-controls="collapse{{ loop.index }}">
+                                        {{ idea.title }}
+                                    </button>
+                                </h2>
+                                <div id="collapse{{ loop.index }}" class="accordion-collapse collapse" aria-labelledby="heading{{ loop.index }}" data-bs-parent="#incomeIdeasAccordion">
+                                    <div class="accordion-body">
+                                        <p>{{ idea.description }}</p>
+                                        <div class="row mt-3">
+                                            <div class="col-md-3 mb-2">
+                                                <div class="d-flex flex-column">
+                                                    <small class="text-muted">Difficulty</small>
+                                                    <span>{{ idea.difficulty }}</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3 mb-2">
+                                                <div class="d-flex flex-column">
+                                                    <small class="text-muted">Startup Cost</small>
+                                                    <span>{{ idea.startup_cost }}</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3 mb-2">
+                                                <div class="d-flex flex-column">
+                                                    <small class="text-muted">Time Commitment</small>
+                                                    <span>{{ idea.time_commitment }}</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3 mb-2">
+                                                <div class="d-flex flex-column">
+                                                    <small class="text-muted">Potential Income</small>
+                                                    <span>{{ idea.potential_income }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title-secondary">Resources</h2>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        <a href="#" class="list-group-item list-group-item-action bg-transparent border-light">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">Freelance Platforms</h5>
+                            </div>
+                            <p class="mb-1">Find freelance opportunities to build your portfolio.</p>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action bg-transparent border-light">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">Digital Marketplaces</h5>
+                            </div>
+                            <p class="mb-1">Platforms to sell your digital products and templates.</p>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action bg-transparent border-light">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">Blog Monetization</h5>
+                            </div>
+                            <p class="mb-1">How to monetize your technical blog effectively.</p>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action bg-transparent border-light">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">Course Creation Guide</h5>
+                            </div>
+                            <p class="mb-1">Step-by-step guide to creating and selling online courses.</p>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title-purple">Income Tracker</h2>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-info-circle"></i> This feature is coming soon! Track all your passive income streams in one place.
+                    </div>
+                    
+                    <div class="text-center py-4">
+                        <i class="fas fa-chart-line fa-4x mb-3 text-muted"></i>
+                        <h4>Income Analytics</h4>
+                        <p>Track your passive income growth over time and identify your most profitable ventures.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

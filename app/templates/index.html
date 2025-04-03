@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="landing-container">
+    <div class="landing-header">
+        <h1 class="landing-title">Welcome to StudentHub</h1>
+        <p class="landing-subtitle">Your All-in-One Platform for Academic and Professional Success</p>
+        
+        <div class="d-flex justify-content-center mt-4">
+            <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg me-3">Get Started</a>
+            <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary btn-lg">Login</a>
+        </div>
+    </div>
+    
+    <div class="landing-features">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="text-center">
+                        <div class="feature-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3 class="feature-title">Track Your Progress</h3>
+                        <p>Monitor your GPA, completed credits, and skill development in one place.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="text-center">
+                        <div class="feature-icon">
+                            <i class="fas fa-briefcase"></i>
+                        </div>
+                        <h3 class="feature-title">Find Opportunities</h3>
+                        <p>Discover internships and job opportunities tailored to your skills and interests.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="text-center">
+                        <div class="feature-icon">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <h3 class="feature-title">Access Courses</h3>
+                        <p>Enroll in courses to expand your knowledge and boost your career prospects.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mt-4">
+                <div class="col-md-4 mb-4">
+                    <div class="text-center">
+                        <div class="feature-icon">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                        <h3 class="feature-title">Stay Organized</h3>
+                        <p>Manage your tasks, deadlines, and projects with our intuitive todo system.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="text-center">
+                        <div class="feature-icon">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                        <h3 class="feature-title">Track Achievements</h3>
+                        <p>Record and showcase your academic and professional accomplishments.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="text-center">
+                        <div class="feature-icon">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                        <h3 class="feature-title">Build Passive Income</h3>
+                        <p>Discover strategies to generate income while focusing on your studies.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="cta-section">
+        <h2 class="cta-title">Ready to Take Control of Your Academic Journey?</h2>
+        <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg btn-cta">Create Your Account Now</a>
+    </div>
+</div>
+{% endblock %}

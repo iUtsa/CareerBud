@@ -1,0 +1,224 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="row">
+        <!-- Job Opportunities Section -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title-primary">Job Opportunities</h2>
+                </div>
+                <div class="card-body">
+                    {% if job_opportunities %}
+                        {% for job in job_opportunities[:3] %}
+                            <div class="job-card card mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ job.title }}</h5>
+                                    <h6 class="card-subtitle mb-2 text-muted">{{ job.company }}</h6>
+                                    <p class="card-text">{{ job.description[:100] }}...</p>
+                                    <a href="#" class="btn btn-sm btn-primary">Apply Now</a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                        
+                        <div class="text-center mt-3">
+                            <a href="{{ url_for('jobs.jobs') }}" class="btn btn-outline-primary">View All Jobs</a>
+                        </div>
+                    {% else %}
+                        <p class="text-center">No job opportunities available right now.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Achievements Section -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title-secondary">Achievements</h2>
+                </div>
+                <div class="card-body">
+                    {% if achievements %}
+                        <div class="list-group">
+                            {% for achievement in achievements %}
+                                <div class="list-group-item bg-transparent border-light">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h5 class="mb-1">{{ achievement.title }}</h5>
+                                            <small>{{ achievement.date }}</small>
+                                        </div>
+                                        <span class="badge bg-success rounded-pill">
+                                            <i class="fas fa-trophy"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-center">No achievements recorded yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Academic Progress -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title-primary">Academic Progress</h2>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span>GPA</span>
+                            <span><strong>{{ academic_progress.gpa }}</strong> / 4.0</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar progress-bar-success" role="progressbar" style="width: {{ (academic_progress.gpa / 4.0) * 100 }}%" aria-valuenow="{{ academic_progress.gpa }}" aria-valuemin="0" aria-valuemax="4.0"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span>Credits</span>
+                            <span><strong>{{ academic_progress.credits }}</strong> / {{ academic_progress.total_credits }}</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar progress-bar-info" role="progressbar" style="width: {{ academic_progress.progress_percentage }}%" aria-valuenow="{{ academic_progress.credits }}" aria-valuemin="0" aria-valuemax="{{ academic_progress.total_credits }}"></div>
+                        </div>
+                    </div>
+                    
+                    <h4 class="subsection-title">Current Courses</h4>
+                    {% if current_courses %}
+                        {% for course in current_courses %}
+                            <div class="course-item">
+                                <span>{{ course.name }}</span>
+                                <span class="course-grade grade-{{ course.grade.lower() if course.grade else 'a' }}">{{ course.grade if course.grade else 'In Progress' }}</span>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p>No current courses.</p>
+                    {% endif %}
+                    
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('progress.progress') }}" class="btn btn-outline-primary">Full Progress Report</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Upcoming Events / Todos -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title-purple">To-Do List</h2>
+                </div>
+                <div class="card-body">
+                    {% if todos %}
+                        <div class="list-group">
+                            {% for todo in todos %}
+                                <div class="todo-item">
+                                    <div class="form-check">
+                                        <input class="form-check-input todo-checkbox" type="checkbox" value="" id="todo-{{ todo.id }}" data-id="{{ todo.id }}" {% if todo.completed %}checked{% endif %}>
+                                        <label class="form-check-label todo-text {% if todo.completed %}todo-completed{% endif %}" for="todo-{{ todo.id }}">
+                                            {{ todo.title }}
+                                        </label>
+                                    </div>
+                                    <div class="todo-actions">
+                                        <button class="btn btn-sm btn-danger delete-todo" data-id="{{ todo.id }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-center">No tasks on your to-do list.</p>
+                    {% endif %}
+                    
+                    <div class="mt-3">
+                        <h4 class="subsection-title">Upcoming Interviews</h4>
+                        {% if upcoming_interviews %}
+                            {% for interview in upcoming_interviews %}
+                                <div class="alert alert-info">
+                                    <h5>{{ interview.company }} - {{ interview.position }}</h5>
+                                    <p>Interview Date: {{ interview.interview_date.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <p>No upcoming interviews scheduled.</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('jobs.todo') }}" class="btn btn-outline-primary">Manage To-Do List</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if not current_user.is_premium %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="mb-3">Upgrade to Premium for More Features!</h3>
+                    <p>Unlock passive income tools, advanced job listings, detailed analytics, and more.</p>
+                    <a href="{{ url_for('subscription.plans') }}" class="btn btn-primary">View Subscription Plans</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    $(document).ready(function() {
+        // Todo item checkbox toggling
+        $('.todo-checkbox').change(function() {
+            const todoId = $(this).data('id');
+            const completed = $(this).prop('checked');
+            
+            $.ajax({
+                url: '/todos/update',
+                type: 'POST',
+                data: {
+                    todo_id: todoId,
+                    completed: completed
+                },
+                success: function(response) {
+                    if (completed) {
+                        $(`label[for="todo-${todoId}"]`).addClass('todo-completed');
+                    } else {
+                        $(`label[for="todo-${todoId}"]`).removeClass('todo-completed');
+                    }
+                }
+            });
+        });
+        
+        // Delete todo item
+        $('.delete-todo').click(function() {
+            const todoId = $(this).data('id');
+            
+            $.ajax({
+                url: '/todos/delete',
+                type: 'POST',
+                data: {
+                    todo_id: todoId
+                },
+                success: function(response) {
+                    $(`#todo-${todoId}`).closest('.todo-item').fadeOut(300, function() {
+                        $(this).remove();
+                    });
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
