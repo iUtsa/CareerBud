@@ -3,7 +3,7 @@
 {% block content %}
 <div class="progress-tracker-container">
     <h1 class="section-title">Progress Tracker</h1>
-    
+
     <div class="row">
         <!-- Academic Progress -->
         <div class="col-lg-6 mb-4">
@@ -18,39 +18,46 @@
                             <span><strong>{{ academic_progress.gpa }}</strong> / 4.0</span>
                         </div>
                         <div class="progress">
-                            <div class="progress-bar progress-bar-success" role="progressbar" style="width: {{ (academic_progress.gpa / 4.0) * 100 }}%" aria-valuenow="{{ academic_progress.gpa }}" aria-valuemin="0" aria-valuemax="4.0"></div>
+                            <div class="progress-bar progress-bar-success" role="progressbar"
+                                style="width: {{ (academic_progress.gpa / 4.0) * 100 }}%"
+                                aria-valuenow="{{ academic_progress.gpa }}" aria-valuemin="0" aria-valuemax="4.0"></div>
                         </div>
                     </div>
-                    
+
                     <div class="mb-4">
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <span>Credits</span>
-                            <span><strong>{{ academic_progress.credits }}</strong> / {{ academic_progress.total_credits }}</span>
+                            <span><strong>{{ academic_progress.credits }}</strong> / {{ academic_progress.total_credits
+                                }}</span>
                         </div>
                         <div class="progress">
-                            <div class="progress-bar progress-bar-info" role="progressbar" style="width: {{ academic_progress.progress_percentage }}%" aria-valuenow="{{ academic_progress.credits }}" aria-valuemin="0" aria-valuemax="{{ academic_progress.total_credits }}"></div>
+                            <div class="progress-bar progress-bar-info" role="progressbar"
+                                style="width: {{ academic_progress.progress_percentage }}%"
+                                aria-valuenow="{{ academic_progress.credits }}" aria-valuemin="0"
+                                aria-valuemax="{{ academic_progress.total_credits }}"></div>
                         </div>
                     </div>
-                    
+
                     <h4 class="subsection-title">Current Courses</h4>
                     {% if current_courses %}
-                        {% for course in current_courses %}
-                            <div class="course-item">
-                                <span>{{ course.name }}</span>
-                                <span class="course-grade grade-{{ course.grade.lower() if course.grade else 'a' }}">{{ course.grade if course.grade else 'In Progress' }}</span>
-                            </div>
-                        {% endfor %}
+                    {% for course in current_courses %}
+                    <div class="course-item">
+                        <span>{{ course.name }}</span>
+                        <span class="course-grade grade-{{ course.grade.lower() if course.grade else 'a' }}">{{
+                            course.grade if course.grade else 'In Progress' }}</span>
+                    </div>
+                    {% endfor %}
                     {% else %}
-                        <p>No current courses.</p>
+                    <p>No current courses.</p>
                     {% endif %}
-                    
+
                     <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#updateAcademicModal">
                         Update Academic Progress
                     </button>
                 </div>
             </div>
         </div>
-        
+
         <!-- Professional Journey -->
         <div class="col-lg-6 mb-4">
             <div class="card">
@@ -60,56 +67,62 @@
                 <div class="card-body">
                     <h4 class="subsection-title">Internships</h4>
                     {% if internships %}
-                        {% for internship in internships %}
-                            <div class="card mb-3">
-                                <div class="card-body">
-                                    <h5 class="card-title">{{ internship.company }}</h5>
-                                    <h6 class="card-subtitle mb-2 text-muted">{{ internship.position }}</h6>
-                                    <p class="card-text">
-                                        <small>
-                                            Skills: {{ internship.skills|join(', ') }}
-                                        </small>
-                                    </p>
-                                    <span class="status-label status-completed">Completed</span>
-                                </div>
-                            </div>
-                        {% endfor %}
+                    {% for internship in internships %}
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ internship.company }}</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">{{ internship.position }}</h6>
+                            <p class="card-text">
+                                <small>
+                                    Skills: {{ internship.skills|join(', ') }}
+                                </small>
+                            </p>
+                            <span class="status-label status-completed">Completed</span>
+                        </div>
+                    </div>
+                    {% endfor %}
                     {% else %}
-                        <p>No internships recorded.</p>
+                    <p>No internships recorded.</p>
                     {% endif %}
-                    
+
                     <h4 class="subsection-title mt-4">Job Applications</h4>
                     {% if job_applications %}
-                        {% for job in job_applications %}
-                            <div class="card mb-3">
-                                <div class="card-body">
-                                    <h5 class="card-title">{{ job.company }}</h5>
-                                    <h6 class="card-subtitle mb-2 text-muted">{{ job.position }}</h6>
-                                    <p class="card-text">
-                                        <small>
-                                            Applied: {{ job.applied_date.strftime('%B %d, %Y') if not isinstance(job.applied_date, str) else job.applied_date }}
-                                        </small>
-                                    </p>
-                                    {% if job.status == 'Applied' %}
-                                        <span class="status-label status-applied">Applied</span>
-                                    {% elif job.status == 'Interview' %}
-                                        <span class="status-label status-interview">Interview Scheduled</span>
-                                    {% elif job.status == 'Offered' %}
-                                        <span class="status-label status-completed">Offered</span>
-                                    {% elif job.status == 'Rejected' %}
-                                        <span class="status-label status-danger">Rejected</span>
+                    {% for job in job_applications %}
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ job.company }}</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">{{ job.position }}</h6>
+                            <p class="card-text">
+                                <small>
+                                    Applied: 
+                                    {% if job.applied_date %}
+                                        {{ job.applied_date.strftime('%B %d, %Y') }}
+                                    {% else %}
+                                        Not yet applied
                                     {% endif %}
-                                </div>
-                            </div>
-                        {% endfor %}
+                                </small>
+                            </p>
+                            
+                            {% if job.status == 'Applied' %}
+                            <span class="status-label status-applied">Applied</span>
+                            {% elif job.status == 'Interview' %}
+                            <span class="status-label status-interview">Interview Scheduled</span>
+                            {% elif job.status == 'Offered' %}
+                            <span class="status-label status-completed">Offered</span>
+                            {% elif job.status == 'Rejected' %}
+                            <span class="status-label status-danger">Rejected</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
                     {% else %}
-                        <p>No job applications recorded.</p>
+                    <p>No job applications recorded.</p>
                     {% endif %}
                 </div>
             </div>
         </div>
     </div>
-    
+
     <div class="row">
         <!-- Skill Development -->
         <div class="col-12 mb-4">
@@ -122,42 +135,48 @@
                         <div class="col-md-6">
                             <h4 class="subsection-title">Technical Skills</h4>
                             {% if technical_skills %}
-                                {% for skill_name, skill_data in technical_skills.items() %}
-                                    <div class="mb-3">
-                                        <div class="d-flex justify-content-between">
-                                            <span>{{ skill_name }}</span>
-                                            <span>{{ skill_data.level }} ({{ skill_data.percentage }}%)</span>
-                                        </div>
-                                        <div class="progress">
-                                            <div class="progress-bar progress-bar-info" role="progressbar" style="width: {{ skill_data.percentage }}%" aria-valuenow="{{ skill_data.percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
-                                        </div>
-                                    </div>
-                                {% endfor %}
+                            {% for skill in technical_skills %}
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <span>{{ skill.name }}</span>
+                                    <span>{{ skill.level }} ({{ skill.percentage }}%)</span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar progress-bar-info" role="progressbar"
+                                        style="width: {{ skill.percentage }}%" aria-valuenow="{{ skill.percentage }}"
+                                        aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
+                            {% endfor %}
                             {% else %}
-                                <p>No technical skills recorded.</p>
+                            <p>No technical skills recorded.</p>
                             {% endif %}
+
                         </div>
-                        
+
                         <div class="col-md-6">
                             <h4 class="subsection-title">Soft Skills</h4>
                             {% if soft_skills %}
-                                {% for skill_name, skill_data in soft_skills.items() %}
-                                    <div class="mb-3">
-                                        <div class="d-flex justify-content-between">
-                                            <span>{{ skill_name }}</span>
-                                            <span>{{ skill_data.level }} ({{ skill_data.percentage }}%)</span>
-                                        </div>
-                                        <div class="progress">
-                                            <div class="progress-bar progress-bar-success" role="progressbar" style="width: {{ skill_data.percentage }}%" aria-valuenow="{{ skill_data.percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
-                                        </div>
-                                    </div>
-                                {% endfor %}
+                            {% for skill in soft_skills %}
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <span>{{ skill.name }}</span>
+                                    <span>{{ skill.level }} ({{ skill.percentage }}%)</span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar progress-bar-success" role="progressbar"
+                                        style="width: {{ skill.percentage }}%" aria-valuenow="{{ skill.percentage }}"
+                                        aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
+                            {% endfor %}
                             {% else %}
-                                <p>No soft skills recorded.</p>
+                            <p>No soft skills recorded.</p>
                             {% endif %}
+
                         </div>
                     </div>
-                    
+
                     <div class="text-center mt-3">
                         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSkillModal">
                             Add/Update Skill
@@ -167,7 +186,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="row">
         <!-- Achievements and Certificates -->
         <div class="col-md-6 mb-4">
@@ -177,25 +196,25 @@
                 </div>
                 <div class="card-body">
                     {% if achievements %}
-                        <div class="list-group">
-                            {% for achievement in achievements %}
-                                <div class="list-group-item bg-transparent border-light">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <h5 class="mb-1">{{ achievement.title }}</h5>
-                                            <small>{{ achievement.date }}</small>
-                                        </div>
-                                        <span class="badge bg-success rounded-pill">
-                                            <i class="fas fa-trophy"></i>
-                                        </span>
-                                    </div>
+                    <div class="list-group">
+                        {% for achievement in achievements %}
+                        <div class="list-group-item bg-transparent border-light">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="mb-1">{{ achievement.title }}</h5>
+                                    <small>{{ achievement.date }}</small>
                                 </div>
-                            {% endfor %}
+                                <span class="badge bg-success rounded-pill">
+                                    <i class="fas fa-trophy"></i>
+                                </span>
+                            </div>
                         </div>
+                        {% endfor %}
+                    </div>
                     {% else %}
-                        <p>No achievements recorded yet.</p>
+                    <p>No achievements recorded yet.</p>
                     {% endif %}
-                    
+
                     <div class="text-center mt-3">
                         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAchievementModal">
                             Add Achievement
@@ -204,7 +223,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="col-md-6 mb-4">
             <div class="card">
                 <div class="card-header">
@@ -212,22 +231,22 @@
                 </div>
                 <div class="card-body">
                     {% if certificates %}
-                        <div class="list-group">
-                            {% for certificate in certificates %}
-                                <div class="list-group-item bg-transparent border-light">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <h5 class="mb-1">{{ certificate.title }}</h5>
-                                            <small>Issued by: {{ certificate.issuer }}</small>
-                                            <p class="mb-0"><small>Valid until: {{ certificate.valid_until }}</small></p>
-                                        </div>
-                                        <span class="status-label status-completed">Verified</span>
-                                    </div>
+                    <div class="list-group">
+                        {% for certificate in certificates %}
+                        <div class="list-group-item bg-transparent border-light">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="mb-1">{{ certificate.title }}</h5>
+                                    <small>Issued by: {{ certificate.issuer }}</small>
+                                    <p class="mb-0"><small>Valid until: {{ certificate.valid_until }}</small></p>
                                 </div>
-                            {% endfor %}
+                                <span class="status-label status-completed">Verified</span>
+                            </div>
                         </div>
+                        {% endfor %}
+                    </div>
                     {% else %}
-                        <p>No certificates recorded yet.</p>
+                    <p>No certificates recorded yet.</p>
                     {% endif %}
                 </div>
             </div>
@@ -236,27 +255,29 @@
 </div>
 
 <!-- Update Academic Progress Modal -->
-<div class="modal fade" id="updateAcademicModal" tabindex="-1" aria-labelledby="updateAcademicModalLabel" aria-hidden="true">
+<div class="modal fade" id="updateAcademicModal" tabindex="-1" aria-labelledby="updateAcademicModalLabel"
+    aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content bg-dark text-light">
             <div class="modal-header">
                 <h5 class="modal-title" id="updateAcademicModalLabel">Update Academic Progress</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form method="POST" action="{{ url_for('progress.update_academic') }}">
                     {{ academic_form.hidden_tag() }}
-                    
+
                     <div class="mb-3">
                         {{ academic_form.gpa.label(class="form-label") }}
                         {{ academic_form.gpa(class="form-control", min="0", max="4.0", step="0.1") }}
                     </div>
-                    
+
                     <div class="mb-3">
                         {{ academic_form.credits.label(class="form-label") }}
                         {{ academic_form.credits(class="form-control", min="0") }}
                     </div>
-                    
+
                     <div class="d-grid gap-2">
                         {{ academic_form.submit(class="btn btn-primary") }}
                     </div>
@@ -267,27 +288,29 @@
 </div>
 
 <!-- Add Achievement Modal -->
-<div class="modal fade" id="addAchievementModal" tabindex="-1" aria-labelledby="addAchievementModalLabel" aria-hidden="true">
+<div class="modal fade" id="addAchievementModal" tabindex="-1" aria-labelledby="addAchievementModalLabel"
+    aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content bg-dark text-light">
             <div class="modal-header">
                 <h5 class="modal-title" id="addAchievementModalLabel">Add Achievement</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form method="POST" action="{{ url_for('progress.add_achievement_route') }}">
                     {{ achievement_form.hidden_tag() }}
-                    
+
                     <div class="mb-3">
                         {{ achievement_form.title.label(class="form-label") }}
                         {{ achievement_form.title(class="form-control") }}
                     </div>
-                    
+
                     <div class="mb-3">
                         {{ achievement_form.date.label(class="form-label") }}
                         {{ achievement_form.date(class="form-control", type="date") }}
                     </div>
-                    
+
                     <div class="d-grid gap-2">
                         {{ achievement_form.submit(class="btn btn-primary") }}
                     </div>
@@ -303,17 +326,18 @@
         <div class="modal-content bg-dark text-light">
             <div class="modal-header">
                 <h5 class="modal-title" id="addSkillModalLabel">Add/Update Skill</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form method="POST" action="{{ url_for('progress.update_skill_route') }}">
                     {{ skill_form.hidden_tag() }}
-                    
+
                     <div class="mb-3">
                         {{ skill_form.name.label(class="form-label") }}
                         {{ skill_form.name(class="form-control") }}
                     </div>
-                    
+
                     <div class="mb-3">
                         {{ skill_form.skill_type.label(class="form-label") }}
                         <select name="skill_type" class="form-select" required>
@@ -321,7 +345,7 @@
                             <option value="soft">Soft</option>
                         </select>
                     </div>
-                    
+
                     <div class="mb-3">
                         {{ skill_form.level.label(class="form-label") }}
                         <select name="level" class="form-select" required>
@@ -330,12 +354,12 @@
                             <option value="Advanced">Advanced</option>
                         </select>
                     </div>
-                    
+
                     <div class="mb-3">
                         {{ skill_form.percentage.label(class="form-label") }}
                         {{ skill_form.percentage(class="form-control", min="0", max="100") }}
                     </div>
-                    
+
                     <div class="d-grid gap-2">
                         {{ skill_form.submit(class="btn btn-primary") }}
                     </div>

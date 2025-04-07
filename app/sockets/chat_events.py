@@ -3,20 +3,20 @@ from flask_login import current_user
 from app import socketio, db
 from app.models import send_message, send_group_message
 from datetime import datetime
-from bson import ObjectId
+from app.models import Conversation
 
 @socketio.on('connect')
 def handle_connect():
     if not current_user.is_authenticated:
         return False
     
-    # Join rooms for each conversation
-    conversations = db.conversations.find({
-        'participants': ObjectId(current_user.id)
-    })
+    # Get conversations using SQLAlchemy (Supabase)
+    conversations = db.session.query(Conversation).filter(
+        (Conversation.user1_id == current_user.id) | (Conversation.user2_id == current_user.id)
+    ).all()
     
     for conv in conversations:
-        join_room(str(conv['_id']))
+        join_room(str(conv.id))
 
 @socketio.on('join_conversation')
 def handle_join_conversation(data):
@@ -47,7 +47,7 @@ def handle_new_message(data):
         'timestamp': datetime.now().isoformat()
     }, room=conversation_id)
 
-# Add to chat_events.py
+# Group chat events
 @socketio.on('join_group')
 def handle_join_group(data):
     room = f"group_{data['group_id']}"
@@ -77,4 +77,3 @@ def handle_new_group_message(data):
         'content': content,
         'timestamp': datetime.now().isoformat()
     }, room=room)
-    

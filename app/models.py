@@ -2,7 +2,23 @@ from flask_login import UserMixin
 from app import db, bcrypt
 from datetime import datetime
 from sqlalchemy import or_
+from sqlalchemy import Column, Integer, String, Text, Boolean
+from app import db  # Ensure this is at the top of your models.py
+from flask import current_app
 
+
+
+
+
+
+# Association table for many-to-many relationship between users and courses
+user_courses = db.Table('user_courses',
+    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
+    db.Column('course_id', db.Integer, db.ForeignKey('courses.id'), primary_key=True)
+)
+
+# User model with existing attributes and relationship to courses
+# User model with existing attributes and relationship to courses
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
 
@@ -23,27 +39,28 @@ class User(UserMixin, db.Model):
     job_applications = db.relationship('JobApplication', backref='user', lazy=True)
     todos = db.relationship('Todo', backref='user', lazy=True)
     skills = db.relationship('Skill', backref='user', lazy=True)
-    achievements = db.relationship('Achievement', backref='user', lazy=True)
+    achievements = db.relationship('Achievement', back_populates='user', lazy=True)  # Change to back_populates
     connections = db.relationship('Connection', backref='user', foreign_keys='Connection.user_id', lazy=True)
+    current_courses = db.relationship('Course', secondary='user_courses', backref='users')
+    internships = db.relationship('Internship', back_populates='user', lazy=True)
 
     def full_name(self):
         return f"{self.first_name} {self.last_name}"
 
     def is_premium(self):
-        return self.subscription_tier == 'premium' and (
-            self.subscription_end_date and datetime.utcnow() < self.subscription_end_date
-        )
+        if not self.subscription_end_date:
+            return False
+        return self.subscription_tier == 'premium' and datetime.utcnow() < self.subscription_end_date
 
-class Course(db.Model):
-    __tablename__ = 'courses'
 
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(255), nullable=False)
-    description = db.Column(db.Text)
-    category = db.Column(db.String(100))
-    level = db.Column(db.String(50))
-    duration = db.Column(db.String(50))
-    premium_only = db.Column(db.Boolean, default=False)
+
+
+
+
+
+# Internship model with the updated backref
+
+
 
 class Job(db.Model):
     __tablename__ = 'jobs'
@@ -67,6 +84,21 @@ class JobApplication(db.Model):
     status = db.Column(db.String(64), default='Applied')
     applied_date = db.Column(db.DateTime, default=datetime.utcnow)
     interview_date = db.Column(db.DateTime, nullable=True)
+
+class Internship(db.Model):
+    __tablename__ = 'internships'
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(255), nullable=False)
+    company = db.Column(db.String(255), nullable=False)
+    start_date = db.Column(db.DateTime)
+    end_date = db.Column(db.DateTime)
+    description = db.Column(db.Text)
+
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    user = db.relationship('User', back_populates='internships')  # Link with back_populates
+
+
 
 class Todo(db.Model):
     __tablename__ = 'todos'
@@ -97,6 +129,12 @@ class Achievement(db.Model):
     title = db.Column(db.String(255), nullable=False)
     date = db.Column(db.DateTime, nullable=False)
 
+    user = db.relationship('User', back_populates='achievements')  # Change to back_populates
+
+
+
+
+
 class Connection(db.Model):
     __tablename__ = 'connections'
 
@@ -107,14 +145,6 @@ class Connection(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     accepted_at = db.Column(db.DateTime, nullable=True)
 
-class Message(db.Model):
-    __tablename__ = 'messages'
-
-    id = db.Column(db.Integer, primary_key=True)
-    conversation_id = db.Column(db.Integer)
-    sender_id = db.Column(db.Integer)
-    content = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Conversation(db.Model):
     __tablename__ = 'conversations'
@@ -133,6 +163,18 @@ class Post(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     user = db.relationship('User', backref='posts')
+
+class Course(db.Model):
+    __tablename__ = 'courses'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.Text)
+    category = db.Column(db.String(100))
+    level = db.Column(db.String(50))
+    duration = db.Column(db.String(50))
+    premium_only = db.Column(db.Boolean, default=False)
+
 
 class Comment(db.Model):
     __tablename__ = 'comments'
@@ -160,6 +202,7 @@ class Like(db.Model):
 
 class Group(db.Model):
     __tablename__ = 'groups'
+    __table_args__ = {'extend_existing': True}  # Add this to avoid conflicts in case of redefinition
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False)
@@ -167,19 +210,53 @@ class Group(db.Model):
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-class Group(db.Model):
-    __tablename__ = 'groups'
-    __table_args__ = {'extend_existing': True}
+class Message(db.Model):
+    __tablename__ = 'messages'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(255), nullable=False)
-    description = db.Column(db.Text)
-    created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    sender_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    recipient_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)  # Individual message
+    content = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    conversation_id = db.Column(db.Integer, db.ForeignKey('conversations.id'), nullable=True)  # For group messages
+    group_id = db.Column(db.Integer, db.ForeignKey('groups.id'), nullable=True)  # For group messages
+
+    sender = db.relationship('User', foreign_keys=[sender_id])
+    recipient = db.relationship('User', foreign_keys=[recipient_id])
+    group = db.relationship('Group', foreign_keys=[group_id], backref='messages')  # For group messages
+    conversation = db.relationship('Conversation', foreign_keys=[conversation_id])  # For group messages
+
+
+def send_message(sender_id, recipient_id, content):
+    try:
+        message = Message(sender_id=sender_id, recipient_id=recipient_id, content=content)
+        db.session.add(message)
+        db.session.commit()
+        return message
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error sending message: {e}")
+        return None
+
+def send_group_message(sender_id, group_id, content):
+    try:
+        # Create a new group message
+        group_message = Message(sender_id=sender_id, group_id=group_id, content=content)
+        db.session.add(group_message)
+        db.session.commit()
+        return group_message
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error sending group message: {e}")
+        return None
+
+def get_db():
+    return current_app.extensions['sqlalchemy'].db
 
 def get_group_messages(group_id):
     try:
-        return Message.query.filter_by(conversation_id=group_id).order_by(Message.created_at).all()
+        # Retrieve messages for a specific group
+        return Message.query.filter_by(group_id=group_id).order_by(Message.created_at).all()
     except Exception as e:
         print(f"Error retrieving group messages: {type(e).__name__} - {str(e)}")
         return []
@@ -205,33 +282,27 @@ def create_group(name, description, created_by):
 
 
 def like_post(post_id, user_id):
-    try:
-        # Prevent duplicate likes
-        existing_like = Like.query.filter_by(post_id=post_id, user_id=user_id).first()
-        if existing_like:
-            db.session.delete(existing_like)
-            db.session.commit()
-            return 'unliked'
-
-        new_like = Like(post_id=post_id, user_id=user_id)
+    post = Post.query.get(post_id)
+    if not post:
+        return False
+    if not any(like.user_id == user_id for like in post.likes):
+        new_like = PostLike(post_id=post_id, user_id=user_id)
         db.session.add(new_like)
         db.session.commit()
-        return 'liked'
-    except Exception as e:
-        print(f"Error liking post: {type(e).__name__} - {str(e)}")
-        return None
-    
+        return True
+    return False
+
 def unlike_post(post_id, user_id):
-    try:
-        like = Like.query.filter_by(post_id=post_id, user_id=user_id).first()
-        if like:
-            db.session.delete(like)
-            db.session.commit()
-            return True
+    post = Post.query.get(post_id)
+    if not post:
         return False
-    except Exception as e:
-        print(f"Error unliking post: {type(e).__name__} - {str(e)}")
-        return False
+    like = PostLike.query.filter_by(post_id=post_id, user_id=user_id).first()
+    if like:
+        db.session.delete(like)
+        db.session.commit()
+        return True
+    return False
+
 
 
 def add_comment(post_id, user_id, content):
@@ -245,15 +316,15 @@ def add_comment(post_id, user_id, content):
         return None
 
 
-def create_post(user_id, content):
+def create_post(user_id, content, visibility):
     try:
-        post = Post(user_id=user_id, content=content)
+        post = Post(user_id=user_id, content=content, visibility=visibility)
         db.session.add(post)
         db.session.commit()
-        return post.id
     except Exception as e:
-        print(f"Error creating post: {type(e).__name__} - {str(e)}")
-        return None
+        print(f"Error creating post: {e}")
+        db.session.rollback()
+
 
 
 
@@ -373,14 +444,21 @@ def update_subscription(user_id, subscription_tier, end_date=None):
     db.session.commit()
     return True
 
-def update_academic_progress(user_id, gpa, credits):
+def update_academic_progress(user_id, gpa, credits, current_courses):
     user = User.query.get(int(user_id))
     if not user:
         return False
+    
+    # Update GPA and credits
     user.gpa = gpa
     user.credits = credits
+    
+    # Update current courses (if needed)
+    user.current_courses = current_courses
+    
     db.session.commit()
     return True
+
 
 def get_courses():
     return Course.query.all()
@@ -473,14 +551,18 @@ def get_feed(user_id):
         connections = get_connections(user_id)
         friend_ids = [friend.id for friend in connections]
 
-        # Sample logic: return achievements or messages from connections as feed
+        # Get the posts (achievements)
         achievements = Achievement.query.filter(Achievement.user_id.in_(friend_ids)).order_by(Achievement.date.desc()).limit(20).all()
-        
-        # You can extend this to include messages, status updates, etc.
+
+        # Debugging: log the achievements to see if they're fetched correctly
+        print("Fetched posts:", achievements)
+
         return achievements
     except Exception as e:
         print(f"Error retrieving feed: {type(e).__name__} - {str(e)}")
         return []
+
+
 
 
 

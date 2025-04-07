@@ -4,8 +4,10 @@ from app.models import authenticate_user, create_user, update_user_profile
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, SelectField
 from wtforms.validators import DataRequired, Email, EqualTo, Length
+from app import db, bcrypt
 
 auth_bp = Blueprint('auth', __name__)
+achievement_bp = Blueprint('achievement', __name__)
 
 # Forms
 class LoginForm(FlaskForm):
@@ -121,3 +123,69 @@ def profile():
             flash('Failed to update profile', 'danger')
     
     return render_template('auth/profile.html', form=form, title='Profile')
+
+    # In your app/routes/auth.py
+@auth_bp.route('/change-password', methods=['POST'])
+@login_required
+def change_password():
+    current_password = request.form['current_password']
+    new_password = request.form['new_password']
+    confirm_password = request.form['confirm_password']
+    
+    # Check if new password and confirm password match
+    if new_password != confirm_password:
+        flash('Passwords do not match.', 'danger')
+        return redirect(url_for('auth.profile'))
+
+    # You can add more checks like ensuring the current password is correct
+    if change_password_logic(current_user.id, current_password, new_password):
+        flash('Password changed successfully!', 'success')
+    else:
+        flash('Failed to change password. Please try again.', 'danger')
+
+    return redirect(url_for('auth.profile'))
+
+
+@auth_bp.route('/delete_account', methods=['POST'])
+@login_required
+def delete_account():
+    # Ensure the CSRF token is validated
+    if request.form['confirm_email'] == current_user.email:
+        # Perform account deletion logic here
+        try:
+            # Remove user from database
+            db.session.delete(current_user)
+            db.session.commit()
+
+            flash("Your account has been deleted successfully.", 'success')
+            return redirect(url_for('auth.logout'))  # Redirect to logout after account deletion
+        except Exception as e:
+            flash(f"Error deleting account: {e}", 'danger')
+            return redirect(url_for('auth.profile'))  # Redirect back to the profile page in case of error
+
+    flash("Email confirmation does not match.", 'danger')
+    return redirect(url_for('auth.profile'))  # Redirect back if email doesn't match
+
+@auth_bp.route('/add_achievement', methods=['GET', 'POST'])
+@login_required
+def add_achievement():
+    form = AchievementForm()
+
+    if form.validate_on_submit():
+        # Create a new Achievement instance
+        achievement = Achievement(
+            title=form.title.data,
+            description=form.description.data,  # Add description to the achievement
+            date=form.date.data,  # Ensure date is also passed
+            user_id=current_user.id
+        )
+
+        # Add to the session and commit to the database
+        db.session.add(achievement)
+        db.session.commit()
+
+        flash('Achievement added successfully!', 'success')
+        return redirect(url_for('auth.profile'))
+
+    return render_template('auth/add_achievement.html', form=form)
+

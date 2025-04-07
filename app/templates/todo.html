@@ -27,7 +27,7 @@
                                     <div class="todo-meta">
                                         {% if todo.due_date %}
                                             <span class="badge {% if todo.completed %}bg-secondary{% else %}bg-info{% endif %} me-2">
-                                                <i class="fas fa-calendar"></i> {{ todo.due_date.strftime('%b %d') if not isinstance(todo.due_date, str) else todo.due_date }}
+                                                <i class="fas fa-calendar"></i> {{ todo.due_date.strftime('%b %d') }}
                                             </span>
                                         {% endif %}
                                         
@@ -181,7 +181,6 @@
                     }
                     
                     // Refresh the page to update statistics
-                    // In a production app, you'd update the UI dynamically
                     location.reload();
                 }
             });

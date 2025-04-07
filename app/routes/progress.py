@@ -32,11 +32,11 @@ def progress():
     academic_form = AcademicProgressForm()
     achievement_form = AchievementForm()
     skill_form = SkillForm()
-    
+
     # Set current values for academic form
     academic_form.gpa.data = current_user.gpa
     academic_form.credits.data = current_user.credits
-    
+
     # Prepare the data for the template
     academic_progress = {
         'gpa': current_user.gpa,
@@ -44,26 +44,32 @@ def progress():
         'total_credits': current_user.total_credits,
         'progress_percentage': (current_user.credits / current_user.total_credits) * 100 if current_user.total_credits > 0 else 0
     }
-    
-    # Get academic progress details
-    current_courses = current_user.current_courses
-    
-    # Get professional journey
-    internships = current_user.internships
-    job_applications = current_user.job_applications
-    
-    # Get skills
-    technical_skills = current_user.skills.get('technical', {})
-    soft_skills = current_user.skills.get('soft', {})
-    
-    # Get achievements
-    achievements = sorted(current_user.achievements, 
-                       key=lambda x: datetime.strptime(x['date'], '%Y-%m-%d') if isinstance(x['date'], str) else x['date'],
-                       reverse=True)
-    
-    # Get certificates (from skills or a separate field)
-    certificates = [] # This would be populated from the database
-    
+
+    # Get academic progress details (current courses)
+    current_courses = getattr(current_user, 'current_courses', [])
+
+    # Get professional journey (internships and job applications)
+    internships = getattr(current_user, 'internships', [])
+    job_applications = getattr(current_user, 'job_applications', [])
+
+    # Get skills categorized as technical and soft
+    technical_skills = [skill for skill in getattr(current_user, 'skills', []) if skill.skill_type == 'technical']
+    soft_skills = [skill for skill in getattr(current_user, 'skills', []) if skill.skill_type == 'soft']
+
+    # Get achievements sorted by date
+    achievements = sorted(getattr(current_user, 'achievements', []),
+                           key=lambda x: datetime.strptime(x.date, '%Y-%m-%d') if isinstance(x.date, str) else x.date,
+                           reverse=True) if current_user.achievements else []
+
+    # Get certificates (this could be derived from skills or another field in the database)
+    certificates = []  # Populate this list as needed
+
+    # Check if any critical values are None or empty
+    if current_courses is None or internships is None or job_applications is None:
+        flash("There was an issue loading some data. Please try again later.", "danger")
+        return redirect(url_for('dashboard.dashboard'))
+
+    # Render template
     return render_template(
         'progress.html',
         title='Progress Tracker',

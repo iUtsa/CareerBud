@@ -35,18 +35,24 @@ def dashboard():
         'progress_percentage': (current_user.credits / current_user.total_credits) * 100 if current_user.total_credits > 0 else 0
     }
     
-    # Get current courses
-    current_courses = current_user.current_courses
+    # Get current courses - added fallback if not defined
+    current_courses = getattr(current_user, 'current_courses', [])
     
-    # Check for upcoming job interviews
+    # Check for upcoming job interviews (fixed to use attribute access)
     upcoming_interviews = []
     for app in current_user.job_applications:
-        if 'interview_date' in app and app['interview_date'] > datetime.now():
-            upcoming_interviews.append(app)
+        try:
+            # Try attribute access first (for objects)
+            if hasattr(app, 'interview_date') and app.interview_date is not None and app.interview_date > datetime.now():
+                upcoming_interviews.append(app)
+        except (AttributeError, TypeError):
+            # Fall back to dictionary access if needed
+            if isinstance(app, dict) and 'interview_date' in app and app['interview_date'] is not None and app['interview_date'] > datetime.now():
+                upcoming_interviews.append(app)
     
-    # Get todos
-    todos = sorted([todo for todo in current_user.todos if not todo['completed']], 
-                   key=lambda x: x.get('due_date', datetime.max))[:5]
+    # Get todos (sorted by completion status and due date)
+    todos = sorted([todo for todo in current_user.todos if not todo.completed], 
+                   key=lambda x: x.due_date or datetime.max)[:5]
     
     return render_template(
         'dashboard.html',

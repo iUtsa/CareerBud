@@ -121,7 +121,7 @@
                                         <div>
                                             <h5 class="mb-1">{{ job.company }}</h5>
                                             <p class="mb-1">{{ job.position }}</p>
-                                            <small>Applied: {{ job.applied_date.strftime('%b %d, %Y') if not isinstance(job.applied_date, str) else job.applied_date }}</small>
+                                            <small>Applied: {{ job.applied_date.strftime('%b %d, %Y') if job.applied_date is not string else job.applied_date }}</small>
                                         </div>
                                         <div>
                                             {% if job.status == 'Applied' %}
@@ -139,7 +139,7 @@
                                     {% if job.status == 'Interview' and job.interview_date %}
                                         <div class="mt-2 small">
                                             <i class="fas fa-calendar-alt"></i> Interview: 
-                                            {{ job.interview_date.strftime('%b %d, %Y') if not isinstance(job.interview_date, str) else job.interview_date }}
+                                            {{ job.interview_date.strftime('%b %d, %Y') if job.interview_date is not string else job.interview_date }}
                                         </div>
                                     {% endif %}
                                 </div>
