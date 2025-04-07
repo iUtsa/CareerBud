@@ -661,3 +661,159 @@
 [data-theme="dark"] .bg-light {
     color: #0f172a !important;
 }
+
+
+/* Fix for oversized login card */
+.auth-container {
+  max-width: 500px;
+  margin: 50px auto;
+}
+
+.card, 
+.auth-card {
+  max-width: 500px;
+  margin: 0 auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Make input fields more compact */
+.form-control {
+  max-height: 45px;
+}
+
+/* Login button sizing */
+.btn-login,
+.btn-primary[type="submit"] {
+  height: 45px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+  .auth-container {
+    margin: 20px auto;
+    padding: 0 15px;
+  }
+}
+
+
+/* Fix landing page alignment issues */
+.landing-container,
+.landing-features,
+.feature-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Feature columns alignment */
+.feature-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 3rem;
+  max-width: 350px;
+}
+
+/* Feature grid layout */
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 3rem;
+  width: 100%;
+  max-width: 1200px;
+  margin: 3rem auto;
+}
+
+/* Feature icons alignment */
+.feature-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1.5rem;
+  color: var(--primary-color);
+  display: flex;
+  justify-content: center;
+}
+
+/* Button alignment */
+.btn-row {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+/* CTA section alignment */
+.cta-section {
+  text-align: center;
+  padding: 4rem 2rem;
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+/* Responsive fixes */
+@media (max-width: 768px) {
+  .feature-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  
+  .btn-row {
+    flex-direction: column;
+    width: 100%;
+    max-width: 300px;
+    margin: 2rem auto;
+  }
+}
+
+
+/* Fix feature section spacing and alignment */
+.landing-features {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 40px;
+  margin: 60px auto;
+  max-width: 1200px;
+}
+
+.feature-item {
+  flex: 0 0 calc(33.333% - 40px);
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.feature-icon {
+  margin-bottom: 20px;
+  font-size: 2.5rem;
+}
+
+.feature-title {
+  margin-bottom: 15px;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+.feature-description {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .feature-item {
+    flex: 0 0 calc(50% - 40px);
+  }
+}
+
+@media (max-width: 768px) {
+  .feature-item {
+    flex: 0 0 100%;
+    max-width: 450px;
+  }
+}
