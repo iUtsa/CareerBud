@@ -817,3 +817,107 @@
     max-width: 450px;
   }
 }
+
+
+
+/* Responsive adjustments for the footer */
+/* Make sidebar fixed while scrolling */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  overflow-y: auto;
+  width: 250px; /* or whatever width your sidebar has */
+  z-index: 1000;
+}
+
+/* Adjust main content to account for fixed sidebar */
+.main-content {
+  margin-left: 250px; /* should match the width of your sidebar */
+}
+
+/* For mobile responsive design */
+@media (max-width: 992px) {
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+  
+  .sidebar.show {
+    transform: translateX(0);
+  }
+  
+  .main-content {
+    margin-left: 0;
+  }
+}
+
+
+/* Fixed footer with proper width and alignment */
+.footer {
+  background-color: #0f172a;
+  color: rgba(255, 255, 255, 0.7);
+  padding: 1.5rem 2rem;
+  position: relative;
+  width: calc(100% - 250px); /* Adjust for sidebar width */
+  margin-left: 250px; /* Match sidebar width */
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden; /* Prevent content overflow */
+  bottom:0;
+  left:0;
+}
+
+/* Footer content alignment */
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.footer-copyright {
+  font-size: 0.9rem;
+}
+
+.footer-nav {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 2rem;
+}
+
+.footer-nav a {
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  transition: color 0.3s;
+  font-size: 0.9rem;
+}
+
+.footer-nav a:hover {
+  color: #4ade80;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .footer {
+      width: 100%;
+      margin-left: 0;
+  }
+  
+  .footer-content {
+      flex-direction: column;
+      text-align: center;
+  }
+  
+  .footer-copyright {
+      margin-bottom: 1rem;
+  }
+  
+  .footer-nav {
+      justify-content: center;
+      gap: 1.5rem;
+  }
+}
