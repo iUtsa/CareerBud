@@ -223,6 +223,16 @@
     border-left: 3px solid var(--primary-color);
     background: var(--hover-overlay);
   }
+
+
+  /* Sidebar lighter gradient for light mode */
+[data-theme="light"] .sidebar {
+    background-image: linear-gradient(
+      to bottom,
+      #f0f9ff,
+      #e0f2fe
+    );
+  }
   
   /* Main Content Area */
   .main-content {
@@ -662,41 +672,40 @@
     color: #0f172a !important;
 }
 
-
 /* Fix for oversized login card */
 .auth-container {
-  max-width: 800px;
-  margin: 50px auto;
-}
-
-.card, 
-.auth-card {
-  max-width: 800px;
-  margin: 0 auto;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-/* Make input fields more compact */
-.form-control {
-  max-height: 45px;
-}
-
-/* Login button sizing */
-.btn-login,
-.btn-primary[type="submit"] {
-  height: 45px;
-}
-
-/* Responsive adjustments */
-@media (max-width: 576px) {
-  .auth-container {
-    margin: 20px auto;
-    padding: 0 15px;
+    max-width: 800px;
+    margin: 50px auto;
   }
-}
+  
+  .card, 
+  .auth-card {
+    max-width: 800px;
+    margin: 0 auto;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Make input fields more compact */
+  .form-control {
+    max-height: 45px;
+  }
+  
+  /* Login button sizing */
+  .btn-login,
+  .btn-primary[type="submit"] {
+    height: 45px;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 576px) {
+    .auth-container {
+      margin: 20px auto;
+      padding: 0 15px;
+    }
+  }
 
 
-/* Fix landing page alignment issues */
+  /* Fix landing page alignment issues */
 .landing-container,
 .landing-features,
 .feature-row {
@@ -767,157 +776,316 @@
 }
 
 
-/* Fix feature section spacing and alignment */
-.landing-features {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 40px;
-  margin: 60px auto;
-  max-width: 1200px;
-}
 
-.feature-item {
-  flex: 0 0 calc(33.333% - 40px);
-  min-width: 300px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 20px;
-  margin-bottom: 20px;
-}
-
-.feature-icon {
-  margin-bottom: 20px;
-  font-size: 2.5rem;
-}
-
-.feature-title {
-  margin-bottom: 15px;
-  font-size: 1.8rem;
-  font-weight: 600;
-}
-
-.feature-description {
-  font-size: 1rem;
-  line-height: 1.6;
-}
-
-/* Responsive adjustments */
-@media (max-width: 992px) {
-  .feature-item {
-    flex: 0 0 calc(50% - 40px);
-  }
-}
-
-@media (max-width: 768px) {
-  .feature-item {
-    flex: 0 0 100%;
-    max-width: 450px;
-  }
-}
 
 
 
 /* Responsive adjustments for the footer */
 /* Make sidebar fixed while scrolling */
 .sidebar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  height: 100vh;
-  overflow-y: auto;
-  width: 250px; /* or whatever width your sidebar has */
-  z-index: 1000;
-}
-
-/* Adjust main content to account for fixed sidebar */
-.main-content {
-  margin-left: 250px; /* should match the width of your sidebar */
-}
-
-/* For mobile responsive design */
-@media (max-width: 992px) {
-  .sidebar {
-    transform: translateX(-100%);
-    transition: transform 0.3s ease;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    overflow-y: auto;
+    width: 250px; /* or whatever width your sidebar has */
+    z-index: 1000;
   }
   
-  .sidebar.show {
-    transform: translateX(0);
-  }
-  
+  /* Adjust main content to account for fixed sidebar */
   .main-content {
-    margin-left: 0;
+    margin-left: 250px; /* should match the width of your sidebar */
   }
-}
+  
+  /* For mobile responsive design */
+  @media (max-width: 992px) {
+    .sidebar {
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+    }
+    
+    .sidebar.show {
+      transform: translateX(0);
+    }
+    
+    .main-content {
+      margin-left: 0;
+    }
+  }
 
 
 /* Fixed footer with proper width and alignment */
 .footer {
-  background-color: #0f172a;
-  color: rgba(255, 255, 255, 0.7);
-  padding: 1.5rem 2rem;
-  position: relative;
-  width: calc(100% - 250px); /* Adjust for sidebar width */
-  margin-left: 250px; /* Match sidebar width */
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  overflow: hidden; /* Prevent content overflow */
-  bottom:0;
-  left:0;
+    background-color: #0f172a;
+    color: rgba(255, 255, 255, 0.7);
+    padding: 1.5rem 2rem;
+    position: relative;
+    width: calc(100% - 250px); /* Adjust for sidebar width */
+    margin-left: 250px; /* Match sidebar width */
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    overflow: hidden; /* Prevent content overflow */
+    bottom:0;
+    left:0;
 }
 
 /* Footer content alignment */
 .footer-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  max-width: 1200px;
-  margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
 .footer-copyright {
-  font-size: 0.9rem;
+    font-size: 0.9rem;
 }
 
 .footer-nav {
-  display: flex;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  gap: 2rem;
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    gap: 2rem;
 }
 
 .footer-nav a {
-  color: rgba(255, 255, 255, 0.7);
-  text-decoration: none;
-  transition: color 0.3s;
-  font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    transition: color 0.3s;
+    font-size: 0.9rem;
 }
 
 .footer-nav a:hover {
-  color: #4ade80;
+    color: #4ade80;
 }
 
 /* Responsive adjustments */
 @media (max-width: 992px) {
-  .footer {
-      width: 100%;
-      margin-left: 0;
+    .footer {
+        width: 100%;
+        margin-left: 0;
+    }
+    
+    .footer-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .footer-copyright {
+        margin-bottom: 1rem;
+    }
+    
+    .footer-nav {
+        justify-content: center;
+        gap: 1.5rem;
+    }
+}
+
+
+/* Fix feature section spacing and alignment */
+.landing-features {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 40px;
+    margin: 60px auto;
+    max-width: 1200px;
   }
   
-  .footer-content {
-      flex-direction: column;
-      text-align: center;
+  .feature-item {
+    flex: 0 0 calc(33.333% - 40px);
+    min-width: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 20px;
+    margin-bottom: 20px;
   }
   
-  .footer-copyright {
-      margin-bottom: 1rem;
+  .feature-icon {
+    margin-bottom: 20px;
+    font-size: 2.5rem;
   }
   
-  .footer-nav {
-      justify-content: center;
-      gap: 1.5rem;
+  .feature-title {
+    margin-bottom: 15px;
+    font-size: 1.8rem;
+    font-weight: 600;
   }
+  
+  .feature-description {
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 992px) {
+    .feature-item {
+      flex: 0 0 calc(50% - 40px);
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .feature-item {
+      flex: 0 0 100%;
+      max-width: 450px;
+    }
+  }
+
+
+
+
+  /* Chat message styling */
+.chat-message {
+    display: inline-block;
+    padding: 10px 15px;
+    border-radius: 18px;
+    max-width: 80%;
+    word-wrap: break-word;
+    margin-bottom: 5px;
+    font-size: 14px;
+    font-weight: normal;
+    position: relative;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.chat-message-sent {
+    background: var(--primary-gradient);
+    color: white;
+    border-bottom-right-radius: 5px;
+}
+
+.chat-message-received {
+    background: var(--card-gradient);
+    color: var(--text-primary);
+    border-bottom-left-radius: 5px;
+}
+
+/* Dark mode specific styles */
+[data-theme="dark"] .chat-message-received {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+/* Light mode specific styles */
+[data-theme="light"] .chat-message-received {
+    background: #f0f0f0;
+    color: #333;
+}
+
+
+
+
+
+/* Override dark modals and card-body in light mode */
+[data-theme="light"] .modal-content.bg-dark {
+    background-color: var(--card-bg) !important;
+    color: var(--text-primary) !important;
+  }
+  
+  [data-theme="light"] .modal-content.bg-dark .form-control,
+  [data-theme="light"] .modal-content.bg-dark .form-select {
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+  }
+  
+  [data-theme="light"] .modal-content.bg-dark .btn-close-white {
+    filter: invert(1);
+  }
+  
+  [data-theme="light"] .modal-content.bg-dark .form-label {
+    color: var(--text-primary);
+  }
+  
+
+
+/* Notification Dropdown Styling */
+.header-icons {
+    display: flex;
+    align-items: center;
+}
+
+.notification-icon, .user-icon {
+    font-size: 1.5rem;
+    margin-left: 1.5rem;
+    position: relative;
+    cursor: pointer;
+    color: var(--text-primary);
+    transition: color var(--transition-speed), transform 0.2s;
+}
+
+.notification-icon .badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: var(--danger-color);
+    color: white;
+    font-size: 0.75rem;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--transition-speed);
+    z-index: 1050; /* Ensure badge is visible */
+}
+
+.dropdown-menu.notification-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    min-width: 300px;
+    max-height: 350px;
+    margin-top: 0.5rem;
+    z-index: 1060 !important; /* Ensure dropdown is above other content */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, var(--box-shadow-strength));
+    border: 1px solid var(--border-color);
+    background: var(--card-gradient);
+}
+
+/* Dropdown Item Styling */
+.dropdown-menu.notification-dropdown .dropdown-item {
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+    transition: background-color var(--transition-speed);
+}
+
+.dropdown-menu.notification-dropdown .dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.dropdown-menu.notification-dropdown .dropdown-item:hover {
+    background: var(--hover-overlay);
+}
+
+.dropdown-menu.notification-dropdown .dropdown-item.unread {
+    font-weight: 600;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .dropdown-menu.notification-dropdown {
+        position: fixed;
+        top: 60px;
+        right: 15px;
+        width: calc(100vw - 30px);
+        max-width: 350px;
+        z-index: 9999 !important;
+    }
+}
+
+/* Theme-specific adjustments */
+[data-theme="dark"] .dropdown-menu.notification-dropdown {
+    background: var(--card-gradient);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="light"] .dropdown-menu.notification-dropdown {
+    background: linear-gradient(145deg, #ffffff, #f8fafc);
+    border-color: rgba(0, 0, 0, 0.1);
 }

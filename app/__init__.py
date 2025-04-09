@@ -1,26 +1,21 @@
-# app/__init__.py
-
 from flask import Flask
-from flask_login import LoginManager, current_user
-from flask_bcrypt import Bcrypt
-from flask_socketio import SocketIO
-from flask_sqlalchemy import SQLAlchemy
-from flask_wtf.csrf import CSRFProtect
+from flask_login import current_user
 from app.config import SQLALCHEMY_DATABASE_URI, SECRET_KEY, DEBUG
-from flask_migrate import Migrate
+from app.extensions import db, bcrypt, login_manager, socketio, csrf, migrate
+import humanize
 
-# Initialize extensions
-socketio = SocketIO()
-login_manager = LoginManager()
-login_manager.login_view = 'auth.login'
-login_manager.login_message_category = 'info'
-bcrypt = Bcrypt()
-db = SQLAlchemy()
-csrf = CSRFProtect()
-migrate = Migrate()
+
+
+def timeago(dt):
+    return humanize.naturaltime(datetime.utcnow() - dt)
 
 def create_app(config_class=None):
     app = Flask(__name__)
+
+
+
+    app.jinja_env.filters['timeago'] = timeago
+
 
     # Basic config
     app.config['SECRET_KEY'] = SECRET_KEY
@@ -30,13 +25,13 @@ def create_app(config_class=None):
 
     # Initialize extensions
     db.init_app(app)
-    login_manager.init_app(app)
     bcrypt.init_app(app)
+    login_manager.init_app(app)
     socketio.init_app(app)
-    csrf.init_app(app)  # Initialize CSRF protection here
+    csrf.init_app(app)
     migrate.init_app(app, db)
 
-    # Register blueprints inside the function to avoid circular imports
+    # Register blueprints
     from app.routes.auth import auth_bp
     from app.routes.dashboard import dashboard_bp
     from app.routes.jobs import jobs_bp
@@ -60,34 +55,29 @@ def create_app(config_class=None):
 
     # Auto-create database tables
     with app.app_context():
+        from app.sockets import chat_events
+        # Creates the tables in PostgreSQL
         db.create_all()
-    
+
     # Add context processor for social notification counts
     @app.context_processor
     def inject_social_counts():
         if current_user.is_authenticated:
             try:
                 # Import social models
-                from app.models import Message, Connection, GroupMessage, GroupMember
+                from app.models import Message, Connection
                 
-                # Count unread direct messages
+                # Count all messages instead of filtering by read status
                 unread_messages_count = Message.query.filter_by(
-                    recipient_id=current_user.id, 
-                    read=False
-                ).count()
+                    recipient_id=current_user.id
+                ).count()  # Remove the read=False filter
                 
-                # Count unread group messages
-                unread_group_messages = db.session.query(GroupMessage).\
-                    join(GroupMember, GroupMember.group_id == GroupMessage.group_id).\
-                    filter(
-                        GroupMember.user_id == current_user.id,
-                        ~GroupMessage.read_by.any(id=current_user.id),
-                        GroupMessage.sender_id != current_user.id
-                    ).count()
+                # For now, set group messages to 0
+                unread_group_messages = 0
                 
-                # Count pending connection requests
+                # Update filter to use recipient_id instead of friend_id
                 pending_connections_count = Connection.query.filter_by(
-                    friend_id=current_user.id, 
+                    recipient_id=current_user.id, 
                     status='pending'
                 ).count()
                 
@@ -103,7 +93,6 @@ def create_app(config_class=None):
                 }
             except Exception as e:
                 app.logger.error(f"Error calculating social counts: {e}")
-                # Return empty counts if there's an error
                 return {
                     'unread_messages_count': 0,
                     'unread_group_messages': 0,

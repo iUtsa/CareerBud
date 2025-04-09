@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h2>{{ user.first_name }} {{ user.last_name }}</h2>
+                </div>
+                <div class="card-body">
+                    <p><strong>University:</strong> {{ user.university }}</p>
+                    <p><strong>Major:</strong> {{ user.major }}</p>
+
+                    <!-- Achievements -->
+                    <h4>Achievements:</h4>
+                    {% if user.achievements %}
+                        <ul>
+                            {% for achievement in user.achievements %}
+                                <li>{{ achievement.title }} - {{ achievement.date.strftime('%Y-%m-%d') if achievement.date else '' }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>No achievements to show.</p>
+                    {% endif %}
+
+                    <!-- Posts -->
+                    <h4>Posts:</h4>
+                    {% if user.posts %}
+                        <ul>
+                            {% for post in user.posts %}
+                                <li>{{ post.content }} - {{ post.created_at.strftime('%Y-%m-%d') }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>No posts to show.</p>
+                    {% endif %}
+
+                    <!-- Connection Status Actions -->
+                    <div class="mt-4">
+                        {% if connection_status == 'not_connected' %}
+                            <form action="{{ url_for('social.send_connection_request', user_id=user.id) }}" method="post">
+                                {{ form.hidden_tag() }}
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-user-plus"></i> Connect
+                                </button>
+                            </form>
+
+                        {% elif connection_status == 'pending' %}
+                            <button class="btn btn-warning" disabled>
+                                <i class="fas fa-clock"></i> Request Pending
+                            </button>
+
+                        {% elif connection_status == 'request_received' %}
+                            <div class="d-flex">
+                                <form action="{{ url_for('social.accept_connection', connection_id=connection.id) }}" method="post" class="me-2">
+                                    {{ form.hidden_tag() }}
+                                    <button type="submit" class="btn btn-success">Accept</button>
+                                </form>
+                                <form action="{{ url_for('social.reject_connection', connection_id=connection.id) }}" method="post">
+                                    {{ form.hidden_tag() }}
+                                    <button type="submit" class="btn btn-outline-danger">Reject</button>
+                                </form>
+                            </div>
+
+                        {% elif connection_status == 'connected' %}
+                            <div class="d-flex">
+                                <a href="{{ url_for('social.new_conversation', user_id=user.id) }}" class="btn btn-primary me-2">
+                                    <i class="fas fa-comment"></i> Message
+                                </a>
+                                <button class="btn btn-success" disabled>
+                                    <i class="fas fa-check"></i> Connected
+                                </button>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

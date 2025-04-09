@@ -28,7 +28,8 @@
                                         <h5 class="card-title">{{ user.first_name }} {{ user.last_name }}</h5>
                                         <p class="card-text text-muted">{{ user.major }} at {{ user.university }}</p>
                                         <div class="d-grid">
-                                            <a href="{{ url_for('social.view_profile', user_id=user._id) }}" class="btn btn-outline-primary">View Profile</a>
+                                            <a href="{{ url_for('social.view_profile', user_id=user.id) }}" class="btn btn-outline-primary">View Profile</a>
+
                                         </div>
                                     </div>
                                 </div>

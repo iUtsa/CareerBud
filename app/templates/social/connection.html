@@ -1,0 +1,67 @@
+<!-- In templates/social/connections.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">My Connections</h1>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3>Pending Requests</h3>
+                </div>
+                <div class="card-body">
+                    {% if pending_requests %}
+                        {% for connection in pending_requests %}
+                        <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded">
+                            <div>
+                                <strong>{{ connection.requester.first_name }} {{ connection.requester.last_name }}</strong>
+                                <div class="text-muted">{{ connection.requester.university }}</div>
+                            </div>
+                            <div class="d-flex">
+                                <form action="{{ url_for('social.accept_connection', connection_id=connection.id) }}" method="post" class="me-2">
+                                    <button type="submit" class="btn btn-success btn-sm">Accept</button>
+                                </form>
+                                <form action="{{ url_for('social.reject_connection', connection_id=connection.id) }}" method="post">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">Reject</button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">No pending connection requests.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3>My Connections</h3>
+                </div>
+                <div class="card-body">
+                    {% if connections %}
+                        {% for user in connections %}
+                        <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded">
+                            <div>
+                                <a href="{{ url_for('social.view_profile', user_id=user.id) }}">
+                                    <strong>{{ user.first_name }} {{ user.last_name }}</strong>
+                                </a>
+                                <div class="text-muted">{{ user.university }}</div>
+                            </div>
+                            <a href="{{ url_for('social.messages_with', user_id=user.id) }}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-comment"></i> Message
+                            </a>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">You don't have any connections yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

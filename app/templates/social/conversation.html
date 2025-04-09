@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Conversation with {{ other_user.first_name }} {{ other_user.last_name }}</h2>
+
+    <div class="card my-4">
+        <div class="card-body" style="height: 300px; overflow-y: scroll;">
+            {% if messages %}
+                {% for msg in messages %}
+                    <div class="mb-2 {% if msg.sender_id == current_user.id %}text-end{% else %}text-start{% endif %}">
+                        <span class="chat-message {% if msg.sender_id == current_user.id %}chat-message-sent{% else %}chat-message-received{% endif %}">
+                            {{ msg.content }}
+                        </span>
+                        <br>
+                        <small class="text-muted">{{ msg.created_at.strftime('%b %d, %I:%M %p') }}</small>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-center text-muted">No messages yet. Start the conversation!</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('social.view_conversation', conversation_id=conversation_id) }}">
+        {{ form.hidden_tag() }}
+        <div class="input-group">
+            {{ form.content(class="form-control", placeholder="Type your message...") }}
+            <button type="submit" class="btn btn-primary">{{ form.submit.label }}</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

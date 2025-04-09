@@ -31,3 +31,7 @@ class AchievementForm(FlaskForm):
     title = StringField('Achievement Title', validators=[DataRequired()])
     date = DateField('Date', validators=[Optional()], format='%Y-%m-%d')
     submit = SubmitField('Add Achievement')
+
+class MessageForm(FlaskForm):
+    content = StringField('Message', validators=[DataRequired()])
+    submit = SubmitField('Send')

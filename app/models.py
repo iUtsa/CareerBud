@@ -1,10 +1,14 @@
 from flask_login import UserMixin
-from app import db, bcrypt
 from datetime import datetime
 from sqlalchemy import or_
 from sqlalchemy import Column, Integer, String, Text, Boolean
 from app import db  # Ensure this is at the top of your models.py
 from flask import current_app
+from flask_sqlalchemy import SQLAlchemy
+from app.extensions import db, bcrypt
+
+
+
 
 
 
@@ -34,13 +38,12 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     gpa = db.Column(db.Float, default=0.0)
     credits = db.Column(db.Integer, default=0)
-    total_credits = db.Column(db.Integer, default=120)
+    total_credits = db.Column(db.Integer, default=128)
 
     job_applications = db.relationship('JobApplication', backref='user', lazy=True)
     todos = db.relationship('Todo', backref='user', lazy=True)
     skills = db.relationship('Skill', backref='user', lazy=True)
     achievements = db.relationship('Achievement', back_populates='user', lazy=True)  # Change to back_populates
-    connections = db.relationship('Connection', backref='user', foreign_keys='Connection.user_id', lazy=True)
     current_courses = db.relationship('Course', secondary='user_courses', backref='users')
     internships = db.relationship('Internship', back_populates='user', lazy=True)
 
@@ -55,6 +58,19 @@ class User(UserMixin, db.Model):
 
 
 
+class Notification(db.Model):
+    __tablename__ = 'notifications'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    message = db.Column(db.String(255), nullable=False)
+    is_read = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref='notifications', lazy=True)
+
+    def __repr__(self):
+        return f'<Notification {self.id} - {self.message}>'
 
 
 
@@ -137,13 +153,15 @@ class Achievement(db.Model):
 
 class Connection(db.Model):
     __tablename__ = 'connections'
-
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    friend_id = db.Column(db.Integer, nullable=False)
-    status = db.Column(db.String(20), default='pending')
+    requester_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    recipient_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    status = db.Column(db.String(20), default='pending')  # pending, accepted, rejected
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    accepted_at = db.Column(db.DateTime, nullable=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    requester = db.relationship('User', foreign_keys=[requester_id], backref='sent_connections')
+    recipient = db.relationship('User', foreign_keys=[recipient_id], backref='received_connections')
 
 
 class Conversation(db.Model):
@@ -220,6 +238,7 @@ class Message(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     conversation_id = db.Column(db.Integer, db.ForeignKey('conversations.id'), nullable=True)  # For group messages
     group_id = db.Column(db.Integer, db.ForeignKey('groups.id'), nullable=True)  # For group messages
+    read = db.Column(db.Boolean, default=False)  # Add this line
 
     sender = db.relationship('User', foreign_keys=[sender_id])
     recipient = db.relationship('User', foreign_keys=[recipient_id])
@@ -358,30 +377,59 @@ def accept_connection(user_id, friend_id):
         print(f"Error accepting connection: {type(e).__name__} - {str(e)}")
         return False
     
-def get_connections(user_id, status='accepted'):
+
+
+def get_connection(user_id, target_user_id):
     try:
-        connections = Connection.query.filter(
-            ((Connection.user_id == user_id) | (Connection.friend_id == user_id)) &
-            (Connection.status == status)
-        ).all()
-
-        friend_ids = [
-            conn.friend_id if conn.user_id == user_id else conn.user_id
-            for conn in connections
-        ]
-
-        return User.query.filter(User.id.in_(friend_ids)).all()
+        connection = Connection.query.filter(
+            ((Connection.requester_id == user_id) & (Connection.recipient_id == target_user_id)) |
+            ((Connection.requester_id == target_user_id) & (Connection.recipient_id == user_id))
+        ).first()
+        return connection
     except Exception as e:
-        print(f"Error retrieving connections: {type(e).__name__} - {str(e)}")
-        return []
+        print(f"Error fetching connection: {type(e).__name__} - {str(e)}")
+        return None
+
+
+
+def get_connection_status(user_id, target_user_id):
+    """
+    Check the connection status between two users (user_id and target_user_id).
+    Returns one of the following: 'not_connected', 'pending', 'request_received', 'connected'
+    """
+    try:
+        connection = Connection.query.filter(
+            ((Connection.requester_id == user_id) & (Connection.recipient_id == target_user_id)) |
+            ((Connection.requester_id == target_user_id) & (Connection.recipient_id == user_id))
+        ).first()
+
+        if not connection:
+            return 'not_connected'
+
+        if connection.status == 'pending':
+            if connection.requester_id == user_id:
+                return 'pending'
+            else:
+                return 'request_received'
+        
+        if connection.status == 'accepted':
+            return 'connected'
+
+        return 'not_connected'  # Default if no status matches
+
+    except Exception as e:
+        print(f"Error checking connection status: {type(e).__name__} - {str(e)}")
+        return 'not_connected'
     
 def get_conversations(user_id):
     try:
-        # Placeholder implementation; adjust according to your conversations model
-        return []  # Or real query when model is defined
+        return Conversation.query.filter(
+            (Conversation.user1_id == user_id) | (Conversation.user2_id == user_id)
+        ).order_by(Conversation.created_at.desc()).all()
     except Exception as e:
         print(f"Error retrieving conversations: {type(e).__name__} - {str(e)}")
         return []
+
 
 def create_user(email, password, first_name, last_name, university, major):
     try:
@@ -545,6 +593,24 @@ def create_conversation(user1_id, user2_id):
     except Exception as e:
         print(f"Error creating conversation: {type(e).__name__} - {str(e)}")
         return None
+
+def get_connections(user_id):
+    try:
+        accepted = Connection.query.filter(
+            ((Connection.requester_id == user_id) | (Connection.recipient_id == user_id)) &
+            (Connection.status == 'accepted')
+        ).all()
+
+        connected_users = []
+        for conn in accepted:
+            if conn.requester_id == user_id:
+                connected_users.append(User.query.get(conn.recipient_id))
+            else:
+                connected_users.append(User.query.get(conn.requester_id))
+        return connected_users
+    except Exception as e:
+        print(f"Error fetching connections: {type(e).__name__} - {str(e)}")
+        return []
     
 def get_feed(user_id):
     try:
