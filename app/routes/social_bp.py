@@ -165,21 +165,58 @@ def new_conversation(user_id):
 @social_bp.route('/feed', methods=['GET', 'POST'])
 @login_required
 def feed():
-    form = PostForm()  # Create an instance of the form
+    form = PostForm()
+    page = request.args.get('page', 1, type=int)
+    per_page = 5
 
-    # Check if the form was submitted and validated
     if form.validate_on_submit():
-        # Call the create_post function to add a new post to the database
-        create_post(current_user.id, form.content.data, form.visibility.data)
-        flash('Post created successfully!', 'success')
-        
-        # After creating the post, get the latest feed for the user
-        posts = get_feed(current_user.id)  # Get the updated feed
-        return render_template('social/feed.html', posts=posts, form=form)
+        post_id = create_post(current_user.id, form.content.data, form.visibility.data)
+        if post_id:
+            flash('Post created successfully!', 'success')
+        else:
+            flash('Error creating post. Please try again.', 'danger')
+        return redirect(url_for('social.feed'))
 
-    # Get the feed posts to display if it's a GET request
-    posts = get_feed(current_user.id)  # Fetch posts
-    return render_template('social/feed.html', posts=posts, form=form)
+    # Get posts for feed with pagination
+    posts_query = get_feed(current_user.id)
+    posts = posts_query.paginate(page=page, per_page=per_page)
+    
+    # Get any additional data needed for the template
+    notifications_count = Notification.query.filter_by(user_id=current_user.id, is_read=False).count()
+    
+    # Get connection suggestions for the sidebar
+    # Find users who aren't connected to the current user
+    # This is a simple example - you might want a more sophisticated algorithm
+    connection_suggestions = User.query.filter(
+        User.id != current_user.id
+    ).limit(5).all()  # Limit to 5 suggestions
+    
+    # Get counts for badges
+    unread_messages_count = Message.query.filter_by(
+        recipient_id=current_user.id, 
+        read=False
+    ).count()
+    
+    pending_connections_count = Connection.query.filter_by(
+        recipient_id=current_user.id,
+        status='pending'
+    ).count()
+
+    # Handle AJAX request for infinite scroll
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return render_template('social/_posts.html', posts=posts)
+
+    return render_template(
+        'social/feed.html', 
+        posts=posts, 
+        form=form, 
+        notifications_count=notifications_count,
+        connection_suggestions=connection_suggestions,
+        unread_messages_count=unread_messages_count,
+        pending_connections_count=pending_connections_count
+    )
+
+
 
 
 
@@ -197,19 +234,28 @@ def new_post():
     return render_template('social/new_post.html', form=form)
 
 
+# Fixed view_post route
 @social_bp.route('/post/<int:post_id>')
 @login_required
 def view_post(post_id):
-    post = get_feed(current_user.id, post_id)
+    post = get_post(post_id, current_user.id)
     if not post:
-        flash('Post not found', 'danger')
+        flash('Post not found or you do not have permission to view it.', 'danger')
         return redirect(url_for('social.feed'))
     return render_template('social/view_post.html', post=post)
 
 
+
+# Fixed comment_post route
 @social_bp.route('/post/<int:post_id>/comment', methods=['POST'])
 @login_required
 def comment_post(post_id):
+    # Check if the user has permission to view the post first
+    post = get_post(post_id, current_user.id)
+    if not post:
+        flash('Post not found or you do not have permission to interact with it.', 'danger')
+        return redirect(url_for('social.feed'))
+        
     content = request.form.get('content')
     if content:
         add_comment(post_id, current_user.id, content)
@@ -217,9 +263,16 @@ def comment_post(post_id):
     return redirect(url_for('social.view_post', post_id=post_id))
 
 
+# Change this route function name
 @social_bp.route('/post/<int:post_id>/like', methods=['POST'])
 @login_required
-def like_post_route(post_id):
+def like_post(post_id):  # Changed from like_post_route to like_post
+    # Check if the user has permission to view the post first
+    post = get_post(post_id, current_user.id)
+    if not post:
+        flash('Post not found or you do not have permission to interact with it.', 'danger')
+        return redirect(url_for('social.feed'))
+        
     if like_post(post_id, current_user.id):
         flash('Liked the post!', 'success')
     else:
@@ -350,6 +403,10 @@ def accept_connection(connection_id):
     return redirect(url_for('social.connections'))
 
 
+@social_bp.route('/notifications')
+@login_required
+def notifications():
+    return render_template('social/notifications.html', notifications=current_user.notifications.order_by(Notification.created_at.desc()).all())
 
 
 @social_bp.route('/reject-connection/<int:connection_id>', methods=['POST'])
@@ -394,7 +451,7 @@ def connections():
             connected_users.append(User.query.get(conn.requester_id))
     
     return render_template(
-        'social/connections.html',
+        'social/connection.html',
         pending_requests=pending_requests,
         connections=connected_users
     )

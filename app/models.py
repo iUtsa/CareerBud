@@ -179,6 +179,7 @@ class Post(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     content = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    visibility = db.Column(db.String(20), default='public')  # Add this field
 
     user = db.relationship('User', backref='posts')
 
@@ -299,6 +300,28 @@ def create_group(name, description, created_by):
         print(f"Error creating group: {type(e).__name__} - {str(e)}")
         return None
 
+# Add a get_post function to fetch a specific post
+def get_post(post_id, user_id=None):
+    try:
+        post = Post.query.get(post_id)
+        if not post:
+            return None
+            
+        # Check visibility permissions
+        if post.visibility == 'public':
+            return post
+        elif post.visibility == 'connections':
+            connections = get_connections(user_id)
+            friend_ids = [friend.id for friend in connections]
+            if post.user_id in friend_ids or post.user_id == user_id:
+                return post
+        elif post.visibility == 'private':
+            if post.user_id == user_id:
+                return post
+        return None
+    except Exception as e:
+        print(f"Error retrieving post: {type(e).__name__} - {str(e)}")
+        return None
 
 def like_post(post_id, user_id):
     post = Post.query.get(post_id)
@@ -335,16 +358,21 @@ def add_comment(post_id, user_id, content):
         return None
 
 
-def create_post(user_id, content, visibility):
+# Fix create_post function to properly handle the visibility parameter
+def create_post(user_id, content, visibility='public'):
     try:
+        # Validate visibility value
+        if visibility not in ['public', 'connections', 'private']:
+            visibility = 'public'  # Default to public if invalid
+            
         post = Post(user_id=user_id, content=content, visibility=visibility)
         db.session.add(post)
         db.session.commit()
+        return post.id  # Return the ID of the created post
     except Exception as e:
         print(f"Error creating post: {e}")
         db.session.rollback()
-
-
+        return None
 
 
 def get_messages(conversation_id):
@@ -612,21 +640,28 @@ def get_connections(user_id):
         print(f"Error fetching connections: {type(e).__name__} - {str(e)}")
         return []
     
+# Fix the get_feed function to return posts, not achievements
 def get_feed(user_id):
     try:
+        # Get user's connections
         connections = get_connections(user_id)
         friend_ids = [friend.id for friend in connections]
-
-        # Get the posts (achievements)
-        achievements = Achievement.query.filter(Achievement.user_id.in_(friend_ids)).order_by(Achievement.date.desc()).limit(20).all()
-
-        # Debugging: log the achievements to see if they're fetched correctly
-        print("Fetched posts:", achievements)
-
-        return achievements
+        
+        # Include user's own posts
+        friend_ids.append(user_id)
+        
+        # Return posts from connections and the user's own posts
+        # Filter by visibility (public or connections)
+        return Post.query.filter(
+            (Post.user_id.in_(friend_ids)) & 
+            ((Post.visibility == 'public') | 
+             (Post.visibility == 'connections') |
+             ((Post.visibility == 'private') & (Post.user_id == user_id)))
+        ).order_by(Post.created_at.desc())
     except Exception as e:
         print(f"Error retrieving feed: {type(e).__name__} - {str(e)}")
-        return []
+        return Post.query.filter(False)  # empty query fallback
+
 
 
 

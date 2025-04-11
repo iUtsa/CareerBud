@@ -1,297 +1,681 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="social-feed-container">
-    <div class="row">
-        <!-- Main Feed Column -->
-        <div class="col-lg-8">
-            <!-- Create Post Card -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h2 class="card-title-primary">Create Post</h2>
-                </div>
-                <div class="card-body">
-                    <form method="POST" action="{{ url_for('social.feed') }}">
-                        {{ form.hidden_tag() }} <!-- CSRF token -->
-                        
-                        <div class="mb-3">
-                            {{ form.content.label(class="form-label") }}
-                            {% if form.content.errors %}
-                                {{ form.content(class="form-control is-invalid", rows=3) }}
-                                <div class="invalid-feedback">
-                                    {% for error in form.content.errors %}
-                                        {{ error }}
-                                    {% endfor %}
-                                </div>
-                            {% else %}
-                                {{ form.content(class="form-control", rows=3, placeholder="What's on your mind?") }}
-                            {% endif %}
+<style>
+/* LinkedIn-style feed layout */
+.feed-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+#Con{
+    margin-top: 80px;
+}
+
+/* Sticky post creator */
+.post-creator-card {
+    position: sticky;
+    top: 15px;
+    z-index: 90;
+    transition: box-shadow 0.3s ease;
+    background: var(--card-bg, white);
+}
+
+.post-creator-card.sticky {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.post-creator-compact {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    cursor: pointer;
+}
+
+.post-creator-compact .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary-color, #4ade80);
+    color: white;
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.post-creator-compact .post-input-placeholder {
+    flex-grow: 1;
+    padding: 10px 15px;
+    border-radius: 35px;
+    border: 1px solid #e0e0e0;
+    color: var(--text-secondary, #6c757d);
+    font-size: 0.9rem;
+    background: var(--card-bg, white);
+}
+
+.post-actions {
+    display: flex;
+    justify-content: space-around;
+    padding: 8px 0;
+    border-top: 1px solid var(--border-color, #e0e0e0);
+}
+
+.post-action-btn {
+    display: flex;
+    align-items: center;
+    color: var(--text-secondary, #6c757d);
+    font-size: 0.9rem;
+    padding: 8px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.post-action-btn:hover {
+    background-color: var(--hover-overlay, rgba(0, 0, 0, 0.05));
+}
+
+.post-action-btn i {
+    margin-right: 6px;
+    font-size: 1.1rem;
+}
+
+/* Mobile Footer Navigation */
+.mobile-footer {
+    display: block;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: var(--card-bg, white);
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 999;
+    border-top: 1px solid var(--border-color, #e0e0e0);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.mobile-footer-nav {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 8px 0 5px;
+    width: 100%;
+}
+
+.mobile-footer-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: var(--text-secondary, #6c757d);
+    text-decoration: none;
+    padding: 5px 0;
+    position: relative;
+    flex-grow: 1;
+    text-align: center;
+}
+
+.mobile-footer-item i {
+    font-size: 1.25rem;
+    margin-bottom: 3px;
+}
+
+.mobile-footer-item span {
+    font-size: 0.7rem;
+}
+
+.mobile-footer-item.active {
+    color: var(--primary-color, #4ade80);
+}
+
+.create-post-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--primary-gradient, linear-gradient(145deg, #4ade80, #38bdf8));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 10px rgba(74, 222, 128, 0.4);
+    margin-bottom: 2px;
+}
+
+.create-post-icon i {
+    color: white;
+    font-size: 1.25rem;
+    margin: 0;
+}
+
+.footer-badge {
+    position: absolute;
+    top: 0;
+    right: calc(50% - 14px);
+    background: var(--danger-color, #ef4444);
+    color: white;
+    font-size: 0.65rem;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--card-bg, white);
+}
+
+/* Desktop Footer Navigation */
+.desktop-footer-nav {
+    display: flex;
+    justify-content: center;
+    background: var(--card-bg, white);
+    border-top: 1px solid var(--border-color, #e0e0e0);
+    padding: 10px 0;
+    margin-top: 30px;
+}
+
+.desktop-footer-item {
+    display: flex;
+    align-items: center;
+    color: var(--text-secondary, #6c757d);
+    text-decoration: none;
+    padding: 8px 20px;
+    position: relative;
+    transition: color 0.2s;
+}
+
+.desktop-footer-item i {
+    font-size: 1.2rem;
+    margin-right: 8px;
+}
+
+.desktop-footer-item:hover {
+    color: var(--primary-color, #4ade80);
+}
+
+.desktop-footer-item.active {
+    color: var(--primary-color, #4ade80);
+}
+
+/* Hide the mobile footer on large screens */
+@media (min-width: 993px) {
+    .mobile-footer {
+        display: none;
+    }
+}
+
+/* Add padding to bottom of content for mobile */
+@media (max-width: 992px) {
+    .content-wrapper {
+        padding-bottom: 70px;
+    }
+    
+    .desktop-footer-nav {
+        display: none;
+    }
+}
+
+/* Mobile Footer Hide/Show on Scroll */
+.mobile-footer-hidden {
+    transform: translateY(100%);
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+    .mobile-footer,
+    .desktop-footer-nav,
+    .post-creator-card {
+        background: var(--card-bg, #1e293b);
+    }
+    
+    .post-creator-compact .post-input-placeholder {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+}
+
+
+
+/* Add to your existing CSS */
+.mobile-footer {
+    transition: transform 0.3s ease;
+}
+
+.mobile-footer-hidden {
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+}
+
+/* Optimize loading indicator */
+#loading {
+    opacity: 0.8;
+    transition: opacity 0.2s ease;
+}
+
+/* Prevent layout shifts during image load */
+.post-image {
+    min-height: 30px;
+}
+
+.post-image img {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.post-image img.loaded {
+    opacity: 1;
+}
+
+/* Improve scrolling performance */
+.post-card {
+    will-change: transform;
+    transform: translateZ(0);
+}
+</style>
+
+<div class="content-wrapper">
+    <div class="feed-container">
+        <div class="row">
+            <!-- Main Feed Column -->
+            <div class="col-lg-8">
+                <!-- LinkedIn-style Post Creator Card -->
+                <div class="card mb-4 post-creator-card">
+                    <div class="card-body p-2">
+                        <div class="post-creator-compact" data-bs-toggle="modal" data-bs-target="#createPostModal">
+                            <div class="avatar">
+                                {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
+                            </div>
+                            <div class="post-input-placeholder">
+                                What's on your mind?
+                            </div>
                         </div>
-                    
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div class="mb-3">
-                                {{ form.visibility.label(class="form-label me-2") }}
-                                {{ form.visibility(class="form-select") }}
+                        <div class="post-actions">
+                            <div class="post-action-btn" data-bs-toggle="modal" data-bs-target="#createPostModal">
+                                <i class="fas fa-image text-info"></i>
+                                <span>Photo</span>
                             </div>
-                            
-                            <div>
-                                {{ form.submit(class="btn btn-primary") }}
+                            <div class="post-action-btn" data-bs-toggle="modal" data-bs-target="#createPostModal">
+                                <i class="fas fa-video text-success"></i>
+                                <span>Video</span>
                             </div>
-                        </div>
-                    </form>
-                    
-                </div>
-            </div>
-            
-            <!-- Posts Feed -->
-            {% if posts %}
-                {% for post in posts %}
-                    <div class="card mb-4 post-card">
-                        <!-- Post Header -->
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <div class="d-flex align-items-center">
-                                <div class="avatar bg-primary me-3">
-                                    {{ post.user.first_name[0] }}{{ post.user.last_name[0] }}
-                                </div>
-                                <div>
-                                    <h5 class="mb-0">
-                                        <a href="{{ url_for('social.view_profile', user_id=post.user.id) }}" class="text-reset text-decoration-none">
-                                            {{ post.user.first_name }} {{ post.user.last_name }}
-                                        </a>
-                                    </h5>
-                                    <small class="text-muted">
-                                        {{ post.created_at.strftime('%B %d, %Y at %I:%M %p') }}
-                                        {% if post.visibility != 'public' %}
-                                            {% if post.visibility == 'private' %}
-                                                <i class="fas fa-lock ms-2" title="Private"></i>
-                                            {% else %}
-                                                <i class="fas fa-user-friends ms-2" title="Connections Only"></i>
-                                            {% endif %}
-                                        {% endif %}
-                                    </small>
-                                </div>
+                            <div class="post-action-btn" data-bs-toggle="modal" data-bs-target="#createPostModal">
+                                <i class="fas fa-calendar-alt text-warning"></i>
+                                <span>Event</span>
                             </div>
-                            
-                            {% if post.user_id == current_user.id %}
-                                <div class="dropdown">
-                                    <button class="btn btn-sm btn-link text-muted" type="button" id="postOptions{{ post.id }}" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="fas fa-ellipsis-v"></i>
-                                    </button>
-                                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="postOptions{{ post.id }}">
-                                        <li><a class="dropdown-item" href="#">Edit Post</a></li>
-                                        <li><a class="dropdown-item text-danger" href="#">Delete Post</a></li>
-                                    </ul>
-                                </div>
-                            {% endif %}
-                        </div>
-                        
-                        <!-- Post Content -->
-                        <div class="card-body">
-                            <p class="card-text">{{ post.content }}</p>
-                        </div>
-                        
-                        <!-- Post Actions -->
-                        <div class="card-footer bg-transparent">
-                            <div class="d-flex justify-content-between mb-2">
-                                <div>
-                                    <span>
-                                        <i class="fas fa-thumbs-up text-primary"></i> {{ post.likes.count() }}
-                                    </span>
-                                    <span class="ms-3">
-                                        <i class="fas fa-comment text-secondary"></i> {{ post.comments.count() }}
-                                    </span>
-                                </div>
-                            </div>
-                            
-                            <div class="d-flex justify-content-around border-top border-bottom py-2">
-                                <form method="POST" action="{{ url_for('social.like_post', post_id=post.id) }}" class="d-inline">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="btn btn-link text-decoration-none {% if post.likes | selectattr('user_id', 'equalto', current_user.id) | list %}text-primary{% else %}text-muted{% endif %}">
-                                        <i class="fas fa-thumbs-up me-1"></i> Like
-                                    </button>
-                                    
-                                </form>
-                                
-                                <button class="btn btn-link text-decoration-none text-muted" type="button" data-bs-toggle="collapse" data-bs-target="#comments{{ post.id }}" aria-expanded="false">
-                                    <i class="fas fa-comment me-1"></i> Comment
-                                </button>
-                                
-                                <button class="btn btn-link text-decoration-none text-muted">
-                                    <i class="fas fa-share me-1"></i> Share
-                                </button>
-                            </div>
-                            
-                            <!-- Comments Section -->
-                            <div class="collapse mt-3" id="comments{{ post.id }}">
-                                {% if post.comments %}
-                                    <div class="comments-section mb-3">
-                                        {% for comment in post.comments %}
-                                            <div class="d-flex mb-2">
-                                                <div class="avatar bg-secondary me-2" style="width: 32px; height: 32px; font-size: 0.7rem;">
-                                                    {{ comment.user.first_name[0] }}{{ comment.user.last_name[0] }}
-                                                </div>
-                                                <div class="comment-bubble">
-                                                    <div class="fw-bold">{{ comment.user.first_name }} {{ comment.user.last_name }}</div>
-                                                    <p class="mb-0">{{ comment.content }}</p>
-                                                    <small class="text-muted">{{ comment.created_at.strftime('%b %d, %Y') }}</small>
-                                                </div>
-                                            </div>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                                
-                                <!-- Comment Form -->
-                                <form method="POST" action="{{ url_for('social.comment_post', post_id=post.id) }}">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <div class="input-group">
-                                        <input type="text" class="form-control" name="content" placeholder="Write a comment..." required>
-                                        <button class="btn btn-primary" type="submit">
-                                            <i class="fas fa-paper-plane"></i>
-                                        </button>
-                                    </div>
-                                </form>
+                            <div class="post-action-btn" data-bs-toggle="modal" data-bs-target="#createPostModal">
+                                <i class="fas fa-newspaper text-danger"></i>
+                                <span>Article</span>
                             </div>
                         </div>
                     </div>
-                {% endfor %}
+                </div>
                 
-                <!-- Pagination -->
-                <nav aria-label="Feed pagination">
-                    <ul class="pagination justify-content-center">
-                        {% if posts.has_prev %}
-                            <li class="page-item">
-                                <a class="page-link" href="{{ url_for('social.feed', page=posts.prev_num) }}">Previous</a>
-                            </li>
-                        {% else %}
-                            <li class="page-item disabled">
-                                <span class="page-link">Previous</span>
-                            </li>
-                        {% endif %}
-                        
-                        {% for page_num in posts.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
-                            {% if page_num %}
-                                {% if posts.page == page_num %}
-                                    <li class="page-item active">
-                                        <span class="page-link">{{ page_num }}</span>
-                                    </li>
-                                {% else %}
-                                    <li class="page-item">
-                                        <a class="page-link" href="{{ url_for('social.feed', page=page_num) }}">{{ page_num }}</a>
-                                    </li>
-                                {% endif %}
+                <!-- Posts Feed -->
+                {% if posts %}
+                <div id="post-container">
+                    {% include 'social/_posts.html' %}
+                </div>
+                <div id="loading" class="text-center my-4" style="display: none;">
+                    <div class="spinner-border text-primary" role="status"></div>
+                </div>
+                
+                    
+                    <!-- Pagination -->
+                    <nav aria-label="Feed pagination">
+                        <ul class="pagination justify-content-center">
+                            {% if posts.has_prev %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('social.feed', page=posts.prev_num) }}">Previous</a>
+                                </li>
                             {% else %}
                                 <li class="page-item disabled">
-                                    <span class="page-link">...</span>
+                                    <span class="page-link">Previous</span>
                                 </li>
                             {% endif %}
-                        {% endfor %}
-                        
-                        {% if posts.has_next %}
-                            <li class="page-item">
-                                <a class="page-link" href="{{ url_for('social.feed', page=posts.next_num) }}">Next</a>
-                            </li>
-                        {% else %}
-                            <li class="page-item disabled">
-                                <span class="page-link">Next</span>
-                            </li>
-                        {% endif %}
-                    </ul>
-                </nav>
-            {% else %}
-                <div class="card">
-                    <div class="card-body text-center py-5">
-                        <i class="fas fa-stream fa-4x mb-3 text-muted"></i>
-                        <h3>No Posts Yet</h3>
-                        <p>Connect with other students or create your first post to see content here!</p>
-                        <a href="{{ url_for('social.search') }}" class="btn btn-primary mt-2">Find Students</a>
-                    </div>
-                </div>
-            {% endif %}
-        </div>
-        
-        <!-- Sidebar Column -->
-        <div class="col-lg-4">
-            <!-- Connection Suggestions -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h2 class="card-title-secondary">People You May Know</h2>
-                </div>
-                <div class="card-body p-0">
-                    {% if connection_suggestions %}
-                        <div class="list-group list-group-flush">
-                            {% for user in connection_suggestions %}
-                                <div class="list-group-item bg-transparent d-flex align-items-center">
-                                    <div class="avatar bg-primary me-3">
-                                        {{ user.first_name[0] }}{{ user.last_name[0] }}
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <h6 class="mb-0">{{ user.first_name }} {{ user.last_name }}</h6>
-                                        <small class="text-muted">{{ user.major }} at {{ user.university }}</small>
-                                    </div>
-                                    <form method="POST" action="{{ url_for('social.connect', user_id=user.id) }}">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                        <button type="submit" class="btn btn-sm btn-outline-primary">
-                                            <i class="fas fa-user-plus"></i> Connect
-                                        </button>
-                                    </form>
-                                </div>
+                            
+                            {% for page_num in posts.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                                {% if page_num %}
+                                    {% if posts.page == page_num %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ page_num }}</span>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ url_for('social.feed', page=page_num) }}">{{ page_num }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">...</span>
+                                    </li>
+                                {% endif %}
                             {% endfor %}
+                            
+                            {% if posts.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('social.feed', page=posts.next_num) }}">Next</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">Next</span>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% else %}
+                    <div class="card">
+                        <div class="card-body text-center py-5">
+                            <i class="fas fa-stream fa-4x mb-3 text-muted"></i>
+                            <h3>No Posts Yet</h3>
+                            <p>Connect with other students or create your first post to see content here!</p>
+                            <a href="{{ url_for('social.search') }}" class="btn btn-primary mt-2">Find Students</a>
                         </div>
-                        
-                        <div class="p-3 text-center">
-                            <a href="{{ url_for('social.search') }}" class="btn btn-sm btn-outline-secondary">
-                                See More <i class="fas fa-arrow-right"></i>
-                            </a>
-                        </div>
-                    {% else %}
-                        <div class="p-4 text-center">
-                            <p>No suggestions available right now.</p>
-                        </div>
-                    {% endif %}
-                </div>
+                    </div>
+                {% endif %}
             </div>
             
-            <!-- Social Activity / Quick Links -->
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="card-title-primary">Quick Links</h2>
-                </div>
-                <div class="card-body">
-                    <div class="list-group">
-                        <a href="{{ url_for('social.messages') }}" class="list-group-item list-group-item-action bg-transparent d-flex justify-content-between align-items-center">
-                            <span><i class="fas fa-comments me-2"></i> Messages</span>
-                            {% if unread_messages_count > 0 %}
-                                <span class="badge bg-danger rounded-pill">{{ unread_messages_count }}</span>
-                            {% endif %}
-                        </a>
-                        <a href="{{ url_for('social.connections') }}" class="list-group-item list-group-item-action bg-transparent d-flex justify-content-between align-items-center">
-                            <span><i class="fas fa-user-friends me-2"></i> Connections</span>
-                            {% if pending_connections_count > 0 %}
-                                <span class="badge bg-warning rounded-pill">{{ pending_connections_count }}</span>
-                            {% endif %}
-                        </a>
-                        <a href="{{ url_for('social.groups') }}" class="list-group-item list-group-item-action bg-transparent">
-                            <i class="fas fa-users me-2"></i> Groups
-                        </a>
-                        <a href="{{ url_for('social.search') }}" class="list-group-item list-group-item-action bg-transparent">
-                            <i class="fas fa-search me-2"></i> Find Students
-                        </a>
+            <!-- Sidebar Column -->
+            <div class="col-lg-4">
+                <!-- Quick Links - Visible on desktop -->
+                <div class="card mb-4 d-none d-lg-block">
+                    <div class="card-header">
+                        <h2 class="card-title-primary">Quick Links</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            <a href="{{ url_for('social.messages') }}" class="list-group-item list-group-item-action bg-transparent d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-comments me-2"></i> Messages</span>
+                                {% if unread_messages_count > 0 %}
+                                    <span class="badge bg-danger rounded-pill">{{ unread_messages_count }}</span>
+                                {% endif %}
+                            </a>
+                            <a href="{{ url_for('social.connections') }}" class="list-group-item list-group-item-action bg-transparent d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-user-friends me-2"></i> Connections</span>
+                                {% if pending_connections_count > 0 %}
+                                    <span class="badge bg-warning rounded-pill">{{ pending_connections_count }}</span>
+                                {% endif %}
+                            </a>
+                            <a href="{{ url_for('social.groups') }}" class="list-group-item list-group-item-action bg-transparent">
+                                <i class="fas fa-users me-2"></i> Groups
+                            </a>
+                            <a href="{{ url_for('social.search') }}" class="list-group-item list-group-item-action bg-transparent">
+                                <i class="fas fa-search me-2"></i> Find Students
+                            </a>
+                        </div>
                     </div>
                 </div>
+                
+                <!-- Connection Suggestions -->
+                <div class="card mb-4" id="Con">
+                    <div class="card-header">
+                        <h2 class="card-title-secondary">People You May Know</h2>
+                    </div>
+                    <div class="card-body p-0">
+                        {% if connection_suggestions %}
+                            <div class="list-group list-group-flush">
+                                {% for user in connection_suggestions %}
+                                    <div class="list-group-item bg-transparent d-flex align-items-center">
+                                        <div class="avatar bg-primary me-3">
+                                            {{ user.first_name[0] }}{{ user.last_name[0] }}
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-0">{{ user.first_name }} {{ user.last_name }}</h6>
+                                            <small class="text-muted">{{ user.major }} at {{ user.university }}</small>
+                                        </div>
+                                        <form method="POST" action="{{ url_for('social.connect', user_id=user.id) }}">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-user-plus"></i> Connect
+                                            </button>
+                                        </form>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="p-3 text-center">
+                                <a href="{{ url_for('social.search') }}" class="btn btn-sm btn-outline-secondary">
+                                    See More <i class="fas fa-arrow-right"></i>
+                                </a>
+                            </div>
+                        {% else %}
+                            <div class="p-4 text-center">
+                                <p>No suggestions available right now.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        
+    </div>
+</div>
+
+<!-- Mobile Footer Navigation -->
+<div class="mobile-footer">
+    <div class="mobile-footer-nav">
+        <a href="{{ url_for('social.feed') }}" class="mobile-footer-item active">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </a>
+        <a href="{{ url_for('social.connections') }}" class="mobile-footer-item">
+            <i class="fas fa-user-friends"></i>
+            <span>Network</span>
+        </a>
+        <a href="#" class="mobile-footer-item create-post-btn" data-bs-toggle="modal" data-bs-target="#createPostModal">
+            <div class="create-post-icon">
+                <i class="fas fa-plus"></i>
+            </div>
+            <span>Post</span>
+        </a>
+        <a href="{{ url_for('social.messages') }}" class="mobile-footer-item">
+            <i class="fas fa-message"></i>
+            <span>Chats</span>
+            {% if notifications_count > 0 %}
+                <span class="footer-badge">{{ notifications_count }}</span>
+            {% endif %}
+        </a>
+        
+        <a href="{{ url_for('auth.profile') }}" class="mobile-footer-item">
+            <i class="fas fa-user"></i>
+            <span>Profile</span>
+        </a>
+        
+    </div>
+</div>
+
+<!-- Create Post Modal -->
+<div class="modal fade" id="createPostModal" tabindex="-1" aria-labelledby="createPostModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createPostModalLabel">Create Post</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('social.feed') }}" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="mb-3">
+                        <textarea class="form-control" name="content" rows="4" placeholder="What's on your mind?"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="modalImage" class="form-label">Add Image</label>
+                        <input type="file" class="form-control" id="modalImage" name="image" accept="image/*">
+                        
+                        <!-- Image Preview -->
+                        <div id="modalImagePreview" class="mt-2 d-none">
+                            <img src="" class="img-thumbnail" style="max-height: 200px">
+                            <button type="button" class="btn btn-sm btn-danger mt-1" id="modalRemoveImage">
+                                <i class="fas fa-times"></i> Remove
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="modalVisibility" class="form-label">Visibility</label>
+                        <select class="form-select" id="modalVisibility" name="visibility">
+                            <option value="public">Public</option>
+                            <option value="connections">Connections Only</option>
+                            <option value="private">Private</option>
+                        </select>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Post</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 </div>
+
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
-    $(document).ready(function() {
-        // Auto-expand textarea as user types
-        $('textarea').on('input', function() {
-            this.style.height = 'auto';
-            this.style.height = (this.scrollHeight) + 'px';
-        });
+$(document).ready(function() {
+    // Define variables in the correct scope
+    let lastScrollTop = 0;
+    let page = 2;
+    let loading = false;
+    let scrollTimeout;
+    const postCreator = $('.post-creator-card');
+    const mobileFooter = $('.mobile-footer');
+    const postCreatorOffset = postCreator.length > 0 ? postCreator.offset().top : 0;
+
+    // Auto-expand textarea as user types
+    $('textarea').on('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
     });
+    
+    // Image preview functionality
+    $('#image, #modalImage').change(function() {
+        const file = this.files[0];
+        const previewId = this.id === 'image' ? '#imagePreview' : '#modalImagePreview';
+        
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                $(previewId + ' img').attr('src', e.target.result);
+                $(previewId).removeClass('d-none');
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+    
+    // Remove image button functionality
+    $('#removeImage, #modalRemoveImage').click(function() {
+        const inputId = this.id === 'removeImage' ? '#image' : '#modalImage';
+        const previewId = this.id === 'removeImage' ? '#imagePreview' : '#modalImagePreview';
+        
+        $(inputId).val('');
+        $(previewId).addClass('d-none');
+        $(previewId + ' img').attr('src', '');
+    });
+    
+    // Throttled scroll handler to improve performance
+    $(window).scroll(function() {
+        if (!scrollTimeout) {
+            scrollTimeout = setTimeout(function() {
+                handleScroll();
+                scrollTimeout = null;
+            }, 50); // Small delay to reduce calculations
+        }
+    });
+    
+    // Extracted scroll handling logic
+    function handleScroll() {
+        const st = $(window).scrollTop();
+        const windowHeight = $(window).height();
+        const documentHeight = $(document).height();
+        const scrollBottom = st + windowHeight;
+        
+        // Mobile footer behavior - don't hide when near bottom
+        const nearFooter = scrollBottom >= documentHeight - 150;
+        if (st > lastScrollTop && st > 100 && !nearFooter) {
+            mobileFooter.addClass('mobile-footer-hidden');
+        } else {
+            mobileFooter.removeClass('mobile-footer-hidden');
+        }
+        
+        // Post creator sticky behavior
+        if (postCreator.length > 0 && st > postCreatorOffset) {
+            postCreator.addClass('sticky');
+        } else if (postCreator.length > 0) {
+            postCreator.removeClass('sticky');
+        }
+        
+        // Infinite scroll for posts - load earlier to prevent waiting
+        if (!loading && scrollBottom >= documentHeight - 300) {
+            loadMorePosts();
+        }
+        
+        lastScrollTop = st;
+    }
+    
+    // Extracted post loading logic
+    function loadMorePosts() {
+        loading = true;
+        $('#loading').fadeIn(200);
+        
+        $.ajax({
+            url: "{{ url_for('social.feed') }}?page=" + page,
+            type: 'GET',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            success: function(data) {
+                if (data.trim() === '') {
+                    $('#loading').fadeOut(200);
+                    return;
+                }
+                
+                // Preload any images to prevent layout shifts
+                const tempDiv = $(data);
+                const images = tempDiv.find('img');
+                
+                let imagesLoaded = 0;
+                const totalImages = images.length;
+                
+                if (totalImages === 0) {
+                    // If no images, just append content
+                    $('#post-container').append(data);
+                    $('#loading').fadeOut(200);
+                    page += 1;
+                    loading = false;
+                } else {
+                    // If has images, preload them first
+                    images.each(function() {
+                        const img = new Image();
+                        img.onload = img.onerror = function() {
+                            imagesLoaded++;
+                            if (imagesLoaded === totalImages) {
+                                $('#post-container').append(data);
+                                $('#loading').fadeOut(200);
+                                page += 1;
+                                loading = false;
+                            }
+                        };
+                        img.src = this.src;
+                    });
+                    
+                    // Safety timeout in case images don't load
+                    setTimeout(function() {
+                        if (loading) {
+                            $('#post-container').append(data);
+                            $('#loading').fadeOut(200);
+                            page += 1;
+                            loading = false;
+                        }
+                    }, 3000);
+                }
+            },
+            error: function() {
+                $('#loading').fadeOut(200);
+                loading = false;
+            }
+        });
+    }
+});
 </script>
 {% endblock %}
