@@ -1,124 +1,183 @@
-# StudentHub
+![CareerBud Logo](https://cdn-icons-png.flaticon.com/512/10397/10397171.png)
 
-A modern web application for students to track academic progress, find job opportunities, manage tasks, and develop skills - all in one place. Built with Flask, MongoDB, Bootstrap, and modern frontend technologies.
+# CareerBud
 
-## Features
+![CareerBud Banner](https://cdn-icons-png.flaticon.com/512/10397/10397171.png)
 
-- **User Authentication**: Secure signup, login, and profile management
-- **Dashboard**: Overview of academic progress, job opportunities, and upcoming tasks
-- **Progress Tracker**: Monitor GPA, credits, courses, and skill development
-- **Job Opportunities**: Browse and apply for relevant jobs and internships
-- **Course Management**: Enroll in courses and track your progress
-- **Todo List**: Organize your tasks with due dates and priorities
-- **Passive Income Tools**: Resources for developing income streams (Premium feature)
-- **Subscription Model**: Free and Premium tiers with different feature sets
+[![Status](https://img.shields.io/badge/STATUS-ACTIVE-success?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/VERSION-1.0.0-blue?style=for-the-badge)](#)
+[![License](https://img.shields.io/badge/LICENSE-MIT-yellow?style=for-the-badge)](#)
 
-## Tech Stack
+**CareerBud** is the ultimate platform for students to manage their academic journey, connect with peers, and launch their professional careers.
 
-- **Backend**: Python/Flask
-- **Database**: MongoDB
-- **Frontend**: HTML, CSS, JavaScript, Bootstrap 5
-- **Authentication**: Flask-Login, Bcrypt
-- **Payment Processing**: Stripe
+*Created by **Arnab Das Utsa***
 
-## Project Structure
+---
 
-The application follows a modular structure with blueprints for different features:
+## 🎯 Highlights
 
-- **Authentication**: User registration, login, and profile management
-- **Dashboard**: Main user interface showing key information
-- **Progress**: Academic progress tracking and skill development
-- **Jobs**: Job listings and application management
-- **Courses**: Course browsing and enrollment
-- **Subscription**: Plan management and payment processing
+| ![Dashboard](https://cdn-icons-png.flaticon.com/512/10397/10397171.png) Track Progress | ![Job Board](https://static.vecteezy.com/system/resources/previews/009/239/861/original/job-board-icon-style-free-vector.jpg) Find Opportunities | ![Network](https://cdn-icons-png.flaticon.com/512/1384/1384005.png) Network | ![Mobile](https://cdn-icons-png.flaticon.com/512/747/747376.png) Mobile Ready |
+|:----------------------------------------------:|:------------------------------------------------------------:|:---------------------------------------------:|:-------------------------------------------:|
 
-## Installation
+---
 
-1. Clone the repository:
-   ```
-   git clone https://github.com/yourusername/studenthub.git
-   cd studenthub
-   ```
+## 🌟 Platform Preview
 
-2. Create and activate a virtual environment:
-   ```
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
+![CareerBud Preview](https://cdn-icons-png.flaticon.com/512/10397/10397171.png)
 
-3. Install dependencies:
-   ```
-   pip install -r requirements.txt
-   ```
+---
 
-4. Set up MongoDB:
-   - Install MongoDB or use MongoDB Atlas cloud service
-   - Update the MONGO_URI in .env file
+## 🚀 Key Features
 
-5. Configure environment variables:
-   - Copy `.env.example` to `.env`
-   - Fill in your MongoDB connection string
-   - Add Stripe API keys (optional, for subscription features)
+### 🎓 For Students
+- 📊 **Academic Dashboard** — GPA, credits, and course info
+- 📝 **Smart To-Do Lists** — Manage assignments
+- 📈 **Skill Tracker** — Visualize growth
+- 🎯 **Goal Planning** — Plan your future
 
-6. Run the application:
-   ```
-   python run.py
-   ```
+### 💼 Career
+- 🔍 **Job Board** — Discover roles that fit
+- 📋 **Application Tracker** — Stay organized
+- 📝 **Resume Builder** — Build standout resumes
+- 🏆 **Portfolio** — Showcase your achievements
 
-7. Access the application at `http://localhost:5000`
+### 🌐 Social Network
+- 📱 **Modern Feed** — LinkedIn-style updates
+- 💬 **Messaging** — Connect with others
+- 👋 **Connections** — Grow your network
+- 👨‍👩‍👧‍👦 **Groups** — Join student communities
 
-## Configuration
+---
 
-Create a `.env` file in the root directory with the following variables:
+## ⚡ Tech Stack
 
-```
-# Application Configuration
-FLASK_ENV=development
-SECRET_KEY=your-super-secret-key
+| HTML5 | CSS3 | JavaScript | Python | Flask |
+|:-----:|:----:|:----------:|:------:|:-----:|
+| ![](https://via.placeholder.com/60/E34F26/FFFFFF?text=HTML) | ![](https://via.placeholder.com/60/1572B6/FFFFFF?text=CSS) | ![](https://via.placeholder.com/60/F7DF1E/000000?text=JS) | ![](https://via.placeholder.com/60/3776AB/FFFFFF?text=PY) | ![](https://via.placeholder.com/60/000000/FFFFFF?text=Flask) |
 
-# MongoDB Configuration
-MONGO_URI=mongodb://localhost:27017/studenthub
-# or for MongoDB Atlas
-# MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/studenthub?retryWrites=true&w=majority
+| PostgreSQL | Bootstrap | SQLAlchemy | Docker | GitHub |
+|:----------:|:---------:|:----------:|:------:|:------:|
+| ![](https://via.placeholder.com/60/336791/FFFFFF?text=SQL) | ![](https://via.placeholder.com/60/7952B3/FFFFFF?text=BS) | ![](https://via.placeholder.com/60/FF6C37/FFFFFF?text=SA) | ![](https://via.placeholder.com/60/2496ED/FFFFFF?text=🐋) | ![](https://via.placeholder.com/60/2088FF/FFFFFF?text=GH) |
 
-# Stripe Configuration (for subscription)
-STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
-STRIPE_PUBLISHABLE_KEY=pk_test_your_stripe_publishable_key
-STRIPE_ENDPOINT_SECRET=whsec_your_stripe_endpoint_secret
-STRIPE_PREMIUM_PRICE_ID=price_your_stripe_price_id
+---
+
+## 🔥 Showcase
+
+| Social Feed | Progress Tracking |
+|:-----------:|:-----------------:|
+| ![](https://cdn-icons-png.flaticon.com/512/10397/10397171.png) | ![](https://cdn-icons-png.flaticon.com/512/10397/10397171.png) |
+
+| Messaging | Job Board |
+|:---------:|:---------:|
+| ![](https://cdn-icons-png.flaticon.com/512/1384/1384005.png) | ![](https://static.vecteezy.com/system/resources/previews/009/239/861/original/job-board-icon-style-free-vector.jpg) |
+
+---
+
+## 🛠️ Getting Started
+
+### ✅ Prerequisites
+
+```bash
+Python 3.12+
+PostgreSQL or SQLite
+pip (Python package manager)
 ```
 
-## Deployment
+### 🚀 Quick Setup
 
-This application can be deployed to any platform that supports Python/Flask applications:
+```bash
+# Clone the repo
+git clone https://github.com/yourusername/careerbud.git
+cd careerbud
 
-1. Set `FLASK_ENV=production` in your environment variables
-2. Use a production WSGI server like Gunicorn:
-   ```
-   pip install gunicorn
-   gunicorn "app:create_app()"
-   ```
+# Set up virtual environment
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
 
-3. For MongoDB, it's recommended to use MongoDB Atlas for production
+# Set up environment
+cp .env.example .env
+# Update your DB and secret settings in .env
 
-## Subscription Plans
+# Initialize DB
+flask db upgrade
 
-The application offers two subscription tiers:
+# Run app
+flask run
+```
 
-**Free Tier**:
-- Basic Dashboard
-- Limited Job Listings
-- Progress Tracking
-- Basic Course Access
+---
 
-**Premium Plan** ($9.99/month):
-- Advanced Dashboard
-- Full Job Listings
-- Detailed Progress Analytics
-- All Courses Access
-- Todo List Manager
-- Passive Income Tools
+## 📊 Database Schema
 
-## License
+![Database Schema](https://cdn-icons-png.flaticon.com/512/10397/10397171.png)
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+---
+
+## 📱 Mobile Experience
+
+| Feed | Profile | Messages |
+|:----:|:-------:|:--------:|
+| ![](https://cdn-icons-png.flaticon.com/512/10397/10397171.png) | ![](https://cdn-icons-png.flaticon.com/512/10397/10397171.png) | ![](https://cdn-icons-png.flaticon.com/512/1384/1384005.png) |
+
+---
+
+## 🧪 Testing & 🐳 Docker
+
+### Testing
+
+```bash
+pytest
+pytest --cov=app
+```
+
+### Docker
+
+```bash
+docker build -t careerbud .
+docker run -p 5000:5000 careerbud
+```
+
+---
+
+## 🔮 Roadmap
+
+| AI Recommendations | Mobile App | API Platform | Institution Portal |
+|:------------------:|:----------:|:------------:|:------------------:|
+| Q2 2025 | Q3 2025 | Q4 2025 | Q1 2026 |
+
+---
+
+## 👥 Contributing
+
+```bash
+# Fork, clone, and create a branch
+git checkout -b feature/amazing-feature
+
+# Make changes and commit
+git commit -m "Added amazing feature"
+
+# Push and create PR
+git push origin feature/amazing-feature
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for more info.
+
+---
+
+## 📜 License
+
+```
+MIT License
+
+(c) 2025 Arnab Das Utsa
+```
+
+---
+
+## 🌐 Connect
+
+[![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/yourusername/careerbud)
+[![Email](https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:contact@careerbud.com)
+[![Twitter](https://img.shields.io/badge/Twitter-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white)](https://twitter.com/careerbud)
+

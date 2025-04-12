@@ -3,6 +3,9 @@ from flask_login import current_user
 from app.config import SQLALCHEMY_DATABASE_URI, SECRET_KEY, DEBUG
 from app.extensions import db, bcrypt, login_manager, socketio, csrf, migrate
 import humanize
+import os
+from datetime import datetime
+
 
 
 
@@ -15,6 +18,8 @@ def create_app(config_class=None):
 
 
     app.jinja_env.filters['timeago'] = timeago
+    app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'static', 'uploads')
+    app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB limit
 
 
     # Basic config
@@ -22,6 +27,14 @@ def create_app(config_class=None):
     app.config['DEBUG'] = DEBUG
     app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+    # Create upload directory if it doesn't exist
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    # Add this near your os.makedirs line for debugging
+    upload_dir = os.path.join(app.root_path, 'static', 'uploads')
+    print(f"Upload directory: {upload_dir}")
+    print(f"Directory exists: {os.path.exists(upload_dir)}")
+    print(f"Directory is writable: {os.access(upload_dir, os.W_OK)}")
 
     # Initialize extensions
     db.init_app(app)

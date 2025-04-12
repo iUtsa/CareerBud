@@ -70,3 +70,18 @@
     </div>
 </div>
 {% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Add this to your template's script section
+$(document).ready(function() {
+  // Get the messages container
+  const messagesContainer = document.querySelector('.messages-list');
+  
+  // If it exists, scroll to the bottom
+  if (messagesContainer) {
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  }
+});
+</script>
+{% endblock %}

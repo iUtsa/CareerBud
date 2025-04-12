@@ -180,6 +180,8 @@ class Post(db.Model):
     content = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     visibility = db.Column(db.String(20), default='public')  # Add this field
+    image_filename = db.Column(db.String(255))
+
 
     user = db.relationship('User', backref='posts')
 
@@ -358,14 +360,14 @@ def add_comment(post_id, user_id, content):
         return None
 
 
-# Fix create_post function to properly handle the visibility parameter
-def create_post(user_id, content, visibility='public'):
+# Updated create_post function with image support while preserving existing functionality
+def create_post(user_id, content, visibility='public', image_filename=None):
     try:
         # Validate visibility value
         if visibility not in ['public', 'connections', 'private']:
             visibility = 'public'  # Default to public if invalid
             
-        post = Post(user_id=user_id, content=content, visibility=visibility)
+        post = Post(user_id=user_id, content=content, visibility=visibility, image_filename=image_filename)
         db.session.add(post)
         db.session.commit()
         return post.id  # Return the ID of the created post

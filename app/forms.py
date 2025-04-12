@@ -1,10 +1,13 @@
 # app/forms.py
+# app/forms.py
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, FloatField, IntegerField, SelectField, SelectMultipleField, DateField, SubmitField
 from wtforms.validators import DataRequired, Optional, Length
+from flask_wtf.file import FileField
 
 class PostForm(FlaskForm):
     content = TextAreaField('Content', validators=[DataRequired(), Length(min=1, max=1000)])
+    image = FileField('Image', validators=[Optional()])
     visibility = SelectField('Visibility', choices=[
         ('public', 'Public - Everyone can see'),
         ('connections', 'Connections Only'),

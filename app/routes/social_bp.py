@@ -170,7 +170,33 @@ def feed():
     per_page = 5
 
     if form.validate_on_submit():
-        post_id = create_post(current_user.id, form.content.data, form.visibility.data)
+        image_filename = None
+        
+        # Handle image upload if present
+        if 'image' in request.files and request.files['image'].filename:
+            from werkzeug.utils import secure_filename
+            import time
+            import os
+            from flask import current_app
+            
+            image = request.files['image']
+            if image.filename != '':
+                # Create a secure filename with timestamp to avoid collisions
+                filename = secure_filename(image.filename)
+                image_filename = f"{current_user.id}_{int(time.time())}_{filename}"
+                
+                # Save the file
+                image_path = os.path.join(current_app.config['UPLOAD_FOLDER'], image_filename)
+                image.save(image_path)
+        
+        # Create post with image
+        post_id = create_post(
+            user_id=current_user.id, 
+            content=form.content.data, 
+            visibility=form.visibility.data, 
+            image_filename=image_filename
+        )
+        
         if post_id:
             flash('Post created successfully!', 'success')
         else:
@@ -221,8 +247,6 @@ def feed():
 
 
 
-
-
 #@social_bp.route('/post/new', methods=['GET', 'POST'])
 @login_required
 def new_post():
@@ -244,7 +268,23 @@ def view_post(post_id):
         return redirect(url_for('social.feed'))
     return render_template('social/view_post.html', post=post)
 
-
+@social_bp.route('/messages/<int:conversation_id>/mark-read', methods=['POST'])
+@login_required
+def mark_messages_read(conversation_id):
+    # Get all unread messages in this conversation sent to current user
+    unread_messages = Message.query.filter_by(
+        conversation_id=conversation_id, 
+        recipient_id=current_user.id,
+        read=False
+    ).all()
+    
+    # Mark them as read
+    for message in unread_messages:
+        message.read = True
+    
+    db.session.commit()
+    
+    return jsonify({'success': True})
 
 # Fixed comment_post route
 @social_bp.route('/post/<int:post_id>/comment', methods=['POST'])
