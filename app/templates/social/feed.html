@@ -261,6 +261,15 @@
     transition: opacity 0.3s ease;
 }
 
+.highlight-post {
+    animation: highlight-fade 2s;
+}
+
+@keyframes highlight-fade {
+    0% { background-color: rgba(var(--bs-primary-rgb), 0.2); }
+    100% { background-color: transparent; }
+}
+
 /*.post-image img.loaded {
     opacity: 1;
 }
@@ -551,6 +560,18 @@ $(document).ready(function() {
         this.style.height = (this.scrollHeight) + 'px';
     });
     
+    // Handle smooth scrolling to anchors
+if (window.location.hash) {
+    const targetElement = $(window.location.hash);
+    if (targetElement.length) {
+        // Wait for images to load for better positioning
+        setTimeout(function() {
+            $('html, body').animate({
+                scrollTop: targetElement.offset().top - 70 // Offset for fixed header
+            }, 800);
+        }, 300);
+    }
+}
     // Image preview functionality
     $('#image, #modalImage').change(function() {
         const file = this.files[0];
@@ -676,6 +697,53 @@ $(document).ready(function() {
                 loading = false;
             }
         });
+    }
+});
+
+# Add or update this in the JavaScript section of feed.html
+
+$(document).ready(function() {
+    // Function to parse URL parameters
+    function getUrlParameter(name) {
+        name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+        var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+        var results = regex.exec(location.search);
+        return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+    }
+    
+    // Handle smooth scrolling to anchors with a delay to ensure content is loaded
+    if (window.location.hash) {
+        const targetId = window.location.hash;
+        const targetElement = $(targetId);
+        
+        if (targetElement.length) {
+            // Wait for images and content to load
+            setTimeout(function() {
+                // Smooth scroll to the element
+                $('html, body').animate({
+                    scrollTop: targetElement.offset().top - 70 // Adjust for header height
+                }, 800);
+                
+                // Flash effect to highlight the post
+                $(targetId).addClass('highlight-post');
+                setTimeout(function() {
+                    $(targetId).removeClass('highlight-post');
+                }, 2000);
+            }, 500);
+        }
+    }
+    
+    // If a show_comments parameter exists, expand that comments section
+    const showCommentsFor = getUrlParameter('show_comments');
+    if (showCommentsFor) {
+        setTimeout(function() {
+            $('#comments' + showCommentsFor).collapse('show');
+            
+            // Focus on the comment input if we're coming from a comment action
+            if (window.location.pathname.includes('/comment')) {
+                $('#comments' + showCommentsFor + ' input[name="content"]').focus();
+            }
+        }, 1000);
     }
 });
 </script>

@@ -17,6 +17,8 @@ from flask_wtf import FlaskForm
 from app.models import Conversation
 from app.forms import MessageForm
 from app.models import Message
+from app.models import get_post
+
 
 
 
@@ -259,14 +261,14 @@ def new_post():
 
 
 # Fixed view_post route
-@social_bp.route('/post/<int:post_id>')
-@login_required
-def view_post(post_id):
-    post = get_post(post_id, current_user.id)
-    if not post:
-        flash('Post not found or you do not have permission to view it.', 'danger')
-        return redirect(url_for('social.feed'))
-    return render_template('social/view_post.html', post=post)
+#@social_bp.route('/post/<int:post_id>')
+#@login_required
+#def view_post(post_id):
+ #   post = get_post(post_id, current_user.id)
+  #  if not post:
+   #     flash('Post not found or you do not have permission to view it.', 'danger')
+    #    return redirect(url_for('social.feed'))
+    #return render_template('social/view_posts.html', post=post)
 
 @social_bp.route('/messages/<int:conversation_id>/mark-read', methods=['POST'])
 @login_required
@@ -300,24 +302,28 @@ def comment_post(post_id):
     if content:
         add_comment(post_id, current_user.id, content)
         flash('Comment added', 'success')
-    return redirect(url_for('social.view_post', post_id=post_id))
+    
+    # Redirect to feed with anchor to the specific post and open the comments section
+    return redirect(url_for('social.feed', _anchor=f'post-{post_id}', show_comments=post_id))
 
 
-# Change this route function name
 @social_bp.route('/post/<int:post_id>/like', methods=['POST'])
 @login_required
-def like_post(post_id):  # Changed from like_post_route to like_post
-    # Check if the user has permission to view the post first
+def like_post_route(post_id):
     post = get_post(post_id, current_user.id)
     if not post:
-        flash('Post not found or you do not have permission to interact with it.', 'danger')
+        flash('Post not found or unauthorized.', 'danger')
         return redirect(url_for('social.feed'))
-        
-    if like_post(post_id, current_user.id):
-        flash('Liked the post!', 'success')
+
+    if like_post(post_id, current_user.id):  # helper function
+        flash('Post liked.', 'success')
     else:
         flash('You already liked this post.', 'warning')
-    return redirect(url_for('social.view_post', post_id=post_id))
+    
+    # Redirect to feed with anchor to the specific post
+    return redirect(url_for('social.feed', _anchor=f'post-{post_id}'))
+
+
 
 @social_bp.route('/post/<int:post_id>/unlike', methods=['POST'])
 @login_required
@@ -326,7 +332,9 @@ def unlike_post_route(post_id):
         flash('Unliked the post!', 'success')
     else:
         flash('You have not liked this post yet.', 'warning')
-    return redirect(url_for('social.view_post', post_id=post_id))
+    
+    # Redirect to feed with anchor to the specific post
+    return redirect(url_for('social.feed', _anchor=f'post-{post_id}'))
 
 
 

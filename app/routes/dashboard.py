@@ -18,9 +18,10 @@ def dashboard():
     upcoming_events = []
     
     # Get recent achievements
-    achievements = sorted(current_user.achievements, 
-                          key=lambda x: datetime.strptime(x['date'], '%Y-%m-%d') if isinstance(x['date'], str) else x['date'],
-                          reverse=True)[:3]
+    achievements = sorted(current_user.achievements,
+                 key=lambda x: datetime.strptime(x.date.strftime('%Y-%m-%d'), '%Y-%m-%d') if isinstance(x.date, str) else x.date,
+                 reverse=True)
+
     
     # Get job opportunities (limited for free tier)
     job_opportunities = get_jobs()

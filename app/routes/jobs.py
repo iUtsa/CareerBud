@@ -4,7 +4,15 @@ from app.models import get_jobs, add_job_application, add_todo, update_todo_stat
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, DateField, SelectField, SubmitField
 from wtforms.validators import DataRequired, Optional
+from app.extensions import db 
+import traceback  # Add traceback for more detailed error logging
 from datetime import datetime
+from app.models import (
+    get_jobs, 
+    add_job_application, 
+    Todo,  # Import Todo from models
+    Job
+)
 
 jobs_bp = Blueprint('jobs', __name__)
 
@@ -85,16 +93,10 @@ def todo():
     form = TodoForm()
 
     try:
-        # Ensure current_user.todos is a list of objects (Todo)
-        if not hasattr(current_user, 'todos'):
-            flash("No todos found for the user.", "danger")
-            return redirect(url_for('dashboard.dashboard'))
-
-        # Get all todos, sort by completion status and due date
-        todos = sorted(current_user.todos, key=lambda x: (x.completed, x.due_date or datetime.max))
-
-        # Debug: Print todos to check if it's returning the expected data
-        print(todos)
+        # Fetch user's todos sorted by completion then due date (nulls last)
+        todos = Todo.query.filter_by(user_id=current_user.id)\
+            .order_by(Todo.completed.asc(), Todo.due_date.asc().nullslast())\
+            .all()
 
         return render_template(
             'todo.html',
@@ -104,31 +106,44 @@ def todo():
         )
 
     except Exception as e:
-        # Print out the error for debugging
-        print(f"Error loading todo data: {e}")
-        flash(f"Error loading todo data: {e}", "danger")
+        print(f"[ERROR] Loading todos: {e}")
+        flash("Something went wrong while loading your tasks.", "danger")
         return redirect(url_for('dashboard.dashboard'))
-
-
 
 @jobs_bp.route('/todos/add', methods=['POST'])
 @login_required
 def add_todo_route():
-    form = TodoForm()
+    todo_id = request.form.get('todo_id')
+    title = request.form.get('title')
+    due_date = request.form.get('due_date')
+    priority = request.form.get('priority')
 
-    if form.validate_on_submit():
-        title = form.title.data
-        due_date = form.due_date.data
-        priority = form.priority.data
+    try:
+        due = datetime.strptime(due_date, '%Y-%m-%d') if due_date else None
 
-        if add_todo(current_user.id, title, due_date, priority):
-            flash('Task added successfully!', 'success')
+        if todo_id:
+            # Update existing
+            todo = Todo.query.filter_by(id=todo_id, user_id=current_user.id).first()
+            if todo:
+                todo.title = title
+                todo.due_date = due
+                todo.priority = priority
         else:
-            flash('Failed to add task', 'danger')
-    else:
-        for field, errors in form.errors.items():
-            for error in errors:
-                flash(f"{getattr(form, field).label.text}: {error}", 'danger')
+            # Add new
+            new_todo = Todo(
+                user_id=current_user.id,
+                title=title,
+                due_date=due,
+                priority=priority
+            )
+            db.session.add(new_todo)
+
+        db.session.commit()
+        flash("Task saved successfully!", "success")
+    except Exception as e:
+        db.session.rollback()
+        print("Add/Update Error:", e)
+        flash("Failed to save task.", "danger")
 
     return redirect(url_for('jobs.todo'))
 
@@ -137,21 +152,50 @@ def add_todo_route():
 def update_todo_route():
     todo_id = request.form.get('todo_id')
     completed = request.form.get('completed') == 'true'
+    
+    try:
+        todo = Todo.query.filter_by(id=todo_id, user_id=current_user.id).first()
 
-    if update_todo_status(current_user.id, todo_id, completed):
-        return jsonify({'success': True})
-    else:
-        return jsonify({'success': False, 'message': 'Failed to update task status'}), 400
+        if todo:
+            todo.completed = completed
+            db.session.commit()
+            return jsonify({'success': True})
+        return jsonify({'success': False}), 404
+    except Exception as e:
+        db.session.rollback()
+        print(f"Update Error: {e}")
+        return jsonify({'success': False}), 500
 
 @jobs_bp.route('/todos/delete', methods=['POST'])
 @login_required
 def delete_todo_route():
     todo_id = request.form.get('todo_id')
+    
+    try:
+        todo = Todo.query.filter_by(id=todo_id, user_id=current_user.id).first()
 
-    if delete_todo(current_user.id, todo_id):
+        if todo:
+            db.session.delete(todo)
+            db.session.commit()
+            return jsonify({'success': True})
+        return jsonify({'success': False}), 404
+    except Exception as e:
+        db.session.rollback()
+        print(f"Delete Error: {e}")
+        return jsonify({'success': False}), 500
+
+@jobs_bp.route('/todos/reset-daily', methods=['POST'])
+@login_required
+def reset_daily_route():
+    try:
+        Todo.query.filter_by(user_id=current_user.id, completed=True).delete()
+        db.session.commit()
         return jsonify({'success': True})
-    else:
-        return jsonify({'success': False, 'message': 'Failed to delete task'}), 400
+    except Exception as e:
+        db.session.rollback()
+        print(f"Reset Error: {e}")
+        return jsonify({'success': False}), 500
+
 
 @jobs_bp.route('/passive-income')
 @login_required

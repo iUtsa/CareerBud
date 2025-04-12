@@ -163,8 +163,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check for saved theme preference or use default (dark)
     const currentTheme = localStorage.getItem('theme') || 'dark';
     
-    // Apply the saved theme or default
+    // Apply the saved theme or default with anti-flicker
+    document.documentElement.classList.add('theme-transition');
     document.body.setAttribute('data-theme', currentTheme);
+    setTimeout(function() {
+        document.documentElement.classList.remove('theme-transition');
+    }, 100);
     
     // Update toggle switch state to match current theme
     const themeToggle = document.getElementById('theme-toggle');
@@ -174,6 +178,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Theme switch event listener
     document.querySelector('.theme-switch')?.addEventListener('change', function(e) {
+        // Add class to prevent transition flicker
+        document.documentElement.classList.add('theme-transition');
+        
         if (e.target.checked) {
             document.body.setAttribute('data-theme', 'light');
             localStorage.setItem('theme', 'light');
@@ -182,10 +189,12 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.setItem('theme', 'dark');
         }
         
-        // Add fade effect when changing themes
+        // Add fade effect when changing themes - keeping your original functionality
         document.body.style.opacity = '0.9';
         setTimeout(() => {
             document.body.style.opacity = '1';
+            // Remove transition prevention class after fade completes
+            document.documentElement.classList.remove('theme-transition');
         }, 300);
     });
     

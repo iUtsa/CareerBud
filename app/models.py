@@ -114,6 +114,16 @@ class Internship(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     user = db.relationship('User', back_populates='internships')  # Link with back_populates
 
+class PostLike(db.Model):
+    __tablename__ = 'post_likes'
+
+    id = db.Column(db.Integer, primary_key=True)
+    post_id = db.Column(db.Integer, db.ForeignKey('posts.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    post = db.relationship('Post', backref='likes')
+    user = db.relationship('User', backref='post_likes')
 
 
 class Todo(db.Model):
@@ -209,16 +219,6 @@ class Comment(db.Model):
     user = db.relationship('User', backref='comments')
     post = db.relationship('Post', backref='comments')
 
-class Like(db.Model):
-    __tablename__ = 'likes'
-
-    id = db.Column(db.Integer, primary_key=True)
-    post_id = db.Column(db.Integer, db.ForeignKey('posts.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    user = db.relationship('User', backref='likes')
-    post = db.relationship('Post', backref='likes')
 
 
 class Group(db.Model):
@@ -329,12 +329,15 @@ def like_post(post_id, user_id):
     post = Post.query.get(post_id)
     if not post:
         return False
-    if not any(like.user_id == user_id for like in post.likes):
+
+    existing_like = PostLike.query.filter_by(post_id=post_id, user_id=user_id).first()
+    if not existing_like:
         new_like = PostLike(post_id=post_id, user_id=user_id)
         db.session.add(new_like)
         db.session.commit()
         return True
     return False
+
 
 def unlike_post(post_id, user_id):
     post = Post.query.get(post_id)

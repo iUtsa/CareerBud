@@ -1,48 +1,70 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="todo-container">
-    <h1 class="section-title">Todo List</h1>
+<div class="todo-container container-fluid">
+    <h1 class="section-title text-center mb-4">Todo List Manager</h1>
     
     <div class="row">
-        <div class="col-md-8 mb-4">
-            <div class="card">
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow-sm">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h2 class="card-title-primary mb-0">My Tasks</h2>
-                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addTodoModal">
-                        <i class="fas fa-plus"></i> Add Task
-                    </button>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addTodoModal">
+                            <i class="fas fa-plus"></i> Add Task
+                        </button>
+                        <div class="btn-group" role="group">
+                            <button id="sortDropdown" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                Sort
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="sortDropdown">
+                                <li><a class="dropdown-item" href="#" data-sort="priority">By Priority</a></li>
+                                <li><a class="dropdown-item" href="#" data-sort="date">By Due Date</a></li>
+                                <li><a class="dropdown-item" href="#" data-sort="created">By Created Date</a></li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
                 <div class="card-body">
                     {% if todos %}
-                        <div class="list-group">
+                        <div id="todoList" class="list-group">
                             {% for todo in todos %}
-                                <div class="todo-item" id="todo-item-{{ todo.id }}">
-                                    <div class="form-check">
-                                        <input class="form-check-input todo-checkbox" type="checkbox" value="" id="todo-{{ todo.id }}" data-id="{{ todo.id }}" {% if todo.completed %}checked{% endif %}>
-                                        <label class="form-check-label todo-text {% if todo.completed %}todo-completed{% endif %}" for="todo-{{ todo.id }}">
-                                            {{ todo.title }}
-                                        </label>
-                                    </div>
-                                    <div class="todo-meta">
-                                        {% if todo.due_date %}
-                                            <span class="badge {% if todo.completed %}bg-secondary{% else %}bg-info{% endif %} me-2">
-                                                <i class="fas fa-calendar"></i> {{ todo.due_date.strftime('%b %d') }}
+                                <div class="todo-item list-group-item list-group-item-action d-flex justify-content-between align-items-center" 
+                                     data-priority="{{ todo.priority }}" 
+                                     data-due-date="{{ todo.due_date }}" 
+                                     data-created="{{ todo.created_at }}"
+                                     id="todo-item-{{ todo.id }}">
+                                    <div class="d-flex align-items-center">
+                                        <input class="form-check-input todo-checkbox me-3" type="checkbox" 
+                                               id="todo-{{ todo.id }}" 
+                                               data-id="{{ todo.id }}" 
+                                               {% if todo.completed %}checked{% endif %}>
+                                        <div>
+                                            <span class="todo-text {% if todo.completed %}text-muted text-decoration-line-through{% endif %}">
+                                                {{ todo.title }}
                                             </span>
-                                        {% endif %}
-                                        
-                                        {% if todo.priority == 'high' %}
-                                            <span class="badge bg-danger">High</span>
-                                        {% elif todo.priority == 'medium' %}
-                                            <span class="badge bg-warning text-dark">Medium</span>
-                                        {% elif todo.priority == 'low' %}
-                                            <span class="badge bg-success">Low</span>
-                                        {% endif %}
+                                            <small class="d-block text-muted">
+                                                {% if todo.due_date %}
+                                                    <i class="fas fa-calendar-alt me-1"></i>Due: {{ todo.due_date.strftime('%b %d, %Y') }}
+                                                {% endif %}
+                                                {% if todo.created_at %}
+                                                    | Created: {{ todo.created_at.strftime('%b %d, %Y %H:%M') }}
+                                                {% endif %}
+                                            </small>
+                                        </div>
                                     </div>
-                                    <div class="todo-actions">
-                                        <button class="btn btn-sm btn-danger delete-todo" data-id="{{ todo.id }}">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
+                                    <div class="todo-meta d-flex align-items-center">
+                                        <span class="badge {% if todo.priority == 'high' %}bg-danger{% elif todo.priority == 'medium' %}bg-warning text-dark{% else %}bg-success{% endif %} me-2">
+                                            {{ todo.priority.capitalize() }}
+                                        </span>
+                                        <div class="todo-actions">
+                                            <button class="btn btn-sm btn-outline-primary edit-todo me-1" data-id="{{ todo.id }}">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger delete-todo" data-id="{{ todo.id }}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             {% endfor %}
@@ -58,8 +80,8 @@
             </div>
         </div>
         
-        <div class="col-md-4 mb-4">
-            <div class="card">
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow-sm">
                 <div class="card-header">
                     <h2 class="card-title-secondary">Task Overview</h2>
                 </div>
@@ -74,8 +96,12 @@
                             <span><strong>{{ completed_count }}</strong> / {{ total_count }}</span>
                         </div>
                         <div class="progress">
-                            <div class="progress-bar progress-bar-success" role="progressbar" style="width: {{ completion_pct }}%" 
-                                 aria-valuenow="{{ completion_pct }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            <div class="progress-bar bg-success" role="progressbar" 
+                                 style="width: {{ completion_pct }}%" 
+                                 aria-valuenow="{{ completion_pct }}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100">
+                            </div>
                         </div>
                     </div>
                     
@@ -85,34 +111,28 @@
                         {% set medium_count = todos|selectattr('priority', 'equalto', 'medium')|list|length %}
                         {% set low_count = todos|selectattr('priority', 'equalto', 'low')|list|length %}
                         
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span>High</span>
-                            <span>{{ high_count }}</span>
-                        </div>
-                        <div class="progress mb-2">
-                            <div class="progress-bar bg-danger" role="progressbar" style="width: {{ (high_count / total_count * 100) if total_count > 0 else 0 }}%"></div>
-                        </div>
-                        
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span>Medium</span>
-                            <span>{{ medium_count }}</span>
-                        </div>
-                        <div class="progress mb-2">
-                            <div class="progress-bar bg-warning" role="progressbar" style="width: {{ (medium_count / total_count * 100) if total_count > 0 else 0 }}%"></div>
-                        </div>
-                        
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span>Low</span>
-                            <span>{{ low_count }}</span>
-                        </div>
-                        <div class="progress">
-                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ (low_count / total_count * 100) if total_count > 0 else 0 }}%"></div>
+                        <div class="priority-stats">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span>High Priority</span>
+                                <span class="badge bg-danger">{{ high_count }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span>Medium Priority</span>
+                                <span class="badge bg-warning text-dark">{{ medium_count }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span>Low Priority</span>
+                                <span class="badge bg-success">{{ low_count }}</span>
+                            </div>
                         </div>
                     </div>
                     
                     <div class="text-center">
-                        <button class="btn btn-sm btn-outline-danger" id="clearCompletedBtn">
-                            Clear Completed Tasks
+                        <button class="btn btn-sm btn-outline-danger me-2" id="clearCompletedBtn">
+                            Clear Completed
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" id="resetDailyTasksBtn">
+                            Reset Daily Tasks
                         </button>
                     </div>
                 </div>
@@ -121,35 +141,45 @@
     </div>
 </div>
 
-<!-- Add Todo Modal -->
+<!-- Add/Edit Todo Modal -->
 <div class="modal fade" id="addTodoModal" tabindex="-1" aria-labelledby="addTodoModalLabel" aria-hidden="true">
     <div class="modal-dialog">
-        <div class="modal-content bg-dark text-light">
+        <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="addTodoModalLabel">Add New Task</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form method="POST" action="{{ url_for('jobs.add_todo_route') }}">
+                <form id="todoForm" method="POST" action="{{ url_for('jobs.add_todo_route') }}">
                     {{ form.hidden_tag() }}
+                    <input type="hidden" id="todoIdInput" name="todo_id" value="">
                     
                     <div class="mb-3">
-                        {{ form.title.label(class="form-label") }}
-                        {{ form.title(class="form-control") }}
+                        <label for="todoTitle" class="form-label">Task Title</label>
+                        <input type="text" class="form-control" id="todoTitle" name="title" required>
                     </div>
                     
                     <div class="mb-3">
-                        {{ form.due_date.label(class="form-label") }}
-                        {{ form.due_date(class="form-control", type="date") }}
+                        <label for="todoDueDate" class="form-label">Due Date</label>
+                        <input type="date" class="form-control" id="todoDueDate" name="due_date">
                     </div>
                     
                     <div class="mb-3">
-                        {{ form.priority.label(class="form-label") }}
-                        {{ form.priority(class="form-select") }}
+                        <label for="todoPriority" class="form-label">Priority</label>
+                        <select class="form-select" id="todoPriority" name="priority">
+                            <option value="high">High</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="low">Low</option>
+                        </select>
                     </div>
                     
-                    <div class="d-grid gap-2">
-                        {{ form.submit(class="btn btn-primary") }}
+                    <div class="mb-3">
+                        <label for="todoDescription" class="form-label">Description (Optional)</label>
+                        <textarea class="form-control" id="todoDescription" name="description" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary" id="submitTodoBtn">Add Task</button>
                     </div>
                 </form>
             </div>
@@ -159,13 +189,63 @@
 {% endblock %}
 
 {% block extra_scripts %}
+
 <script>
-    $(document).ready(function() {
-        // Todo item checkbox toggling
-        $('.todo-checkbox').change(function() {
+    $(document).ready(function () {
+        // ✅ Setup CSRF
+        $.ajaxSetup({
+            beforeSend: function (xhr, settings) {
+                const csrf_token = "{{ csrf_token() }}";
+                if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type)) {
+                    xhr.setRequestHeader("X-CSRFToken", csrf_token);
+                }
+            }
+        });
+    
+        // ✅ Toast Handler
+        function showToast(message, type = 'success') {
+            const toastId = `toast-${Date.now()}`;
+            const toastHtml = `
+                <div id="${toastId}" class="toast align-items-center text-white bg-${type} border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body">${message}</div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>`;
+            $('#toastContainer').append(toastHtml);
+            const toastElement = new bootstrap.Toast(document.getElementById(toastId));
+            toastElement.show();
+        }
+    
+        // ✅ Sort
+        function sortTodos(criteria) {
+            const todoList = $('#todoList');
+            const todos = todoList.find('.todo-item').get();
+            todos.sort(function (a, b) {
+                switch (criteria) {
+                    case 'priority':
+                        const priorityOrder = { 'high': 1, 'medium': 2, 'low': 3 };
+                        return priorityOrder[$(a).data('priority')] - priorityOrder[$(b).data('priority')];
+                    case 'date':
+                        return new Date($(a).data('due-date')) - new Date($(b).data('due-date'));
+                    case 'created':
+                        return new Date($(a).data('created')) - new Date($(b).data('created'));
+                }
+            });
+            $.each(todos, function (idx, todo) {
+                todoList.append(todo);
+            });
+        }
+    
+        $('.dropdown-item[data-sort]').click(function (e) {
+            e.preventDefault();
+            sortTodos($(this).data('sort'));
+        });
+    
+        // ✅ Completion Toggle
+        $('.todo-checkbox').change(function () {
             const todoId = $(this).data('id');
             const completed = $(this).prop('checked');
-            
             $.ajax({
                 url: '/todos/update',
                 type: 'POST',
@@ -173,62 +253,105 @@
                     todo_id: todoId,
                     completed: completed
                 },
-                success: function(response) {
+                success: function () {
+                    const todoItem = $(`#todo-item-${todoId}`);
+                    const todoText = todoItem.find('.todo-text');
                     if (completed) {
-                        $(`label[for="todo-${todoId}"]`).addClass('todo-completed');
+                        todoText.addClass('text-muted text-decoration-line-through');
                     } else {
-                        $(`label[for="todo-${todoId}"]`).removeClass('todo-completed');
+                        todoText.removeClass('text-muted text-decoration-line-through');
                     }
-                    
-                    // Refresh the page to update statistics
+                    showToast("Task updated.");
                     location.reload();
-                }
-            });
-        });
-        
-        // Delete todo item
-        $('.delete-todo').click(function() {
-            const todoId = $(this).data('id');
-            
-            $.ajax({
-                url: '/todos/delete',
-                type: 'POST',
-                data: {
-                    todo_id: todoId
                 },
-                success: function(response) {
-                    $(`#todo-item-${todoId}`).fadeOut(300, function() {
-                        $(this).remove();
-                        
-                        // Refresh the page to update statistics
-                        location.reload();
-                    });
+                error: function (err) {
+                    console.error("Update Failed:", err);
+                    showToast("Error updating task.", "danger");
                 }
             });
         });
-        
-        // Clear completed tasks
-        $('#clearCompletedBtn').click(function() {
-            if (confirm('Are you sure you want to clear all completed tasks?')) {
-                const completedIds = [];
-                
-                $('.todo-checkbox:checked').each(function() {
-                    completedIds.push($(this).data('id'));
+    
+        // ✅ Edit Task
+        $('.edit-todo').click(function () {
+            const todoId = $(this).data('id');
+            const todoItem = $(`#todo-item-${todoId}`);
+            $('#todoIdInput').val(todoId);
+            $('#todoTitle').val(todoItem.find('.todo-text').text().trim());
+            $('#todoDueDate').val(todoItem.data('due-date'));
+            $('#todoPriority').val(todoItem.data('priority'));
+            $('#addTodoModalLabel').text('Edit Task');
+            $('#submitTodoBtn').text('Update Task');
+            $('#addTodoModal').modal('show');
+        });
+    
+        // ✅ Delete Task
+        $('.delete-todo').click(function () {
+            const todoId = $(this).data('id');
+            if (confirm('Are you sure you want to delete this task?')) {
+                $.ajax({
+                    url: '/todos/delete',
+                    type: 'POST',
+                    data: { todo_id: todoId },
+                    success: function () {
+                        $(`#todo-item-${todoId}`).fadeOut(300, function () {
+                            $(this).remove();
+                            showToast("Task deleted.");
+                            location.reload();
+                        });
+                    },
+                    error: function (err) {
+                        console.error("Delete Failed:", err);
+                        showToast("Error deleting task.", "danger");
+                    }
                 });
-                
-                const deleteRequests = completedIds.map(id => {
-                    return $.ajax({
+            }
+        });
+    
+        // ✅ Clear Completed
+        $('#clearCompletedBtn').click(function () {
+            if (confirm('Clear all completed tasks?')) {
+                const completedIds = $('.todo-checkbox:checked').map(function () {
+                    return $(this).data('id');
+                }).get();
+    
+                const deleteRequests = completedIds.map(id =>
+                    $.ajax({
                         url: '/todos/delete',
                         type: 'POST',
                         data: { todo_id: id }
-                    });
-                });
-                
-                $.when.apply($, deleteRequests).done(function() {
+                    })
+                );
+    
+                $.when.apply($, deleteRequests).done(function () {
+                    showToast("Cleared completed tasks.");
                     location.reload();
                 });
             }
         });
+    
+        // ✅ Reset Daily
+        $('#resetDailyTasksBtn').click(function () {
+            if (confirm('Reset daily tasks? Completed tasks will be removed.')) {
+                $.ajax({
+                    url: '/todos/reset-daily',
+                    type: 'POST',
+                    success: function () {
+                        showToast("Daily tasks reset.");
+                        location.reload();
+                    },
+                    error: function (err) {
+                        console.error("Reset Failed:", err);
+                        showToast("Error resetting daily tasks.", "danger");
+                    }
+                });
+            }
+        });
+    
+        // ✅ Prevent refresh resubmission
+        if (window.history.replaceState) {
+            window.history.replaceState(null, null, window.location.href);
+        }
     });
-</script>
+    </script>
+
 {% endblock %}
