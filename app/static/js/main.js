@@ -158,95 +158,37 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 
-// Theme Toggle Functionality
+// Theme Toggle Functionality - Improved
 document.addEventListener('DOMContentLoaded', function() {
-    // Check for saved theme preference or use default (dark)
-    const currentTheme = localStorage.getItem('theme') || 'dark';
-    
-    // Apply the saved theme or default with anti-flicker
-    document.documentElement.classList.add('theme-transition');
-    document.body.setAttribute('data-theme', currentTheme);
-    setTimeout(function() {
-        document.documentElement.classList.remove('theme-transition');
-    }, 100);
-    
-    // Update toggle switch state to match current theme
     const themeToggle = document.getElementById('theme-toggle');
+    
+    // Initialize the toggle to match current theme
     if (themeToggle) {
+        const currentTheme = localStorage.getItem('theme') || 'dark';
         themeToggle.checked = currentTheme === 'light';
-    }
-    
-    // Theme switch event listener
-    document.querySelector('.theme-switch')?.addEventListener('change', function(e) {
-        // Add class to prevent transition flicker
-        document.documentElement.classList.add('theme-transition');
         
-        if (e.target.checked) {
-            document.body.setAttribute('data-theme', 'light');
-            localStorage.setItem('theme', 'light');
-        } else {
-            document.body.setAttribute('data-theme', 'dark');
-            localStorage.setItem('theme', 'dark');
-        }
+        // Set theme on both document element and body for consistency
+        document.documentElement.setAttribute('data-theme', currentTheme);
+        document.body.setAttribute('data-theme', currentTheme);
         
-        // Add fade effect when changing themes - keeping your original functionality
-        document.body.style.opacity = '0.9';
-        setTimeout(() => {
-            document.body.style.opacity = '1';
-            // Remove transition prevention class after fade completes
-            document.documentElement.classList.remove('theme-transition');
-        }, 300);
-    });
-    
-    // Sidebar toggle functionality for mobile
-    const sidebarToggle = document.querySelector('.toggle-sidebar');
-    const sidebar = document.querySelector('.sidebar');
-    
-    if (sidebarToggle && sidebar) {
-        sidebarToggle.addEventListener('click', function() {
-            sidebar.classList.toggle('show');
-        });
-        
-        // Close sidebar when clicking outside on mobile
-        document.addEventListener('click', function(event) {
-            if (!sidebar.contains(event.target) && !sidebarToggle.contains(event.target)) {
-                sidebar.classList.remove('show');
-            }
+        // Handle toggle change
+        themeToggle.addEventListener('change', function() {
+            // Prevent transition flicker
+            document.documentElement.classList.add('theme-transition');
+            
+            const newTheme = this.checked ? 'light' : 'dark';
+            
+            // Apply theme to both document element and body
+            document.documentElement.setAttribute('data-theme', newTheme);
+            document.body.setAttribute('data-theme', newTheme);
+            
+            // Store preference
+            localStorage.setItem('theme', newTheme);
+            
+            // Remove transition prevention class after transition completes
+            setTimeout(function() {
+                document.documentElement.classList.remove('theme-transition');
+            }, 300);
         });
     }
-    
-    // Add subtle animation when cards enter viewport
-    const cards = document.querySelectorAll('.card');
-    const cardObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.style.opacity = '1';
-                entry.target.style.transform = 'translateY(0)';
-                cardObserver.unobserve(entry.target);
-            }
-        });
-    }, { threshold: 0.1 });
-    
-    cards.forEach(card => {
-        card.style.opacity = '0';
-        card.style.transform = 'translateY(20px)';
-        card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-        cardObserver.observe(card);
-    });
-    
-    // Add gradient hover effect to buttons
-    const buttons = document.querySelectorAll('.btn-primary, .btn-secondary');
-    buttons.forEach(button => {
-        button.addEventListener('mouseover', function() {
-            this.style.backgroundPosition = 'right center';
-        });
-        
-        button.addEventListener('mouseout', function() {
-            this.style.backgroundPosition = 'left center';
-        });
-        
-        // Set initial background position
-        button.style.backgroundSize = '200% auto';
-        button.style.backgroundPosition = 'left center';
-    });
 });

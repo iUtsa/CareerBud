@@ -3,64 +3,81 @@
  * Modern and futuristic light/dark theme with gradient coloring
  */
 
- :root {
-    /* Common variables */
-    --transition-speed: 0.3s;
-    --border-radius: 10px;
-    --box-shadow-strength: 0.15;
-    
-    /* Dark Theme (Default) */
-    --primary-gradient: linear-gradient(145deg, #4ade80, #38bdf8);
-    --secondary-gradient: linear-gradient(145deg, #60a5fa, #a78bfa);
-    --bg-gradient: linear-gradient(135deg, #111827, #0f172a);
-    --card-gradient: linear-gradient(145deg, #1e293b, #1a1f35);
-    --hover-overlay: rgba(255, 255, 255, 0.1);
-    
-    --primary-color: #4ade80;
-    --primary-hover: #3bc46c;
-    --secondary-color: #60a5fa;
-    --secondary-hover: #4d8fd9;
-    --tertiary-color: #a78bfa;
-    --bg-color: #111827;
-    --bg-secondary: #0f172a;
-    --card-bg: #1e293b;
-    --text-primary: #f3f4f6;
-    --text-secondary: rgba(255, 255, 255, 0.7);
-    --border-color: rgba(255, 255, 255, 0.1);
-    --success-color: #22c55e;
-    --warning-color: #f59e0b;
-    --danger-color: #ef4444;
-    --info-color: #38bdf8;
-  }
+ /* Theme Transition Prevention */
+html.theme-transition,
+html.theme-transition *,
+html.theme-transition *:before,
+html.theme-transition *:after {
+    transition: none !important;
+    animation: none !important;
+}
+
+/* Ensure consistent theme application */
+:root[data-theme="dark"] {
+  /* Dark Theme Variables - GitHub-inspired */
+  --primary-gradient: linear-gradient(145deg, #71b2fd, #aab1b8);
+  --secondary-gradient: linear-gradient(145deg, #3fb950, #56d364);
+  --bg-gradient: linear-gradient(135deg, #0d1117, #161b22);
+  --card-gradient: linear-gradient(145deg, #21262d, #30363d);
+  --hover-overlay: rgba(177, 186, 196, 0.12);
   
-  /* Light Theme */
-  [data-theme="light"] {
-    --primary-gradient: linear-gradient(145deg, #10b981, #0ea5e9);
-    --secondary-gradient: linear-gradient(145deg, #3b82f6, #8b5cf6);
-    --bg-gradient: linear-gradient(135deg, #f0f9ff, #e0f2fe);
-    --card-gradient: linear-gradient(145deg, #ffffff, #f8fafc);
-    --hover-overlay: rgba(0, 0, 0, 0.05);
-    
-    --primary-color: #10b981;
-    --primary-hover: #0d9488;
-    --secondary-color: #3b82f6;
-    --secondary-hover: #2563eb;
-    --tertiary-color: #8b5cf6;
-    --bg-color: #f0f9ff;
-    --bg-secondary: #e0f2fe;
-    --card-bg: #ffffff;
-    --text-primary: #0f172a;
-    --text-secondary: rgba(15, 23, 42, 0.7);
-    --border-color: rgba(0, 0, 0, 0.1);
-    --success-color: #16a34a;
-    --warning-color: #d97706;
-    --danger-color: #dc2626;
-    --info-color: #0284c7;
-  }
+  --primary-color: #2188ff;
+  --primary-hover: #1f6feb;
+  --secondary-color: #3fb950;
+  --secondary-hover: #2ea043;
+  --tertiary-color: #f778ba;
+  --bg-color: #0d1117;
+  --bg-secondary: #161b22;
+  --card-bg: #21262d;
+  --text-primary: #c9d1d9;
+  --text-secondary: #8b949e;
+  --border-color: #30363d;
+  --success-color: #3fb950;
+  --warning-color: #d29922;
+  --danger-color: #f85149;
+  --info-color: #58a6ff;
+}
+
+:root[data-theme="light"] {
+  /* Light Theme Variables - GitHub-inspired */
+  --primary-gradient: linear-gradient(145deg, #53a1f9, #9ca3a9);
+  --secondary-gradient: linear-gradient(145deg, #2da44e, #46954a);
+  --bg-gradient: linear-gradient(135deg, #ffffff, #f6f8fa);
+  --card-gradient: linear-gradient(145deg, #f6f8fa, #eaeef2);
+  --hover-overlay: rgba(0, 0, 0, 0.05);
+  
+  --primary-color: #0969da;
+  --primary-hover: #0550ae;
+  --secondary-color: #2da44e;
+  --secondary-hover: #2c974b;
+  --tertiary-color: #bf3989;
+  --bg-color: #ffffff;
+  --bg-secondary: #f6f8fa;
+  --card-bg: #f6f8fa;
+  --text-primary: #24292f;
+  --text-secondary: #57606a;
+  --border-color: #d0d7de;
+  --success-color: #2da44e;
+  --warning-color: #bf8700;
+  --danger-color: #cf222e;
+  --info-color: #0969da;
+}
+/* Apply the same theme to both html and body elements */
+html[data-theme="dark"], 
+body[data-theme="dark"] {
+    background: var(--bg-gradient);
+    color: var(--text-primary);
+}
+
+html[data-theme="light"], 
+body[data-theme="light"] {
+    background: var(--bg-gradient);
+    color: var(--text-primary);
+}
   
   /* Base Styles */
   body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Segoe UI', Tahoma, "Josefin Sans", Verdana, sans-serif;
     background: var(--bg-gradient);
     color: var(--text-primary);
     margin: 0;
@@ -1342,56 +1359,7 @@ html.theme-transition *:after {
 
 
 
-/* Add to your main CSS file */
 
-/* Apply theme to html element too, not just body */
-:root[data-theme="dark"] {
-  /* Copy all the dark theme variables here from your [data-theme="dark"] rule */
-  --text-primary: #e2e8f0 !important;
-  --text-secondary: rgba(226, 232, 240, 0.7) !important;
-  --card-bg: #1a202c !important;
-  --card-gradient: linear-gradient(145deg, #1a202c, #171e2e) !important;
-  --bg-color: #0f1521 !important;
-  --bg-secondary: #0d1219 !important;
-  --hover-overlay: rgba(255, 255, 255, 0.08) !important;
-  --border-color: rgba(255, 255, 255, 0.08) !important;
-  --primary-gradient: linear-gradient(145deg, #4ade80, #38bdf8);
-  --secondary-gradient: linear-gradient(145deg, #60a5fa, #a78bfa);
-  --bg-gradient: linear-gradient(135deg, #111827, #0f172a);
-}
-
-:root[data-theme="light"] {
-  /* Copy all the light theme variables here from your [data-theme="light"] rule */
-  --primary-gradient: linear-gradient(145deg, #10b981, #0ea5e9);
-  --secondary-gradient: linear-gradient(145deg, #3b82f6, #8b5cf6);
-  --bg-gradient: linear-gradient(135deg, #f0f9ff, #e0f2fe);
-  --card-gradient: linear-gradient(145deg, #ffffff, #f8fafc);
-  --hover-overlay: rgba(0, 0, 0, 0.05);
-  --primary-color: #10b981;
-  --primary-hover: #0d9488;
-  --secondary-color: #3b82f6;
-  --secondary-hover: #2563eb;
-  --tertiary-color: #8b5cf6;
-  --bg-color: #f0f9ff;
-  --bg-secondary: #e0f2fe;
-  --card-bg: #ffffff;
-  --text-primary: #0f172a;
-  --text-secondary: rgba(15, 23, 42, 0.7);
-  --border-color: rgba(0, 0, 0, 0.1);
-  --success-color: #16a34a;
-  --warning-color: #d97706;
-  --danger-color: #dc2626;
-  --info-color: #0284c7;
-}
-
-/* Prevent flash of wrong theme */
-html.theme-transition,
-html.theme-transition *,
-html.theme-transition *:before,
-html.theme-transition *:after {
-  transition: none !important;
-  animation: none !important;
-}
 
 /* Override any conflicting styles */
 html {
