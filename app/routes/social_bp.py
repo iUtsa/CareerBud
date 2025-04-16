@@ -505,5 +505,35 @@ def connections():
     )
 
 
+@social_bp.route('/post/<int:post_id>/delete', methods=['POST'])
+@login_required
+def delete_post_route(post_id):
+    """
+    Route to handle deletion of a post.
+    Verifies the current user is the owner of the post before deletion.
+    """
+    from app.models import delete_post, get_post
+    
+    # First check if the post exists and the user has permission to access it
+    post = get_post(post_id, current_user.id)
+    if not post:
+        flash('Post not found or you do not have permission to view it.', 'danger')
+        return redirect(url_for('social.feed'))
+    
+    # Check if the user is the owner of the post
+    if post.user_id != current_user.id:
+        flash('You can only delete your own posts.', 'danger')
+        return redirect(url_for('social.feed'))
+    
+    # Try to delete the post
+    if delete_post(post_id, current_user.id):
+        flash('Post deleted successfully.', 'success')
+    else:
+        flash('An error occurred while trying to delete the post.', 'danger')
+    
+    # Redirect back to the feed
+    return redirect(url_for('social.feed'))
+
+
 class DummyForm(FlaskForm):
     pass

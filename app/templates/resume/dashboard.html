@@ -1,0 +1,267 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="card-title-primary">Resume Builder</h1>
+        <a href="{{ url_for('resume.create') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i> Create New Resume
+        </a>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h2 class="card-title-secondary mb-3">Welcome to the Resume Builder</h2>
+                    <p>Create professional resumes with our AI-powered tools. Our intelligent resume builder will help you:</p>
+                    <ul class="list-group list-group-flush mb-3">
+                        <li class="list-group-item bg-transparent">
+                            <i class="fas fa-check-circle text-success me-2"></i> 
+                            Optimize your resume for Applicant Tracking Systems (ATS)
+                        </li>
+                        <li class="list-group-item bg-transparent">
+                            <i class="fas fa-check-circle text-success me-2"></i> 
+                            Generate impactful bullet points and summaries
+                        </li>
+                        <li class="list-group-item bg-transparent">
+                            <i class="fas fa-check-circle text-success me-2"></i> 
+                            Target specific job descriptions with keyword optimization
+                        </li>
+                        <li class="list-group-item bg-transparent">
+                            <i class="fas fa-check-circle text-success me-2"></i> 
+                            Choose from multiple professional templates
+                        </li>
+                        <li class="list-group-item bg-transparent">
+                            <i class="fas fa-check-circle text-success me-2"></i> 
+                            Maintain multiple versions of your resume for different careers
+                        </li>
+                    </ul>
+                    {% if not resumes %}
+                    <div class="text-center">
+                        <a href="{{ url_for('resume.create') }}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-plus me-2"></i> Create Your First Resume
+                        </a>
+                        <a href="{{ url_for('resume.templates') }}" class="btn btn-outline-secondary btn-lg ms-2">
+                            <i class="fas fa-palette me-2"></i> Explore Templates
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card bg-gradient-primary text-white">
+                <div class="card-body">
+                    <h3 class="mb-3"><i class="fas fa-lightbulb me-2"></i> Resume Tips</h3>
+                    <p>Include quantifiable achievements and metrics in your bullet points to demonstrate impact.</p>
+                    <p>Tailor your resume for each application by including keywords from the job description.</p>
+                    <p>Keep your resume concise - one or two pages is ideal for most positions.</p>
+                    <hr class="my-3 border-white opacity-25">
+                    <a href="#" class="btn btn-light">More Tips</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if resumes %}
+    <h2 class="mb-3">Your Resumes</h2>
+    <div class="row">
+        {% for resume in resumes %}
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100 resume-card {% if resume.is_primary %}border-primary{% endif %}">
+                {% if resume.is_primary %}
+                <div class="position-absolute top-0 end-0 mt-2 me-2">
+                    <span class="badge bg-primary px-3 py-2">
+                        <i class="fas fa-star me-1"></i> Primary
+                    </span>
+                </div>
+                {% endif %}
+                <div class="card-body">
+                    <h3 class="card-title">{{ resume.title }}</h3>
+                    <p class="text-muted small">Last updated: {{ resume.updated_at.strftime('%b %d, %Y') }}</p>
+                    
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Template:</span>
+                        <span>{{ resume.template|capitalize }}</span>
+                    </div>
+                    
+                    {% if resume.ats_score > 0 %}
+                    <div class="mt-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-muted">ATS Score:</span>
+                            <span class="fw-bold 
+                                {% if resume.ats_score >= 80 %}text-success
+                                {% elif resume.ats_score >= 60 %}text-primary
+                                {% elif resume.ats_score >= 40 %}text-warning
+                                {% else %}text-danger{% endif %}">
+                                {{ resume.ats_score }}%
+                            </span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar 
+                                {% if resume.ats_score >= 80 %}bg-success
+                                {% elif resume.ats_score >= 60 %}bg-primary
+                                {% elif resume.ats_score >= 40 %}bg-warning
+                                {% else %}bg-danger{% endif %}" 
+                                role="progressbar" 
+                                style="width: {{ resume.ats_score }}%;" 
+                                aria-valuenow="{{ resume.ats_score }}" 
+                                aria-valuemin="0" 
+                                aria-valuemax="100">
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('resume.view', resume_id=resume.id) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye me-1"></i> Preview
+                        </a>
+                        <a href="{{ url_for('resume.edit', resume_id=resume.id) }}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-pencil-alt me-1"></i> Edit
+                        </a>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="resumeOptions{{ resume.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="resumeOptions{{ resume.id }}">
+                                <li>
+                                    <a href="{{ url_for('resume.export', resume_id=resume.id) }}" class="dropdown-item">
+                                        <i class="fas fa-file-pdf me-2 text-danger"></i> Export as PDF
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{{ url_for('resume.analyze', resume_id=resume.id) }}" class="dropdown-item">
+                                        <i class="fas fa-chart-line me-2 text-info"></i> Analyze
+                                    </a>
+                                </li>
+                                {% if not resume.is_primary %}
+                                <li>
+                                    <form action="{{ url_for('resume.make_primary', resume_id=resume.id) }}" method="POST">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="dropdown-item">
+                                            <i class="fas fa-star me-2 text-warning"></i> Make Primary
+                                        </button>
+                                    </form>
+                                </li>
+                                {% endif %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <button type="button" class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#deleteResumeModal" data-resume-id="{{ resume.id }}" data-resume-title="{{ resume.title }}">
+                                        <i class="fas fa-trash-alt me-2"></i> Delete
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Recommendations Section -->
+    <div class="mt-5">
+        <h2 class="mb-4">Improve Your Resume</h2>
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="text-center mb-3">
+                            <i class="fas fa-sync-alt fa-3x text-primary"></i>
+                        </div>
+                        <h3 class="card-title text-center">ATS Optimization</h3>
+                        <p class="card-text">Scan your resume against ATS systems to ensure it passes through automated filters.</p>
+                    </div>
+                    <div class="card-footer text-center bg-transparent">
+                        <a href="{{ url_for('resume.templates') }}" class="btn btn-outline-primary">Learn More</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="text-center mb-3">
+                            <i class="fas fa-magic fa-3x text-primary"></i>
+                        </div>
+                        <h3 class="card-title text-center">AI Enhancement</h3>
+                        <p class="card-text">Use our AI tools to improve your bullet points and create compelling summaries.</p>
+                    </div>
+                    <div class="card-footer text-center bg-transparent">
+                        <a href="{{ url_for('resume.templates') }}" class="btn btn-outline-primary">Learn More</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="text-center mb-3">
+                            <i class="fas fa-file-alt fa-3x text-primary"></i>
+                        </div>
+                        <h3 class="card-title text-center">Template Gallery</h3>
+                        <p class="card-text">Choose from our collection of professional templates designed for different industries.</p>
+                    </div>
+                    <div class="card-footer text-center bg-transparent">
+                        <a href="{{ url_for('resume.templates') }}" class="btn btn-outline-primary">Browse Templates</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Resume Modal -->
+<div class="modal fade" id="deleteResumeModal" tabindex="-1" aria-labelledby="deleteResumeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteResumeModalLabel">
+                    <i class="fas fa-exclamation-triangle text-danger me-2"></i>
+                    Delete Resume
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the resume "<span id="deleteResumeTitle"></span>"?</p>
+                <p class="text-danger fw-bold">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteResumeForm" method="POST" action="">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger">Delete Resume</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Setup the delete resume modal
+        const deleteResumeModal = document.getElementById('deleteResumeModal');
+        if (deleteResumeModal) {
+            deleteResumeModal.addEventListener('show.bs.modal', function(event) {
+                // Button that triggered the modal
+                const button = event.relatedTarget;
+                
+                // Extract resume info
+                const resumeId = button.getAttribute('data-resume-id');
+                const resumeTitle = button.getAttribute('data-resume-title');
+                
+                // Update the modal content
+                document.getElementById('deleteResumeTitle').textContent = resumeTitle;
+                
+                // Update the form's action URL
+                const form = document.getElementById('deleteResumeForm');
+                form.action = "{{ url_for('resume.delete', resume_id=0) }}".replace('/0', '/' + resumeId);
+            });
+        }
+    });
+</script>
+{% endblock %}

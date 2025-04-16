@@ -1,8 +1,8 @@
 # app/forms.py
 # app/forms.py
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, FloatField, IntegerField, SelectField, SelectMultipleField, DateField, SubmitField
-from wtforms.validators import DataRequired, Optional, Length
+from wtforms import StringField, TextAreaField, FloatField, IntegerField, SelectField, SelectMultipleField, DateField, SubmitField, BooleanField
+from wtforms.validators import DataRequired, Optional, Length, NumberRange
 from flask_wtf.file import FileField
 
 class PostForm(FlaskForm):
@@ -38,3 +38,72 @@ class AchievementForm(FlaskForm):
 class MessageForm(FlaskForm):
     content = StringField('Message', validators=[DataRequired()])
     submit = SubmitField('Send')
+
+class ResumeForm(FlaskForm):
+    """
+    Form for creating or updating a resume
+    """
+    title = StringField('Resume Title', validators=[DataRequired(), Length(max=100)])
+    template = SelectField('Template', choices=[
+        ('modern', 'Modern'),
+        ('professional', 'Professional'),
+        ('creative', 'Creative'),
+        ('minimal', 'Minimal'),
+        ('tech', 'Tech')
+    ])
+    objective = TextAreaField('Career Objective/Summary', validators=[Optional(), Length(max=500)])
+    
+    # Design options
+    primary_color = StringField('Primary Color', validators=[Optional(), Length(max=20)], default='#4ade80')
+    secondary_color = StringField('Secondary Color', validators=[Optional(), Length(max=20)], default='#60a5fa')
+    font_family = SelectField('Font', choices=[
+        ('Roboto', 'Roboto'),
+        ('Open Sans', 'Open Sans'),
+        ('Lato', 'Lato'),
+        ('Montserrat', 'Montserrat'),
+        ('Raleway', 'Raleway')
+    ])
+
+class ResumeSectionForm(FlaskForm):
+    """
+    Form for adding or editing a resume section
+    """
+    section_type = SelectField('Section Type', choices=[
+        ('education', 'Education'),
+        ('experience', 'Work Experience'),
+        ('project', 'Project'),
+        ('volunteer', 'Volunteer Experience'),
+        ('certification', 'Certification'),
+        ('award', 'Award/Achievement'),
+        ('custom', 'Custom Section')
+    ])
+    title = StringField('Title/Position', validators=[DataRequired(), Length(max=100)])
+    organization = StringField('Organization/Institution', validators=[Optional(), Length(max=100)])
+    location = StringField('Location', validators=[Optional(), Length(max=100)])
+    start_date = DateField('Start Date', validators=[Optional()], format='%Y-%m-%d')
+    end_date = DateField('End Date', validators=[Optional()], format='%Y-%m-%d')
+    is_current = BooleanField('Currently Active', default=False)
+    description = TextAreaField('Description', validators=[Optional(), Length(max=1000)])
+    bullets = TextAreaField('Bullet Points (One per line)', validators=[Optional()])
+
+class ResumeSkillForm(FlaskForm):
+    """
+    Form for adding or editing a resume skill
+    """
+    skill_name = StringField('Skill', validators=[DataRequired(), Length(max=100)])
+    category = SelectField('Category', choices=[
+        ('technical', 'Technical Skills'),
+        ('soft', 'Soft Skills'),
+        ('language', 'Languages'),
+        ('certification', 'Certifications'),
+        ('other', 'Other Skills')
+    ])
+    proficiency = IntegerField('Proficiency (1-5)', validators=[Optional(), NumberRange(min=1, max=5)], default=3)
+
+class ResumeAnalysisForm(FlaskForm):
+    """
+    Form for analyzing a resume against a job description
+    """
+    job_description = TextAreaField('Job Description', validators=[DataRequired()])
+    job_title = StringField('Job Title', validators=[Optional(), Length(max=100)])
+    company = StringField('Company', validators=[Optional(), Length(max=100)])

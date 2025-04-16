@@ -1,0 +1,452 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<style>
+    .resume-builder-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem;
+        background-color: var(--card-bg);
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .resume-section {
+        margin-bottom: 1.5rem;
+        background-color: var(--background);
+        border-radius: 8px;
+        padding: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .resume-section:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .resume-section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid var(--border-color);
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .resume-section-header h2 {
+        margin: 0;
+        color: var(--primary-color);
+        font-size: 1.2rem;
+    }
+
+    .form-floating {
+        margin-bottom: 1rem;
+    }
+
+    .dynamic-field-container {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .dynamic-field-container .form-control {
+        margin-right: 0.5rem;
+    }
+
+    .btn-dynamic-add {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        transition: background-color 0.3s ease;
+    }
+
+    .btn-dynamic-add:hover {
+        background-color: var(--primary-color-dark);
+    }
+
+    .btn-dynamic-remove {
+        background-color: var(--danger-color);
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        transition: background-color 0.3s ease;
+    }
+
+    .btn-dynamic-remove:hover {
+        background-color: var(--danger-color-dark);
+    }
+
+    .resume-progress {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+
+    .progress-step {
+        flex: 1;
+        text-align: center;
+        padding: 0.5rem;
+        margin: 0 0.25rem;
+        background-color: var(--border-color);
+        color: var(--text-muted);
+        border-radius: 4px;
+        transition: all 0.3s ease;
+    }
+
+    .progress-step.active {
+        background-color: var(--primary-color);
+        color: white;
+    }
+
+    .color-picker-container {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    @media (max-width: 768px) {
+        .resume-builder-container {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="resume-builder-container">
+    <div class="resume-progress">
+        <div class="progress-step {% if current_step == 1 %}active{% endif %}">Basic Info</div>
+        <div class="progress-step {% if current_step == 2 %}active{% endif %}">Sections</div>
+        <div class="progress-step {% if current_step == 3 %}active{% endif %}">Skills</div>
+        <div class="progress-step {% if current_step == 4 %}active{% endif %}">Design</div>
+        <div class="progress-step {% if current_step == 5 %}active{% endif %}">Review</div>
+    </div>
+
+    <form method="POST" action="{{ url_for('resume.create') }}" id="resumeBuilderForm">
+        {{ form.csrf_token }}
+
+        {% if current_step == 1 %}
+        <div class="resume-section">
+            <div class="resume-section-header">
+                <h2>Resume Basics</h2>
+            </div>
+            
+            <div class="form-floating mb-3">
+                {{ form.title(class="form-control", placeholder="Resume Title") }}
+                <label for="{{ form.title.id }}">Resume Title</label>
+            </div>
+
+            <div class="form-floating mb-3">
+                {{ form.template(class="form-control") }}
+                <label for="{{ form.template.id }}">Template</label>
+            </div>
+
+            <div class="form-floating mb-3">
+                {{ form.objective(class="form-control", placeholder="Career Objective/Summary", style="height: 100px") }}
+                <label for="{{ form.objective.id }}">Career Objective/Summary</label>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if current_step == 2 %}
+        <div class="resume-section">
+            <div class="resume-section-header">
+                <h2>Resume Sections</h2>
+                <button type="button" class="btn btn-dynamic-add" id="addSectionBtn">
+                    <i class="fas fa-plus"></i> Add Section
+                </button>
+            </div>
+
+            <div id="sectionsContainer">
+                {% for section_form in sections_form %}
+                <div class="section-entry mb-4">
+                    <div class="row">
+                        <div class="col-md-6 form-floating mb-3">
+                            {{ section_form.section_type(class="form-control") }}
+                            <label>Section Type</label>
+                        </div>
+                        <div class="col-md-6 form-floating mb-3">
+                            {{ section_form.title(class="form-control", placeholder="Title/Position") }}
+                            <label>Title/Position</label>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 form-floating mb-3">
+                            {{ section_form.organization(class="form-control", placeholder="Organization/Institution") }}
+                            <label>Organization/Institution</label>
+                        </div>
+                        <div class="col-md-6 form-floating mb-3">
+                            {{ section_form.location(class="form-control", placeholder="Location") }}
+                            <label>Location</label>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 form-floating mb-3">
+                            {{ section_form.start_date(class="form-control", type="date") }}
+                            <label>Start Date</label>
+                        </div>
+                        <div class="col-md-6 form-floating mb-3">
+                            {{ section_form.end_date(class="form-control", type="date") }}
+                            <label>End Date</label>
+                        </div>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        {{ section_form.is_current(class="form-check-input") }}
+                        <label class="form-check-label" for="{{ section_form.is_current.id }}">
+                            Currently Active
+                        </label>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        {{ section_form.description(class="form-control", placeholder="Description", style="height: 100px") }}
+                        <label>Description</label>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        {{ section_form.bullets(class="form-control", placeholder="Bullet Points (One per line)", style="height: 100px") }}
+                        <label>Bullet Points (One per line)</label>
+                    </div>
+
+                    {% if loop.index > 1 %}
+                    <button type="button" class="btn btn-dynamic-remove remove-section">
+                        <i class="fas fa-trash"></i> Remove Section
+                    </button>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if current_step == 3 %}
+        <div class="resume-section">
+            <div class="resume-section-header">
+                <h2>Skills</h2>
+                <button type="button" class="btn btn-dynamic-add" id="addSkillBtn">
+                    <i class="fas fa-plus"></i> Add Skill
+                </button>
+            </div>
+
+            <div id="skillsContainer">
+                {% for skill_form in skills_form %}
+                <div class="skill-entry row align-items-center mb-3">
+                    <div class="col-md-4 form-floating">
+                        {{ skill_form.skill_name(class="form-control", placeholder="Skill Name") }}
+                        <label>Skill Name</label>
+                    </div>
+                    <div class="col-md-4 form-floating">
+                        {{ skill_form.category(class="form-control") }}
+                        <label>Category</label>
+                    </div>
+                    <div class="col-md-4 form-floating">
+                        {{ skill_form.proficiency(class="form-control", type="number", min="1", max="5") }}
+                        <label>Proficiency (1-5)</label>
+                    </div>
+                    {% if loop.index > 1 %}
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-dynamic-remove remove-skill">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if current_step == 4 %}
+        <div class="resume-section">
+            <div class="resume-section-header">
+                <h2>Resume Design</h2>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 form-floating mb-3">
+                    <div class="color-picker-container">
+                        {{ form.primary_color(class="form-control form-control-color", type="color") }}
+                        <label for="{{ form.primary_color.id }}">Primary Color</label>
+                    </div>
+                </div>
+                <div class="col-md-6 form-floating mb-3">
+                    <div class="color-picker-container">
+                        {{ form.secondary_color(class="form-control form-control-color", type="color") }}
+                        <label for="{{ form.secondary_color.id }}">Secondary Color</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-floating mb-3">
+                {{ form.font_family(class="form-control") }}
+                <label for="{{ form.font_family.id }}">Font Family</label>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if current_step == 5 %}
+        <div class="resume-section">
+            <div class="resume-section-header">
+                <h2>Review Your Resume</h2>
+            </div>
+            
+            <div class="review-content">
+                <h3>Basic Information</h3>
+                <p><strong>Title:</strong> {{ form.title.data }}</p>
+                <p><strong>Template:</strong> {{ form.template.data }}</p>
+                <p><strong>Objective:</strong> {{ form.objective.data }}</p>
+
+                <h3>Sections</h3>
+                {% for section_form in sections_form %}
+                    {% if section_form.title.data %}
+                    <div>
+                        <p><strong>{{ section_form.section_type.data }}: {{ section_form.title.data }}</strong></p>
+                        <p>{{ section_form.organization.data }} | {{ section_form.location.data }}</p>
+                        <p>{{ section_form.start_date.data }} - 
+                            {% if section_form.is_current.data %}Present{% else %}{{ section_form.end_date.data }}{% endif %}
+                        </p>
+                        <p>{{ section_form.description.data }}</p>
+                        {% if section_form.bullets.data %}
+                        <ul>
+                            {% for bullet in section_form.bullets.data.split('\n') %}
+                            <li>{{ bullet }}</li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                {% endfor %}
+
+                <h3>Skills</h3>
+                <ul>
+                {% for skill_form in skills_form %}
+                    {% if skill_form.skill_name.data %}
+                    <li>
+                        {{ skill_form.skill_name.data }} 
+                        ({{ skill_form.category.data }}, Level: {{ skill_form.proficiency.data }}/5)
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                </ul>
+
+                <h3>Design</h3>
+                <p><strong>Primary Color:</strong> {{ form.primary_color.data }}</p>
+                <p><strong>Secondary Color:</strong> {{ form.secondary_color.data }}</p>
+                <p><strong>Font Family:</strong> {{ form.font_family.data }}</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="resume-navigation mt-4 d-flex justify-content-between">
+            {% if current_step > 1 %}
+            <button type="submit" name="action" value="previous" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Previous
+            </button>
+            {% endif %}
+
+            {% if current_step < 5 %}
+            <button type="submit" name="action" value="next" class="btn btn-primary ms-auto">
+                Next <i class="fas fa-arrow-right"></i>
+            </button>
+            {% else %}
+            <button type="submit" name="action" value="submit" class="btn btn-success ms-auto">
+                <i class="fas fa-check"></i> Create Resume
+            </button>
+            {% endif %}
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Dynamic Sections 
+    const addSectionBtn = document.getElementById('addSectionBtn');
+    const sectionsContainer = document.getElementById('sectionsContainer');
+    
+    if (addSectionBtn) {
+        addSectionBtn.addEventListener('click', function() {
+            const newEntry = document.querySelector('.section-entry').cloneNode(true);
+            
+            // Clear input values
+            newEntry.querySelectorAll('input, select, textarea').forEach(input => {
+                if (input.type === 'checkbox') {
+                    input.checked = false;
+                } else {
+                    input.value = '';
+                }
+            });
+            
+            // Add remove button
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'btn btn-dynamic-remove remove-section';
+            removeBtn.innerHTML = '<i class="fas fa-trash"></i> Remove Section';
+            
+            removeBtn.addEventListener('click', function() {
+                newEntry.remove();
+            });
+            
+            newEntry.appendChild(removeBtn);
+            sectionsContainer.appendChild(newEntry);
+        });
+    }
+
+    // Dynamic Skills
+    const addSkillBtn = document.getElementById('addSkillBtn');
+    const skillsContainer = document.getElementById('skillsContainer');
+    
+    if (addSkillBtn) {
+        addSkillBtn.addEventListener('click', function() {
+            const newEntry = document.querySelector('.skill-entry').cloneNode(true);
+            
+            // Clear input values
+            newEntry.querySelectorAll('input, select').forEach(input => {
+                input.value = '';
+            });
+            
+            // Add remove button if not already present
+            const removeContainer = newEntry.querySelector('.col-md-2');
+            if (!removeContainer) {
+                const removeCol = document.createElement('div');
+                removeCol.className = 'col-md-2';
+                
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'btn btn-dynamic-remove remove-skill';
+                removeBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                
+                removeBtn.addEventListener('click', function() {
+                    newEntry.remove();
+                });
+                
+                removeCol.appendChild(removeBtn);
+                newEntry.appendChild(removeCol);
+            }
+            
+            skillsContainer.appendChild(newEntry);
+        });
+    }
+
+    // Form submission handling for multi-step process
+    const resumeForm = document.getElementById('resumeBuilderForm');
+    
+    if (resumeForm) {
+        resumeForm.addEventListener('submit', function(e) {
+            const actionInput = document.createElement('input');
+            actionInput.type = 'hidden';
+            actionInput.name = 'action';
+            actionInput.value = e.submitter.value;
+            resumeForm.appendChild(actionInput);
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,116 +1,123 @@
 {% for post in posts %}
-                        <div class="card mb-4 post-card" id="post-{{ post.id }}">
-                            <!-- Post Header -->
-                            <div class="card-header d-flex justify-content-between align-items-center">
-                                <div class="d-flex align-items-center">
-                                    <div class="avatar bg-primary me-3">
-                                        {{ post.user.first_name[0] }}{{ post.user.last_name[0] }}
-                                    </div>
-                                    <div>
-                                        <h5 class="mb-0">
-                                            <a href="{{ url_for('social.view_profile', user_id=post.user.id) }}" class="text-reset text-decoration-none">
-                                                {{ post.user.first_name }} {{ post.user.last_name }}
-                                            </a>
-                                        </h5>
-                                        <small class="text-muted">
-                                            {{ post.created_at.strftime('%B %d, %Y at %I:%M %p') }}
-                                            {% if post.visibility != 'public' %}
-                                                {% if post.visibility == 'private' %}
-                                                    <i class="fas fa-lock ms-2" title="Private"></i>
-                                                {% else %}
-                                                    <i class="fas fa-user-friends ms-2" title="Connections Only"></i>
-                                                {% endif %}
-                                            {% endif %}
-                                        </small>
-                                    </div>
-                                </div>
-                                
-                                {% if post.user_id == current_user.id %}
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm btn-link text-muted" type="button" id="postOptions{{ post.id }}" data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="fas fa-ellipsis-v"></i>
-                                        </button>
-                                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="postOptions{{ post.id }}">
-                                            <li><a class="dropdown-item" href="#">Edit Post</a></li>
-                                            <li><a class="dropdown-item text-danger" href="#">Delete Post</a></li>
-                                        </ul>
-                                    </div>
-                                {% endif %}
+<div class="card mb-4 post-card" id="post-{{ post.id }}">
+    <!-- Post Header -->
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+            <div class="avatar bg-primary me-3">
+                {{ post.user.first_name[0] }}{{ post.user.last_name[0] }}
+            </div>
+            <div>
+                <h5 class="mb-0">
+                    <a href="{{ url_for('social.view_profile', user_id=post.user.id) }}" class="text-reset text-decoration-none">
+                        {{ post.user.first_name }} {{ post.user.last_name }}
+                    </a>
+                </h5>
+                <small class="text-muted">
+                    {{ post.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                    {% if post.visibility != 'public' %}
+                        {% if post.visibility == 'private' %}
+                            <i class="fas fa-lock ms-2" title="Private"></i>
+                        {% else %}
+                            <i class="fas fa-user-friends ms-2" title="Connections Only"></i>
+                        {% endif %}
+                    {% endif %}
+                </small>
+            </div>
+        </div>
+        
+        {% if post.user_id == current_user.id %}
+            <div class="dropdown">
+                <button class="btn btn-sm btn-link text-muted" type="button" id="postOptions{{ post.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-ellipsis-v"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="postOptions{{ post.id }}">
+                    <li>
+                        <!-- Add data attributes for the delete confirmation modal -->
+                        <a class="dropdown-item text-danger" href="#" 
+                           data-bs-toggle="modal" 
+                           data-bs-target="#deletePostModal" 
+                           data-post-id="{{ post.id }}">
+                            <i class="fas fa-trash-alt me-2"></i>Delete Post
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Post Content -->
+    <div class="card-body">
+        <p class="card-text">{{ post.content }}</p>
+        
+        <!-- Display Post Image if Available -->
+        {% if post.image_filename %}
+            <div class="post-image mt-2">
+                <img src="{{ url_for('static', filename='uploads/' + post.image_filename) }}" class="img-fluid rounded" alt="Post image">
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Post Actions -->
+    <div class="card-footer bg-transparent">
+        <div class="d-flex justify-content-between mb-2">
+            <div>
+                <span>
+                    <i class="fas fa-thumbs-up text-primary"></i> {{ post.likes|length }}
+                </span>
+                <span class="ms-3">
+                    <i class="fas fa-comment text-secondary"></i> {{ post.comments|length }}
+                </span>
+            </div>
+        </div>
+        
+        <div class="d-flex justify-content-around border-top border-bottom py-2">
+            <form method="POST" action="{{ url_for('social.like_post_route', post_id=post.id) }}" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-link text-decoration-none {% if post.likes|selectattr('user_id', 'equalto', current_user.id)|list|length > 0 %}text-primary{% else %}text-muted{% endif %}">
+                    <i class="fas fa-thumbs-up me-1"></i> Like
+                </button>
+                
+            </form>
+            
+            <button class="btn btn-link text-decoration-none text-muted" type="button" data-bs-toggle="collapse" data-bs-target="#comments{{ post.id }}" aria-expanded="false">
+                <i class="fas fa-comment me-1"></i> Comment
+            </button>
+            
+            <button class="btn btn-link text-decoration-none text-muted">
+                <i class="fas fa-share me-1"></i> Share
+            </button>
+        </div>
+        
+        <!-- Comments Section -->
+        <div class="collapse mt-3" id="comments{{ post.id }}">
+            {% if post.comments %}
+                <div class="comments-section mb-3">
+                    {% for comment in post.comments %}
+                        <div class="d-flex mb-2">
+                            <div class="avatar bg-secondary me-2" style="width: 32px; height: 32px; font-size: 0.7rem;">
+                                {{ comment.user.first_name[0] }}{{ comment.user.last_name[0] }}
                             </div>
-                            
-                            <!-- Post Content -->
-                            <div class="card-body">
-                                <p class="card-text">{{ post.content }}</p>
-                                
-                                <!-- Display Post Image if Available -->
-                                {% if post.image_filename %}
-                                    <div class="post-image mt-2">
-                                        <img src="{{ url_for('static', filename='uploads/' + post.image_filename) }}" class="img-fluid rounded" alt="Post image">
-                                    </div>
-                                {% endif %}
-                            </div>
-                            
-                            <!-- Post Actions -->
-                            <div class="card-footer bg-transparent">
-                                <div class="d-flex justify-content-between mb-2">
-                                    <div>
-                                        <span>
-                                            <i class="fas fa-thumbs-up text-primary"></i> {{ post.likes|length }}
-                                        </span>
-                                        <span class="ms-3">
-                                            <i class="fas fa-comment text-secondary"></i> {{ post.comments|length }}
-                                        </span>
-                                    </div>
-                                </div>
-                                
-                                <div class="d-flex justify-content-around border-top border-bottom py-2">
-                                    <form method="POST" action="{{ url_for('social.like_post_route', post_id=post.id) }}" class="d-inline">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                        <button type="submit" class="btn btn-link text-decoration-none {% if post.likes|selectattr('user_id', 'equalto', current_user.id)|list|length > 0 %}text-primary{% else %}text-muted{% endif %}">
-                                            <i class="fas fa-thumbs-up me-1"></i> Like
-                                        </button>
-                                        
-                                    </form>
-                                    
-                                    <button class="btn btn-link text-decoration-none text-muted" type="button" data-bs-toggle="collapse" data-bs-target="#comments{{ post.id }}" aria-expanded="false">
-                                        <i class="fas fa-comment me-1"></i> Comment
-                                    </button>
-                                    
-                                    <button class="btn btn-link text-decoration-none text-muted">
-                                        <i class="fas fa-share me-1"></i> Share
-                                    </button>
-                                </div>
-                                
-                                <!-- Comments Section -->
-                                <div class="collapse mt-3" id="comments{{ post.id }}">
-                                    {% if post.comments %}
-                                        <div class="comments-section mb-3">
-                                            {% for comment in post.comments %}
-                                                <div class="d-flex mb-2">
-                                                    <div class="avatar bg-secondary me-2" style="width: 32px; height: 32px; font-size: 0.7rem;">
-                                                        {{ comment.user.first_name[0] }}{{ comment.user.last_name[0] }}
-                                                    </div>
-                                                    <div class="comment-bubble">
-                                                        <div class="fw-bold">{{ comment.user.first_name }} {{ comment.user.last_name }}</div>
-                                                        <p class="mb-0">{{ comment.content }}</p>
-                                                        <small class="text-muted">{{ comment.created_at.strftime('%b %d, %Y') }}</small>
-                                                    </div>
-                                                </div>
-                                            {% endfor %}
-                                        </div>
-                                    {% endif %}
-                                    
-                                    <!-- Comment Form -->
-                                    <form method="POST" action="{{ url_for('social.comment_post', post_id=post.id) }}">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                        <div class="input-group">
-                                            <input type="text" class="form-control" name="content" placeholder="Write a comment..." required>
-                                            <button class="btn btn-primary" type="submit">
-                                                <i class="fas fa-paper-plane"></i>
-                                            </button>
-                                        </div>
-                                    </form>
-                                </div>
+                            <div class="comment-bubble">
+                                <div class="fw-bold">{{ comment.user.first_name }} {{ comment.user.last_name }}</div>
+                                <p class="mb-0">{{ comment.content }}</p>
+                                <small class="text-muted">{{ comment.created_at.strftime('%b %d, %Y') }}</small>
                             </div>
                         </div>
                     {% endfor %}
+                </div>
+            {% endif %}
+            
+            <!-- Comment Form -->
+            <form method="POST" action="{{ url_for('social.comment_post', post_id=post.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="input-group">
+                    <input type="text" class="form-control" name="content" placeholder="Write a comment..." required>
+                    <button class="btn btn-primary" type="submit">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}

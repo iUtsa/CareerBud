@@ -248,6 +248,408 @@ class Message(db.Model):
     group = db.relationship('Group', foreign_keys=[group_id], backref='messages')  # For group messages
     conversation = db.relationship('Conversation', foreign_keys=[conversation_id])  # For group messages
 
+# Add these models to your models.py file
+
+class Resume(db.Model):
+    __tablename__ = 'resumes'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    title = db.Column(db.String(100), nullable=False)
+    template = db.Column(db.String(50), default='modern')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    is_primary = db.Column(db.Boolean, default=False)
+    
+    # Resume metadata
+    objective = db.Column(db.Text, nullable=True)
+    summary = db.Column(db.Text, nullable=True)
+    
+    # Color and style preferences
+    primary_color = db.Column(db.String(20), default='#4ade80')
+    secondary_color = db.Column(db.String(20), default='#60a5fa')
+    font_family = db.Column(db.String(50), default='Roboto')
+    
+    # Score and analytics
+    ats_score = db.Column(db.Float, default=0.0)
+    feedback = db.Column(db.Text, nullable=True)
+    
+    # Relationships
+    user = db.relationship('User', backref='resumes')
+    resume_sections = db.relationship('ResumeSection', back_populates='resume', cascade='all, delete-orphan')
+    resume_skills = db.relationship('ResumeSkill', back_populates='resume', cascade='all, delete-orphan')
+    
+    def __repr__(self):
+        return f'<Resume {self.title}>'
+
+
+class ResumeSection(db.Model):
+    __tablename__ = 'resume_sections'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    resume_id = db.Column(db.Integer, db.ForeignKey('resumes.id'), nullable=False)
+    type = db.Column(db.String(50), nullable=False)  # 'education', 'experience', 'project', etc.
+    title = db.Column(db.String(100), nullable=False)
+    organization = db.Column(db.String(100), nullable=True)
+    location = db.Column(db.String(100), nullable=True)
+    start_date = db.Column(db.DateTime, nullable=True)
+    end_date = db.Column(db.DateTime, nullable=True)
+    is_current = db.Column(db.Boolean, default=False)
+    description = db.Column(db.Text, nullable=True)
+    order = db.Column(db.Integer, default=0)
+    
+    # Relationships
+    resume = db.relationship('Resume', back_populates='resume_sections')
+    bullets = db.relationship('ResumeBullet', back_populates='section', cascade='all, delete-orphan')
+    
+    def __repr__(self):
+        return f'<ResumeSection {self.type}: {self.title}>'
+
+
+class ResumeBullet(db.Model):
+    __tablename__ = 'resume_bullets'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    section_id = db.Column(db.Integer, db.ForeignKey('resume_sections.id'), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    order = db.Column(db.Integer, default=0)
+    impact_score = db.Column(db.Float, default=0.0)  # AI score for impact
+    
+    # Relationships
+    section = db.relationship('ResumeSection', back_populates='bullets')
+    
+    def __repr__(self):
+        return f'<ResumeBullet {self.id}>'
+
+
+class ResumeSkill(db.Model):
+    __tablename__ = 'resume_skills'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    resume_id = db.Column(db.Integer, db.ForeignKey('resumes.id'), nullable=False)
+    skill_name = db.Column(db.String(100), nullable=False)
+    category = db.Column(db.String(50), nullable=True)  # 'Technical', 'Soft Skills', etc.
+    proficiency = db.Column(db.Integer, default=0)  # 1-5 scale
+    order = db.Column(db.Integer, default=0)
+    
+    # Relationships
+    resume = db.relationship('Resume', back_populates='resume_skills')
+    
+    def __repr__(self):
+        return f'<ResumeSkill {self.skill_name}>'
+
+
+# Add these functions to work with resume data
+
+def create_resume(user_id, title, template='modern'):
+    try:
+        # Check if this is the first resume for the user
+        is_first = not Resume.query.filter_by(user_id=user_id).first()
+        
+        resume = Resume(
+            user_id=user_id,
+            title=title,
+            template=template,
+            is_primary=is_first  # First resume is primary by default
+        )
+        db.session.add(resume)
+        db.session.commit()
+        return resume.id
+    except Exception as e:
+        print(f"Error creating resume: {type(e).__name__} - {str(e)}")
+        db.session.rollback()
+        return None
+
+
+def get_user_resumes(user_id):
+    try:
+        return Resume.query.filter_by(user_id=user_id).order_by(Resume.updated_at.desc()).all()
+    except Exception as e:
+        print(f"Error retrieving resumes: {type(e).__name__} - {str(e)}")
+        return []
+
+
+def get_resume(resume_id, user_id=None):
+    """
+    Get a resume by ID. If user_id is provided, ensure the resume belongs to that user.
+    """
+    query = Resume.query.filter_by(id=resume_id)
+    if user_id:
+        query = query.filter_by(user_id=user_id)
+    return query.first()
+
+
+def update_resume(resume_id, user_id, resume_data):
+    """
+    Update a resume with the provided data
+    """
+    try:
+        resume = get_resume(resume_id, user_id)
+        if not resume:
+            return False
+            
+        # Update basic resume fields
+        for key, value in resume_data.items():
+            if hasattr(resume, key):
+                setattr(resume, key, value)
+        
+        resume.updated_at = datetime.utcnow()
+        db.session.commit()
+        return True
+    except Exception as e:
+        print(f"Error updating resume: {type(e).__name__} - {str(e)}")
+        db.session.rollback()
+        return False
+
+
+def delete_resume(resume_id, user_id):
+    """
+    Delete a resume
+    """
+    try:
+        resume = get_resume(resume_id, user_id)
+        if not resume:
+            return False
+            
+        db.session.delete(resume)
+        db.session.commit()
+        return True
+    except Exception as e:
+        print(f"Error deleting resume: {type(e).__name__} - {str(e)}")
+        db.session.rollback()
+        return False
+
+
+def add_resume_section(resume_id, user_id, section_data):
+    """
+    Add a section to a resume
+    """
+    try:
+        resume = get_resume(resume_id, user_id)
+        if not resume:
+            return None
+            
+        # Get the highest order and add 1
+        max_order = db.session.query(db.func.max(ResumeSection.order)).filter_by(resume_id=resume_id).scalar() or 0
+        
+        section = ResumeSection(
+            resume_id=resume_id,
+            type=section_data.get('type'),
+            title=section_data.get('title'),
+            organization=section_data.get('organization'),
+            location=section_data.get('location'),
+            start_date=section_data.get('start_date'),
+            end_date=section_data.get('end_date'),
+            is_current=section_data.get('is_current', False),
+            description=section_data.get('description'),
+            order=max_order + 1
+        )
+        db.session.add(section)
+        db.session.commit()
+        
+        # Add bullets if provided
+        bullets = section_data.get('bullets', [])
+        for idx, bullet_content in enumerate(bullets):
+            bullet = ResumeBullet(
+                section_id=section.id,
+                content=bullet_content,
+                order=idx
+            )
+            db.session.add(bullet)
+        
+        db.session.commit()
+        return section.id
+    except Exception as e:
+        print(f"Error adding resume section: {type(e).__name__} - {str(e)}")
+        db.session.rollback()
+        return None
+
+
+def add_resume_skill(resume_id, user_id, skill_data):
+    """
+    Add a skill to a resume
+    """
+    try:
+        resume = get_resume(resume_id, user_id)
+        if not resume:
+            return None
+            
+        # Get the highest order and add 1
+        max_order = db.session.query(db.func.max(ResumeSkill.order)).filter_by(resume_id=resume_id).scalar() or 0
+        
+        skill = ResumeSkill(
+            resume_id=resume_id,
+            skill_name=skill_data.get('skill_name'),
+            category=skill_data.get('category'),
+            proficiency=skill_data.get('proficiency', 3),
+            order=max_order + 1
+        )
+        db.session.add(skill)
+        db.session.commit()
+        return skill.id
+    except Exception as e:
+        print(f"Error adding resume skill: {type(e).__name__} - {str(e)}")
+        db.session.rollback()
+        return None
+
+
+def generate_resume_summary(resume_id, user_id):
+    """
+    Generate an AI-powered summary for a resume
+    """
+    try:
+        resume = get_resume(resume_id, user_id)
+        if not resume:
+            return False
+            
+        # Get user data
+        user = User.query.get(user_id)
+        
+        # Get sections for this resume
+        experience_sections = ResumeSection.query.filter_by(
+            resume_id=resume_id, 
+            type='experience'
+        ).order_by(ResumeSection.order).all()
+        
+        education_sections = ResumeSection.query.filter_by(
+            resume_id=resume_id, 
+            type='education'
+        ).order_by(ResumeSection.order).all()
+        
+        skills = ResumeSkill.query.filter_by(resume_id=resume_id).all()
+        
+        # Build context for summary generation
+        context = {
+            'name': f"{user.first_name} {user.last_name}",
+            'major': user.major,
+            'university': user.university,
+            'experience': [
+                {
+                    'title': section.title,
+                    'organization': section.organization,
+                    'bullets': [bullet.content for bullet in section.bullets]
+                } for section in experience_sections
+            ],
+            'education': [
+                {
+                    'degree': section.title,
+                    'school': section.organization,
+                } for section in education_sections
+            ],
+            'skills': [skill.skill_name for skill in skills]
+        }
+        
+        # This is where you would integrate with an AI service to generate the summary
+        # For now, we'll create a simple placeholder summary based on the context
+        summary = f"Dedicated {context['major']} student at {context['university']} with experience in "
+        
+        if context['experience']:
+            summary += f"{context['experience'][0]['title']} at {context['experience'][0]['organization']}. "
+        else:
+            summary += "various projects and coursework. "
+            
+        if context['skills']:
+            skills_str = ", ".join(context['skills'][:3])
+            summary += f"Skilled in {skills_str} and more."
+        
+        resume.summary = summary
+        db.session.commit()
+        return True
+        
+    except Exception as e:
+        print(f"Error generating resume summary: {type(e).__name__} - {str(e)}")
+        db.session.rollback()
+        return False
+
+
+def analyze_resume_ats(resume_id, user_id, job_description=None):
+    """
+    Analyze a resume against ATS systems and potentially a job description
+    """
+    try:
+        resume = get_resume(resume_id, user_id)
+        if not resume:
+            return False
+            
+        # Get resume sections and skills
+        sections = ResumeSection.query.filter_by(resume_id=resume_id).all()
+        skills = ResumeSkill.query.filter_by(resume_id=resume_id).all()
+        
+        # Basic checks - these would be more sophisticated in a real implementation
+        has_contact = True  # Assume user profile has contact info
+        has_experience = any(section.type == 'experience' for section in sections)
+        has_education = any(section.type == 'education' for section in sections)
+        has_skills = len(skills) > 0
+        bullet_count = sum(len(section.bullets) for section in sections)
+        has_enough_bullets = bullet_count >= 5
+        
+        # Calculate basic ATS score - this would be more sophisticated in reality
+        base_score = 0
+        if has_contact: base_score += 20
+        if has_experience: base_score += 25
+        if has_education: base_score += 20
+        if has_skills: base_score += 15
+        if has_enough_bullets: base_score += 20
+        
+        # Calculate more sophisticated score if job description is provided
+        job_match_score = 0
+        feedback = []
+        
+        if job_description:
+            # This simulates keyword matching - in a real implementation, 
+            # you'd use more sophisticated NLP
+            job_description = job_description.lower()
+            skill_matches = 0
+            
+            for skill in skills:
+                if skill.skill_name.lower() in job_description:
+                    skill_matches += 1
+            
+            # Calculate match percentage
+            if skills:
+                match_percentage = (skill_matches / len(skills)) * 100
+                job_match_score = min(30, match_percentage * 0.3)  # Max 30 points from keyword matching
+            
+            # Add feedback based on analysis
+            if skill_matches < len(skills) * 0.3:
+                feedback.append("Your skills don't strongly match the job description. Consider adding more relevant skills.")
+            
+            if not has_experience:
+                feedback.append("Add professional experience to improve your resume's strength.")
+            
+            if bullet_count < 10:
+                feedback.append("Add more bullet points to detail your experiences.")
+        else:
+            # General feedback without job description
+            if not has_experience:
+                feedback.append("Add professional experience to improve your resume's strength.")
+            
+            if not has_education:
+                feedback.append("Add your educational background.")
+                
+            if not has_skills:
+                feedback.append("Add your technical and soft skills.")
+                
+            if bullet_count < 5:
+                feedback.append("Add more details to your experiences with bullet points.")
+        
+        # Calculate final score
+        final_score = min(100, base_score + job_match_score)
+        
+        # Update resume with score and feedback
+        resume.ats_score = final_score
+        resume.feedback = "\n".join(feedback) if feedback else "Your resume meets basic ATS requirements."
+        db.session.commit()
+        
+        return {
+            'score': final_score,
+            'feedback': resume.feedback
+        }
+    except Exception as e:
+        print(f"Error analyzing resume: {type(e).__name__} - {str(e)}")
+        db.session.rollback()
+        return None
+
 
 def send_message(sender_id, recipient_id, content):
     try:
@@ -696,3 +1098,39 @@ def search_users(query):
             User.major.ilike(f"%{query}%")
         )
     ).limit(20).all()
+
+
+# Add this function to your models.py file
+
+def delete_post(post_id, user_id):
+    """
+    Delete a post if the user is the owner
+    
+    Args:
+        post_id: The ID of the post to delete
+        user_id: The ID of the user trying to delete the post
+        
+    Returns:
+        bool: True if post was deleted, False otherwise
+    """
+    try:
+        post = Post.query.get(post_id)
+        
+        # Check if post exists and user is the owner
+        if not post or post.user_id != user_id:
+            return False
+            
+        # Delete all likes associated with the post
+        PostLike.query.filter_by(post_id=post_id).delete()
+        
+        # Delete all comments associated with the post
+        Comment.query.filter_by(post_id=post_id).delete()
+        
+        # Delete the post itself
+        db.session.delete(post)
+        db.session.commit()
+        return True
+    except Exception as e:
+        print(f"Error deleting post: {type(e).__name__} - {str(e)}")
+        db.session.rollback()
+        return False

@@ -5,6 +5,7 @@ from app.extensions import db, bcrypt, login_manager, socketio, csrf, migrate
 import humanize
 import os
 from datetime import datetime
+from app.routes.resume_bp import resume_bp
 
 
 
@@ -60,6 +61,7 @@ def create_app(config_class=None):
     app.register_blueprint(progress_bp)
     app.register_blueprint(social_bp)
     app.register_blueprint(subscription_bp)
+    app.register_blueprint(resume_bp)
 
     # Import models here to avoid circular imports
     from app import models

@@ -1,0 +1,541 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+:root {
+    --primary-color: {{ resume.primary_color }};
+    --secondary-color: {{ resume.secondary_color }};
+    --font-family: "{{ resume.font_family }}", Roboto, sans-serif;
+}
+
+/* Modern Resume Template Styles */
+.resume-container {
+    max-width: 850px;
+    margin: 40px auto;
+    background: white;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+    font-family: var(--font-family);
+}
+
+.resume-header {
+    position: relative;
+    padding: 40px 50px 30px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+}
+
+.resume-header h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin: 0 0 5px 0;
+    letter-spacing: 1px;
+}
+
+.resume-header h2 {
+    font-size: 1.3rem;
+    font-weight: 500;
+    margin: 0 0 15px 0;
+    opacity: 0.9;
+}
+
+.contact-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px 30px;
+    margin-top: 20px;
+}
+
+.contact-info div {
+    display: flex;
+    align-items: center;
+}
+
+.contact-info i {
+    margin-right: 8px;
+    font-size: 0.9rem;
+}
+
+.resume-objective {
+    padding: 30px 50px;
+    border-bottom: 1px solid #eee;
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.resume-content {
+    padding: 0 50px 50px;
+}
+
+.resume-section {
+    margin: 35px 0;
+}
+
+.resume-section-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 5px;
+    display: inline-block;
+}
+
+.resume-item {
+    margin-bottom: 25px;
+    position: relative;
+}
+
+.resume-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+}
+
+.resume-item-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+    color: #333;
+}
+
+.resume-item-subtitle {
+    font-size: 1rem;
+    color: #555;
+    margin: 5px 0;
+}
+
+.resume-date {
+    font-size: 0.9rem;
+    color: #777;
+    white-space: nowrap;
+}
+
+.resume-item-location {
+    font-size: 0.9rem;
+    color: #777;
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+}
+
+.resume-item-location i {
+    margin-right: 5px;
+    font-size: 0.8rem;
+}
+
+.resume-item-description {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #555;
+    margin-top: 10px;
+}
+
+.resume-item-bullets {
+    margin-top: 10px;
+    padding-left: 20px;
+}
+
+.resume-item-bullets li {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #444;
+    margin-bottom: 5px;
+}
+
+.skills-section {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+}
+
+.skill-category {
+    flex: 1 1 300px;
+}
+
+.skill-category-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.skill-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.skill-tag {
+    padding: 5px 10px;
+    background: rgba(var(--primary-color-rgb, 77, 171, 247), 0.1);
+    border: 1px solid rgba(var(--primary-color-rgb, 77, 171, 247), 0.3);
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: #444;
+}
+
+.print-button {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 1000;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 30px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.2s, background-color 0.2s;
+}
+
+.print-button i {
+    margin-right: 8px;
+}
+
+.print-button:hover {
+    transform: translateY(-2px);
+    background: var(--secondary-color);
+}
+
+@media (max-width: 768px) {
+    .resume-header {
+        padding: 30px 30px 25px;
+    }
+    
+    .resume-objective, .resume-content {
+        padding: 25px 30px;
+    }
+    
+    .resume-item-header {
+        flex-direction: column;
+    }
+    
+    .resume-date {
+        margin-top: 5px;
+    }
+}
+
+@media print {
+    body {
+        background: white;
+        font-size: 12pt;
+    }
+    
+    .resume-container {
+        box-shadow: none;
+        margin: 0;
+        width: 100%;
+    }
+    
+    .print-button {
+        display: none;
+    }
+    
+    .resume-header {
+        padding: 20pt 30pt 15pt;
+    }
+    
+    .resume-objective, .resume-content {
+        padding: 15pt 30pt;
+    }
+    
+    a {
+        text-decoration: none;
+        color: inherit;
+    }
+    
+    .resume-section {
+        page-break-inside: avoid;
+    }
+}
+</style>
+
+<div class="container-fluid">
+    <div class="resume-container">
+        <!-- Header -->
+        <header class="resume-header">
+            <h1>{{ user.first_name }} {{ user.last_name }}</h1>
+            <h2>{{ user.major }} Student</h2>
+            
+            <div class="contact-info">
+                <div>
+                    <i class="fas fa-envelope"></i>
+                    <span>{{ user.email }}</span>
+                </div>
+                <div>
+                    <i class="fas fa-phone"></i>
+                    <span>+1 (123) 456-7890</span>
+                </div>
+                <div>
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>{{ user.university }}</span>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Objective/Summary -->
+        {% if resume.objective %}
+        <section class="resume-objective">
+            {{ resume.objective }}
+        </section>
+        {% endif %}
+        
+        <div class="resume-content">
+            <!-- Education Section -->
+            {% set education_sections = section_types.get('education', []) %}
+            {% if education_sections %}
+            <section class="resume-section">
+                <h2 class="resume-section-title">Education</h2>
+                
+                {% for section in education_sections %}
+                <div class="resume-item">
+                    <div class="resume-item-header">
+                        <div>
+                            <h3 class="resume-item-title">{{ section.title }}</h3>
+                            <h4 class="resume-item-subtitle">{{ section.organization }}</h4>
+                            {% if section.location %}
+                            <div class="resume-item-location">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span>{{ section.location }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="resume-date">
+                            {% if section.start_date %}
+                                {{ section.start_date.strftime('%b %Y') }} - 
+                                {% if section.is_current %}
+                                    Present
+                                {% elif section.end_date %}
+                                    {{ section.end_date.strftime('%b %Y') }}
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if section.description %}
+                    <div class="resume-item-description">
+                        {{ section.description }}
+                    </div>
+                    {% endif %}
+                    
+                    {% if section.bullets %}
+                    <ul class="resume-item-bullets">
+                        {% for bullet in section.bullets %}
+                        <li>{{ bullet.content }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </section>
+            {% endif %}
+            
+            <!-- Experience Section -->
+            {% set experience_sections = section_types.get('experience', []) %}
+            {% if experience_sections %}
+            <section class="resume-section">
+                <h2 class="resume-section-title">Experience</h2>
+                
+                {% for section in experience_sections %}
+                <div class="resume-item">
+                    <div class="resume-item-header">
+                        <div>
+                            <h3 class="resume-item-title">{{ section.title }}</h3>
+                            <h4 class="resume-item-subtitle">{{ section.organization }}</h4>
+                            {% if section.location %}
+                            <div class="resume-item-location">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span>{{ section.location }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="resume-date">
+                            {% if section.start_date %}
+                                {{ section.start_date.strftime('%b %Y') }} - 
+                                {% if section.is_current %}
+                                    Present
+                                {% elif section.end_date %}
+                                    {{ section.end_date.strftime('%b %Y') }}
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if section.description %}
+                    <div class="resume-item-description">
+                        {{ section.description }}
+                    </div>
+                    {% endif %}
+                    
+                    {% if section.bullets %}
+                    <ul class="resume-item-bullets">
+                        {% for bullet in section.bullets %}
+                        <li>{{ bullet.content }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </section>
+            {% endif %}
+            
+            <!-- Projects Section -->
+            {% set project_sections = section_types.get('project', []) %}
+            {% if project_sections %}
+            <section class="resume-section">
+                <h2 class="resume-section-title">Projects</h2>
+                
+                {% for section in project_sections %}
+                <div class="resume-item">
+                    <div class="resume-item-header">
+                        <div>
+                            <h3 class="resume-item-title">{{ section.title }}</h3>
+                            {% if section.organization %}
+                            <h4 class="resume-item-subtitle">{{ section.organization }}</h4>
+                            {% endif %}
+                        </div>
+                        <div class="resume-date">
+                            {% if section.start_date %}
+                                {{ section.start_date.strftime('%b %Y') }} - 
+                                {% if section.is_current %}
+                                    Present
+                                {% elif section.end_date %}
+                                    {{ section.end_date.strftime('%b %Y') }}
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if section.description %}
+                    <div class="resume-item-description">
+                        {{ section.description }}
+                    </div>
+                    {% endif %}
+                    
+                    {% if section.bullets %}
+                    <ul class="resume-item-bullets">
+                        {% for bullet in section.bullets %}
+                        <li>{{ bullet.content }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </section>
+            {% endif %}
+            
+            <!-- Skills Section -->
+            {% if skill_categories %}
+            <section class="resume-section">
+                <h2 class="resume-section-title">Skills</h2>
+                
+                <div class="skills-section">
+                    {% for category, skills in skill_categories.items() %}
+                    <div class="skill-category">
+                        <h3 class="skill-category-title">{{ category }}</h3>
+                        <div class="skill-list">
+                            {% for skill in skills %}
+                            <span class="skill-tag">{{ skill.skill_name }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
+            
+            <!-- Other Sections -->
+            {% for section_type, sections in section_types.items() %}
+                {% if section_type not in ['education', 'experience', 'project'] and sections %}
+                <section class="resume-section">
+                    <h2 class="resume-section-title">{{ section_type|capitalize }}</h2>
+                    
+                    {% for section in sections %}
+                    <div class="resume-item">
+                        <div class="resume-item-header">
+                            <div>
+                                <h3 class="resume-item-title">{{ section.title }}</h3>
+                                {% if section.organization %}
+                                <h4 class="resume-item-subtitle">{{ section.organization }}</h4>
+                                {% endif %}
+                                {% if section.location %}
+                                <div class="resume-item-location">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <span>{{ section.location }}</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="resume-date">
+                                {% if section.start_date %}
+                                    {{ section.start_date.strftime('%b %Y') }} - 
+                                    {% if section.is_current %}
+                                        Present
+                                    {% elif section.end_date %}
+                                        {{ section.end_date.strftime('%b %Y') }}
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if section.description %}
+                        <div class="resume-item-description">
+                            {{ section.description }}
+                        </div>
+                        {% endif %}
+                        
+                        {% if section.bullets %}
+                        <ul class="resume-item-bullets">
+                            {% for bullet in section.bullets %}
+                            <li>{{ bullet.content }}</li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </section>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+    
+    <button class="print-button" onclick="window.print()">
+        <i class="fas fa-print"></i> Print Resume
+    </button>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Extract RGB values from hex color for CSS variables
+        function hexToRgb(hex) {
+            // Remove the hash if it exists
+            hex = hex.replace('#', '');
+            
+            // Parse the hex values
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            
+            return `${r}, ${g}, ${b}`;
+        }
+        
+        // Set the RGB variables for the primary and secondary colors
+        document.documentElement.style.setProperty(
+            '--primary-color-rgb', 
+            hexToRgb('{{ resume.primary_color }}')
+        );
+        
+        document.documentElement.style.setProperty(
+            '--secondary-color-rgb', 
+            hexToRgb('{{ resume.secondary_color }}')
+        );
+    });
+</script>
+{% endblock %}

@@ -706,6 +706,33 @@
     </div>
 </div>
 
+<!-- Delete Post Modal -->
+<div class="modal fade" id="deletePostModal" tabindex="-1" aria-labelledby="deletePostModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deletePostModalLabel">
+                    <i class="fas fa-exclamation-triangle text-danger me-2"></i>
+                    Delete Post
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this post? This action cannot be undone.</p>
+                <p class="text-danger fw-bold">All comments and interactions will be permanently deleted.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deletePostForm" method="POST" action="">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash-alt me-2"></i>Delete Post
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_scripts %}
@@ -727,17 +754,18 @@ $(document).ready(function() {
     });
     
     // Handle smooth scrolling to anchors
-if (window.location.hash) {
-    const targetElement = $(window.location.hash);
-    if (targetElement.length) {
-        // Wait for images to load for better positioning
-        setTimeout(function() {
-            $('html, body').animate({
-                scrollTop: targetElement.offset().top - 70 // Offset for fixed header
-            }, 800);
-        }, 300);
+    if (window.location.hash) {
+        const targetElement = $(window.location.hash);
+        if (targetElement.length) {
+            // Wait for images to load for better positioning
+            setTimeout(function() {
+                $('html, body').animate({
+                    scrollTop: targetElement.offset().top - 70 // Offset for fixed header
+                }, 800);
+            }, 300);
+        }
     }
-}
+    
     // Image preview functionality
     $('#image, #modalImage').change(function() {
         const file = this.files[0];
@@ -833,6 +861,7 @@ if (window.location.hash) {
                     loading = false;
                 } else {
                     // If has images, preload them first
+                    // Continuation of loadMorePosts function
                     images.each(function() {
                         const img = new Image();
                         img.onload = img.onerror = function() {
@@ -864,10 +893,7 @@ if (window.location.hash) {
             }
         });
     }
-});
 
-
-$(document).ready(function() {
     // Function to parse URL parameters
     function getUrlParameter(name) {
         name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
@@ -910,9 +936,22 @@ $(document).ready(function() {
             }
         }, 1000);
     }
+    
+    // Setup the delete post modal
+    const deletePostModal = document.getElementById('deletePostModal');
+    if (deletePostModal) {
+        deletePostModal.addEventListener('show.bs.modal', function(event) {
+            // Button that triggered the modal
+            const button = event.relatedTarget;
+            
+            // Extract post id from the button's data attribute
+            const postId = button.getAttribute('data-post-id');
+            
+            // Update the form's action URL with the post id
+            const form = this.querySelector('#deletePostForm');
+            form.action = "{{ url_for('social.delete_post_route', post_id=0) }}".replace('/0', '/' + postId);
+        });
+    }
 });
-
-
-
 </script>
 {% endblock %}
