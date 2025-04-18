@@ -1,183 +1,160 @@
-![CareerBud Logo](https://cdn-icons-png.flaticon.com/512/10397/10397171.png)
-
 # CareerBud
 
-![CareerBud Banner](https://cdn-icons-png.flaticon.com/512/10397/10397171.png)
+> Your Smart Career Companion — Resume Builder, Job Tracker, Skill Growth, and More. Empower your future with AI.
 
-[![Status](https://img.shields.io/badge/STATUS-ACTIVE-success?style=for-the-badge)](#)
-[![Version](https://img.shields.io/badge/VERSION-1.0.0-blue?style=for-the-badge)](#)
-[![License](https://img.shields.io/badge/LICENSE-MIT-yellow?style=for-the-badge)](#)
-
-**CareerBud** is the ultimate platform for students to manage their academic journey, connect with peers, and launch their professional careers.
-
-*Created by **Arnab Das Utsa***
+## 🌐 Live Project
+**Website:** [careersbud.com](https://careersbud.com)
 
 ---
 
-## 🎯 Highlights
+## 🧠 Overview
+**CareerBud** is a full-stack AI-powered career management platform built for students, professionals, and job-seekers. It combines job tracking, resume building, skill progress monitoring, and real-time analytics to help users take full control of their career journey — all in one sleek and intuitive web app.
 
-| ![Dashboard](https://cdn-icons-png.flaticon.com/512/10397/10397171.png) Track Progress | ![Job Board](https://static.vecteezy.com/system/resources/previews/009/239/861/original/job-board-icon-style-free-vector.jpg) Find Opportunities | ![Network](https://cdn-icons-png.flaticon.com/512/1384/1384005.png) Network | ![Mobile](https://cdn-icons-png.flaticon.com/512/747/747376.png) Mobile Ready |
-|:----------------------------------------------:|:------------------------------------------------------------:|:---------------------------------------------:|:-------------------------------------------:|
-
----
-
-## 🌟 Platform Preview
-
-![CareerBud Preview](https://cdn-icons-png.flaticon.com/512/10397/10397171.png)
+CareerBud also features social engagement tools, personalized AI guidance, and ATS-optimized resume generation using modern templates.
 
 ---
 
 ## 🚀 Key Features
 
-### 🎓 For Students
-- 📊 **Academic Dashboard** — GPA, credits, and course info
-- 📝 **Smart To-Do Lists** — Manage assignments
-- 📈 **Skill Tracker** — Visualize growth
-- 🎯 **Goal Planning** — Plan your future
+### 📝 Resume Builder
+- Create stunning resumes using modern, professional, or creative templates
+- Customize fonts, color themes, and layouts
+- Add sections like experience, education, certifications, and projects
+- Export to PDF or share a link
+- Enhance bullet points and career objectives using AI suggestions
 
-### 💼 Career
-- 🔍 **Job Board** — Discover roles that fit
-- 📋 **Application Tracker** — Stay organized
-- 📝 **Resume Builder** — Build standout resumes
-- 🏆 **Portfolio** — Showcase your achievements
+### 📊 Career Dashboard
+- Visualize job applications across companies, roles, and status
+- Add and manage applied jobs with notes and resume versions
+- Track interview stages with drag-and-drop progress
 
-### 🌐 Social Network
-- 📱 **Modern Feed** — LinkedIn-style updates
-- 💬 **Messaging** — Connect with others
-- 👋 **Connections** — Grow your network
-- 👨‍👩‍👧‍👦 **Groups** — Join student communities
+### 🧠 Skill Tracker
+- Organize and monitor your hard and soft skills
+- Categorized by proficiency and industry relevance
+- Integrate with completed projects and achievements
 
----
+### 💬 Social + ChatGPT Integration
+- In-app messaging between connections
+- Intelligent AI chatbot for job advice, resume review, and learning resources
 
-## ⚡ Tech Stack
-
-| HTML5 | CSS3 | JavaScript | Python | Flask |
-|:-----:|:----:|:----------:|:------:|:-----:|
-| ![](https://via.placeholder.com/60/E34F26/FFFFFF?text=HTML) | ![](https://via.placeholder.com/60/1572B6/FFFFFF?text=CSS) | ![](https://via.placeholder.com/60/F7DF1E/000000?text=JS) | ![](https://via.placeholder.com/60/3776AB/FFFFFF?text=PY) | ![](https://via.placeholder.com/60/000000/FFFFFF?text=Flask) |
-
-| PostgreSQL | Bootstrap | SQLAlchemy | Docker | GitHub |
-|:----------:|:---------:|:----------:|:------:|:------:|
-| ![](https://via.placeholder.com/60/336791/FFFFFF?text=SQL) | ![](https://via.placeholder.com/60/7952B3/FFFFFF?text=BS) | ![](https://via.placeholder.com/60/FF6C37/FFFFFF?text=SA) | ![](https://via.placeholder.com/60/2496ED/FFFFFF?text=🐋) | ![](https://via.placeholder.com/60/2088FF/FFFFFF?text=GH) |
+### 📂 Job Bank + ATS Analysis
+- Upload job descriptions to get tailored resume suggestions
+- Get ATS ranking, skill keyword match, and improvement tips
 
 ---
 
-## 🔥 Showcase
+## 🛠️ Tech Stack
 
-| Social Feed | Progress Tracking |
-|:-----------:|:-----------------:|
-| ![](https://cdn-icons-png.flaticon.com/512/10397/10397171.png) | ![](https://cdn-icons-png.flaticon.com/512/10397/10397171.png) |
+### 🔐 Backend
+- Python (Flask)
+- PostgreSQL with SQLAlchemy ORM
+- Flask-Login, Flask-Migrate, WTForms, Flask-SocketIO
 
-| Messaging | Job Board |
-|:---------:|:---------:|
-| ![](https://cdn-icons-png.flaticon.com/512/1384/1384005.png) | ![](https://static.vecteezy.com/system/resources/previews/009/239/861/original/job-board-icon-style-free-vector.jpg) |
+### 💻 Frontend
+- HTML5, CSS3, Bootstrap 5
+- Vanilla JavaScript + jQuery
+- AJAX for asynchronous form and chat processing
+
+### 🤖 AI & Analytics
+- OpenAI (optional AI enhancement & chat)
+- Custom NLP logic for keyword extraction and ATS matching
+
+### ☁️ Deployment
+- Hosted on **Render** (can be deployed on Vercel, Heroku, or DigitalOcean)
+- CI/CD with GitHub Actions (optional)
 
 ---
 
-## 🛠️ Getting Started
-
-### ✅ Prerequisites
-
-```bash
-Python 3.12+
-PostgreSQL or SQLite
-pip (Python package manager)
+## 📁 Folder Structure
+```
+CareerBud/
+├── app/
+│   ├── routes/
+│   ├── models/
+│   ├── templates/
+│   ├── static/
+│   └── forms.py
+├── migrations/
+├── config.py
+├── README.md
+├── run.py
+└── requirements.txt
 ```
 
-### 🚀 Quick Setup
+---
 
+## 🎨 Templates Preview
+| Modern | Professional | Tech | Creative | Minimal |
+|--------|--------------|------|----------|---------|
+| ![Modern](static/image/modern.png) | ![Professional](static/image/professional.png) | ![Tech](static/image/tech.png) | ![Creative](static/image/creative.png) | ![Minimal](static/image/minimal.png) |
+
+---
+
+## 📦 Installation
+
+### 1. Clone the Repository
 ```bash
-# Clone the repo
-git clone https://github.com/yourusername/careerbud.git
+git clone https://github.com/your-username/careerbud.git
 cd careerbud
+```
 
-# Set up virtual environment
+### 2. Create a Virtual Environment
+```bash
 python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+### 3. Install Dependencies
+```bash
 pip install -r requirements.txt
+```
 
-# Set up environment
-cp .env.example .env
-# Update your DB and secret settings in .env
+### 4. Set Environment Variables
+```bash
+export FLASK_APP=run.py
+export FLASK_ENV=development
+export SECRET_KEY='your_secret_key'
+```
 
-# Initialize DB
+### 5. Run the App
+```bash
 flask db upgrade
-
-# Run app
 flask run
 ```
 
 ---
 
-## 📊 Database Schema
-
-![Database Schema](https://cdn-icons-png.flaticon.com/512/10397/10397171.png)
-
----
-
-## 📱 Mobile Experience
-
-| Feed | Profile | Messages |
-|:----:|:-------:|:--------:|
-| ![](https://cdn-icons-png.flaticon.com/512/10397/10397171.png) | ![](https://cdn-icons-png.flaticon.com/512/10397/10397171.png) | ![](https://cdn-icons-png.flaticon.com/512/1384/1384005.png) |
-
----
-
-## 🧪 Testing & 🐳 Docker
-
-### Testing
-
+## 🧪 Testing
 ```bash
-pytest
-pytest --cov=app
-```
-
-### Docker
-
-```bash
-docker build -t careerbud .
-docker run -p 5000:5000 careerbud
+pytest tests/
 ```
 
 ---
 
-## 🔮 Roadmap
-
-| AI Recommendations | Mobile App | API Platform | Institution Portal |
-|:------------------:|:----------:|:------------:|:------------------:|
-| Q2 2025 | Q3 2025 | Q4 2025 | Q1 2026 |
-
----
-
-## 👥 Contributing
-
-```bash
-# Fork, clone, and create a branch
-git checkout -b feature/amazing-feature
-
-# Make changes and commit
-git commit -m "Added amazing feature"
-
-# Push and create PR
-git push origin feature/amazing-feature
-```
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for more info.
+## 💡 Future Plans
+- PDF resume export with advanced typography
+- LinkedIn data importer
+- AI-generated cover letters
+- Real-time job scraping from Indeed, Glassdoor
+- Mobile PWA support
 
 ---
 
-## 📜 License
-
-```
-MIT License
-
-(c) 2025 Arnab Das Utsa
-```
+## 🙌 Credits
+**Team Lead:** Arnab Das Utsa  
+**UI/UX Designer:** Senjuti Das  
+**Backend Engineers:** Suleman Sami, Erfan Chowdhury  
+**Full Stack Developer:** Arpan Patel
 
 ---
 
-## 🌐 Connect
+## 🛡 License
+This project is licensed under the MIT License.
 
-[![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/yourusername/careerbud)
-[![Email](https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:contact@careerbud.com)
-[![Twitter](https://img.shields.io/badge/Twitter-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white)](https://twitter.com/careerbud)
+---
+
+## 🧠 Let's Connect
+Have feedback or ideas? Reach out on [LinkedIn](https://linkedin.com/in/arnabdutsaa) or drop an issue/pull request.
+
+> CareerBud: Building Your Career, One Block at a Time. 🚀
 
