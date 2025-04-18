@@ -11,6 +11,9 @@ from werkzeug.utils import secure_filename
 import os
 from datetime import datetime
 from app import db
+from app.forms import ResumeForm
+
+
 
 resume_bp = Blueprint('resume', __name__, url_prefix='/resume')
 
@@ -320,6 +323,7 @@ def templates():
     """
     View available resume templates
     """
+    form = ResumeForm()
     templates = [
         {
             'id': 'modern',
@@ -353,7 +357,7 @@ def templates():
         }
     ]
     
-    return render_template('resume/templates.html', templates=templates)
+    return render_template('resume/templates.html', templates=templates, form=form)
 
 @resume_bp.route('/api/section/<int:section_id>/update-order', methods=['POST'])
 @login_required
