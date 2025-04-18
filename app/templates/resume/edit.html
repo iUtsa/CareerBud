@@ -335,7 +335,7 @@
                                         <input class="form-check-input" type="radio" name="template" id="templateModern" value="modern" {% if resume.template == 'modern' %}checked{% endif %}>
                                         <label class="form-check-label" for="templateModern">
                                             <div class="template-preview">
-                                                <img src="{{ url_for('static', filename='img/templates/modern_thumb.png') }}" alt="Modern Template">
+                                                <img src="{{ url_for('static', filename='image/modern.png') }}" alt="Modern Template" id="tee">
                                             </div>
                                             Modern
                                         </label>
@@ -344,7 +344,7 @@
                                         <input class="form-check-input" type="radio" name="template" id="templateProfessional" value="professional" {% if resume.template == 'professional' %}checked{% endif %}>
                                         <label class="form-check-label" for="templateProfessional">
                                             <div class="template-preview">
-                                                <img src="{{ url_for('static', filename='img/templates/professional_thumb.png') }}" alt="Professional Template">
+                                                <img src="{{ url_for('static', filename='image/professional.png') }}" alt="Professional Template" id="tee">
                                             </div>
                                             Professional
                                         </label>
@@ -353,7 +353,7 @@
                                         <input class="form-check-input" type="radio" name="template" id="templateCreative" value="creative" {% if resume.template == 'creative' %}checked{% endif %}>
                                         <label class="form-check-label" for="templateCreative">
                                             <div class="template-preview">
-                                                <img src="{{ url_for('static', filename='img/templates/creative_thumb.png') }}" alt="Creative Template">
+                                                <img src="{{ url_for('static', filename='image/creative.png') }}" alt="Creative Template" id="tee">
                                             </div>
                                             Creative
                                         </label>

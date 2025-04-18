@@ -1371,3 +1371,8 @@ body {
   color: var(--text-primary);
   transition: background-color 0.3s ease, color 0.3s ease; 
 }
+
+#tee{
+  width:80px;
+  height:auto;
+}

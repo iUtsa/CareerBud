@@ -4,6 +4,8 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, FloatField, IntegerField, SelectField, SelectMultipleField, DateField, SubmitField, BooleanField
 from wtforms.validators import DataRequired, Optional, Length, NumberRange
 from flask_wtf.file import FileField
+from wtforms import RadioField  # Add this import
+
 
 class PostForm(FlaskForm):
     content = TextAreaField('Content', validators=[DataRequired(), Length(min=1, max=1000)])
@@ -39,21 +41,17 @@ class MessageForm(FlaskForm):
     content = StringField('Message', validators=[DataRequired()])
     submit = SubmitField('Send')
 
+
 class ResumeForm(FlaskForm):
-    """
-    Form for creating or updating a resume
-    """
     title = StringField('Resume Title', validators=[DataRequired(), Length(max=100)])
-    template = SelectField('Template', choices=[
+    template = RadioField('Template', choices=[
         ('modern', 'Modern'),
         ('professional', 'Professional'),
         ('creative', 'Creative'),
         ('minimal', 'Minimal'),
         ('tech', 'Tech')
-    ])
+    ], default='modern', validators=[DataRequired()]) # Added default value here
     objective = TextAreaField('Career Objective/Summary', validators=[Optional(), Length(max=500)])
-    
-    # Design options
     primary_color = StringField('Primary Color', validators=[Optional(), Length(max=20)], default='#4ade80')
     secondary_color = StringField('Secondary Color', validators=[Optional(), Length(max=20)], default='#60a5fa')
     font_family = SelectField('Font', choices=[
@@ -62,7 +60,7 @@ class ResumeForm(FlaskForm):
         ('Lato', 'Lato'),
         ('Montserrat', 'Montserrat'),
         ('Raleway', 'Raleway')
-    ])
+    ], default='Roboto') # Added default value here
 
 class ResumeSectionForm(FlaskForm):
     """
