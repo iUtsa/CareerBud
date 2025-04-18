@@ -1,0 +1,329 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h2 class="card-title-primary mb-0">
+                        <i class="fas fa-tools me-2"></i> Add Skill
+                    </h2>
+                    <a href="{{ url_for('resume.edit', resume_id=resume.id) }}" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i> Cancel
+                    </a>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('resume.add_skill', resume_id=resume.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        
+                        <div class="mb-3">
+                            <label for="skill_name" class="form-label">Skill Name</label>
+                            <input type="text" class="form-control" id="skill_name" name="skill_name" value="{{ form.skill_name.data or '' }}" required>
+                            <div class="form-text">
+                                Enter the name of your skill (e.g., "Python", "Project Management", "Adobe Photoshop")
+                            </div>
+                            {% if form.skill_name.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.skill_name.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="category" class="form-label">Category</label>
+                            <select class="form-select" id="category" name="category">
+                                <option value="technical" {% if form.category.data == 'technical' %}selected{% endif %}>Technical Skills</option>
+                                <option value="soft" {% if form.category.data == 'soft' %}selected{% endif %}>Soft Skills</option>
+                                <option value="language" {% if form.category.data == 'language' %}selected{% endif %}>Languages</option>
+                                <option value="certification" {% if form.category.data == 'certification' %}selected{% endif %}>Certifications</option>
+                                <option value="other" {% if form.category.data == 'other' %}selected{% endif %}>Other Skills</option>
+                            </select>
+                            <div class="form-text">
+                                Categorizing your skills helps organize them on your resume
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label">Proficiency Level</label>
+                            <div class="range-container mb-2">
+                                <input type="range" class="form-range" min="1" max="5" step="1" id="proficiency_range" name="proficiency" value="{{ form.proficiency.data or 3 }}">
+                                <div class="d-flex justify-content-between">
+                                    <span>Beginner</span>
+                                    <span>Intermediate</span>
+                                    <span>Expert</span>
+                                </div>
+                            </div>
+                            <div class="proficiency-label text-center mb-3">
+                                <span class="badge bg-primary px-3 py-2" id="proficiency_label">
+                                    <i class="fas fa-star me-1"></i> Intermediate
+                                </span>
+                            </div>
+                            <div class="form-text text-center">
+                                Be honest but confident in your self-assessment
+                            </div>
+                        </div>
+                        
+                        <div class="skills-suggestions mb-4">
+                            <h5>Popular Skills by Category</h5>
+                            <div class="mb-3 category-skills" id="technical-skills">
+                                <h6 class="mb-2">Technical Skills</h6>
+                                <div class="skill-chips">
+                                    <span class="skill-chip" data-skill="JavaScript">JavaScript</span>
+                                    <span class="skill-chip" data-skill="Python">Python</span>
+                                    <span class="skill-chip" data-skill="Java">Java</span>
+                                    <span class="skill-chip" data-skill="SQL">SQL</span>
+                                    <span class="skill-chip" data-skill="React">React</span>
+                                    <span class="skill-chip" data-skill="HTML/CSS">HTML/CSS</span>
+                                    <span class="skill-chip" data-skill="Node.js">Node.js</span>
+                                    <span class="skill-chip" data-skill="Docker">Docker</span>
+                                    <span class="skill-chip" data-skill="AWS">AWS</span>
+                                    <span class="skill-chip" data-skill="Git">Git</span>
+                                </div>
+                            </div>
+                            <div class="mb-3 category-skills" id="soft-skills" style="display: none;">
+                                <h6 class="mb-2">Soft Skills</h6>
+                                <div class="skill-chips">
+                                    <span class="skill-chip" data-skill="Leadership">Leadership</span>
+                                    <span class="skill-chip" data-skill="Communication">Communication</span>
+                                    <span class="skill-chip" data-skill="Problem Solving">Problem Solving</span>
+                                    <span class="skill-chip" data-skill="Teamwork">Teamwork</span>
+                                    <span class="skill-chip" data-skill="Time Management">Time Management</span>
+                                    <span class="skill-chip" data-skill="Critical Thinking">Critical Thinking</span>
+                                    <span class="skill-chip" data-skill="Adaptability">Adaptability</span>
+                                    <span class="skill-chip" data-skill="Project Management">Project Management</span>
+                                    <span class="skill-chip" data-skill="Creativity">Creativity</span>
+                                </div>
+                            </div>
+                            <div class="mb-3 category-skills" id="language-skills" style="display: none;">
+                                <h6 class="mb-2">Languages</h6>
+                                <div class="skill-chips">
+                                    <span class="skill-chip" data-skill="English">English</span>
+                                    <span class="skill-chip" data-skill="Spanish">Spanish</span>
+                                    <span class="skill-chip" data-skill="French">French</span>
+                                    <span class="skill-chip" data-skill="German">German</span>
+                                    <span class="skill-chip" data-skill="Mandarin">Mandarin</span>
+                                    <span class="skill-chip" data-skill="Japanese">Japanese</span>
+                                    <span class="skill-chip" data-skill="Arabic">Arabic</span>
+                                    <span class="skill-chip" data-skill="Russian">Russian</span>
+                                </div>
+                            </div>
+                            <div class="mb-3 category-skills" id="certification-skills" style="display: none;">
+                                <h6 class="mb-2">Certifications</h6>
+                                <div class="skill-chips">
+                                    <span class="skill-chip" data-skill="AWS Certified Solutions Architect">AWS Certified Solutions Architect</span>
+                                    <span class="skill-chip" data-skill="Google Cloud Professional">Google Cloud Professional</span>
+                                    <span class="skill-chip" data-skill="Microsoft Azure">Microsoft Azure</span>
+                                    <span class="skill-chip" data-skill="Cisco CCNA">Cisco CCNA</span>
+                                    <span class="skill-chip" data-skill="CompTIA A+">CompTIA A+</span>
+                                    <span class="skill-chip" data-skill="PMP">PMP</span>
+                                    <span class="skill-chip" data-skill="Scrum Master">Scrum Master</span>
+                                </div>
+                            </div>
+                            <div class="mb-3 category-skills" id="other-skills" style="display: none;">
+                                <h6 class="mb-2">Other Skills</h6>
+                                <div class="skill-chips">
+                                    <span class="skill-chip" data-skill="Microsoft Office">Microsoft Office</span>
+                                    <span class="skill-chip" data-skill="Adobe Creative Suite">Adobe Creative Suite</span>
+                                    <span class="skill-chip" data-skill="Digital Marketing">Digital Marketing</span>
+                                    <span class="skill-chip" data-skill="Social Media Management">Social Media Management</span>
+                                    <span class="skill-chip" data-skill="Content Creation">Content Creation</span>
+                                    <span class="skill-chip" data-skill="Data Analysis">Data Analysis</span>
+                                    <span class="skill-chip" data-skill="SEO">SEO</span>
+                                    <span class="skill-chip" data-skill="CRM Software">CRM Software</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('resume.edit', resume_id=resume.id) }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i> Back to Editor
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i> Add Skill
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tips Sidebar for larger screens -->
+        <div class="col-lg-4 d-none d-lg-block">
+            <div class="card position-sticky" style="top: 20px;">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-lightbulb me-2 text-warning"></i> Resume Skills Tips</h3>
+                </div>
+                <div class="card-body">
+                    <h5>General Tips</h5>
+                    <ul class="mb-4">
+                        <li>Focus on skills relevant to the job you're targeting</li>
+                        <li>Blend hard skills (technical) with soft skills (interpersonal)</li>
+                        <li>Be honest about your proficiency levels</li>
+                        <li>Use industry-standard terminology</li>
+                    </ul>
+                    
+                    <h5>Skill Categories</h5>
+                    <div class="mb-2">
+                        <h6><i class="fas fa-laptop-code me-2 text-primary"></i> Technical Skills</h6>
+                        <p class="small">Programming languages, software, tools, platforms, and technical abilities</p>
+                    </div>
+                    <div class="mb-2">
+                        <h6><i class="fas fa-comments me-2 text-success"></i> Soft Skills</h6>
+                        <p class="small">Interpersonal abilities like communication, leadership, and problem-solving</p>
+                    </div>
+                    <div class="mb-2">
+                        <h6><i class="fas fa-language me-2 text-info"></i> Languages</h6>
+                        <p class="small">Languages you speak, including proficiency level (fluent, conversational, etc.)</p>
+                    </div>
+                    <div class="mb-2">
+                        <h6><i class="fas fa-certificate me-2 text-warning"></i> Certifications</h6>
+                        <p class="small">Official certifications and qualifications you've earned</p>
+                    </div>
+                    
+                    <div class="alert alert-info mt-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>ATS Tip:</strong> Most Applicant Tracking Systems scan for specific skills. Include keywords from the job description for better matching.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Skill chips styling */
+.skill-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 5px;
+}
+
+.skill-chip {
+    background-color: rgba(var(--primary-color-rgb), 0.1);
+    border: 1px solid rgba(var(--primary-color-rgb), 0.2);
+    border-radius: 16px;
+    padding: 5px 12px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.skill-chip:hover {
+    background-color: rgba(var(--primary-color-rgb), 0.2);
+    transform: translateY(-1px);
+}
+
+/* Range styling */
+.proficiency-label {
+    margin-top: 10px;
+}
+</style>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Extract RGB values from hex color for CSS variables
+    function hexToRgb(hex) {
+        hex = hex.replace('#', '');
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        return `${r}, ${g}, ${b}`;
+    }
+    
+    // Set CSS variable for primary color RGB
+    const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
+    if (primaryColor) {
+        document.documentElement.style.setProperty('--primary-color-rgb', hexToRgb(primaryColor));
+    }
+    
+    // Handle proficiency slider changes
+    const proficiencyRange = document.getElementById('proficiency_range');
+    const proficiencyLabel = document.getElementById('proficiency_label');
+    
+    function updateProficiencyLabel(value) {
+        let label = '';
+        let icon = '';
+        
+        switch(parseInt(value)) {
+            case 1:
+                label = 'Beginner';
+                icon = 'seedling';
+                break;
+            case 2:
+                label = 'Elementary';
+                icon = 'leaf';
+                break;
+            case 3:
+                label = 'Intermediate';
+                icon = 'star';
+                break;
+            case 4:
+                label = 'Advanced';
+                icon = 'star-half-alt';
+                break;
+            case 5:
+                label = 'Expert';
+                icon = 'award';
+                break;
+        }
+        
+        proficiencyLabel.innerHTML = `<i class="fas fa-${icon} me-1"></i> ${label}`;
+    }
+    
+    if (proficiencyRange && proficiencyLabel) {
+        // Set initial value
+        updateProficiencyLabel(proficiencyRange.value);
+        
+        // Update on change
+        proficiencyRange.addEventListener('input', function() {
+            updateProficiencyLabel(this.value);
+        });
+    }
+    
+    // Handle category change
+    const categorySelect = document.getElementById('category');
+    const categorySkills = document.querySelectorAll('.category-skills');
+    
+    if (categorySelect && categorySkills.length > 0) {
+        function updateSkillSuggestions() {
+            // Hide all skill categories
+            categorySkills.forEach(category => {
+                category.style.display = 'none';
+            });
+            
+            // Show selected category
+            const selectedCategory = categorySelect.value;
+            const categoryElement = document.getElementById(`${selectedCategory}-skills`);
+            if (categoryElement) {
+                categoryElement.style.display = 'block';
+            }
+        }
+        
+        // Set initial visibility
+        updateSkillSuggestions();
+        
+        // Update on change
+        categorySelect.addEventListener('change', updateSkillSuggestions);
+    }
+    
+    // Handle skill chip clicks
+    const skillChips = document.querySelectorAll('.skill-chip');
+    const skillNameInput = document.getElementById('skill_name');
+    
+    if (skillChips.length > 0 && skillNameInput) {
+        skillChips.forEach(chip => {
+            chip.addEventListener('click', function() {
+                const skillName = this.getAttribute('data-skill');
+                skillNameInput.value = skillName;
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

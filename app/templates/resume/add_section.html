@@ -1,0 +1,395 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h2 class="card-title-primary mb-0">
+                        {% if request.args.get('type') == 'experience' %}
+                            <i class="fas fa-briefcase me-2"></i> Add Experience
+                        {% elif request.args.get('type') == 'education' %}
+                            <i class="fas fa-graduation-cap me-2"></i> Add Education
+                        {% elif request.args.get('type') == 'project' %}
+                            <i class="fas fa-project-diagram me-2"></i> Add Project
+                        {% else %}
+                            <i class="fas fa-plus-circle me-2"></i> Add Section
+                        {% endif %}
+                    </h2>
+                    <a href="{{ url_for('resume.edit', resume_id=resume.id) }}" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i> Cancel
+                    </a>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('resume.add_section', resume_id=resume.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        
+                        <div class="mb-3">
+                            <label for="section_type" class="form-label">Section Type</label>
+                            <select class="form-select" id="section_type" name="section_type" required>
+                                <option value="experience" {% if request.args.get('type') == 'experience' or form.section_type.data == 'experience' %}selected{% endif %}>Work Experience</option>
+                                <option value="education" {% if request.args.get('type') == 'education' or form.section_type.data == 'education' %}selected{% endif %}>Education</option>
+                                <option value="project" {% if request.args.get('type') == 'project' or form.section_type.data == 'project' %}selected{% endif %}>Project</option>
+                                <option value="volunteer" {% if request.args.get('type') == 'volunteer' or form.section_type.data == 'volunteer' %}selected{% endif %}>Volunteer Experience</option>
+                                <option value="certification" {% if request.args.get('type') == 'certification' or form.section_type.data == 'certification' %}selected{% endif %}>Certification</option>
+                                <option value="award" {% if request.args.get('type') == 'award' or form.section_type.data == 'award' %}selected{% endif %}>Award/Achievement</option>
+                                <option value="custom" {% if request.args.get('type') == 'custom' or form.section_type.data == 'custom' %}selected{% endif %}>Custom Section</option>
+                            </select>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="title" class="form-label">Title/Position</label>
+                                <input type="text" class="form-control" id="title" name="title" value="{{ form.title.data or '' }}" required>
+                                <div class="form-text title-help">
+                                    {% if request.args.get('type') == 'experience' %}
+                                        Your job title (e.g., "Software Engineer")
+                                    {% elif request.args.get('type') == 'education' %}
+                                        Your degree (e.g., "Bachelor of Science in Computer Science")
+                                    {% elif request.args.get('type') == 'project' %}
+                                        Project name (e.g., "E-commerce Website")
+                                    {% else %}
+                                        Title or name of this entry
+                                    {% endif %}
+                                </div>
+                                {% if form.title.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.title.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="organization" class="form-label">Organization/Institution</label>
+                                <input type="text" class="form-control" id="organization" name="organization" value="{{ form.organization.data or '' }}">
+                                <div class="form-text organization-help">
+                                    {% if request.args.get('type') == 'experience' %}
+                                        Company name (e.g., "Google")
+                                    {% elif request.args.get('type') == 'education' %}
+                                        School name (e.g., "Stanford University")
+                                    {% elif request.args.get('type') == 'project' %}
+                                        Associated organization or "Personal Project"
+                                    {% else %}
+                                        Organization related to this entry
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="location" class="form-label">Location (Optional)</label>
+                                <input type="text" class="form-control" id="location" name="location" value="{{ form.location.data or '' }}">
+                                <div class="form-text">
+                                    City, State or Remote (e.g., "San Francisco, CA" or "Remote")
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label for="start_date" class="form-label">Start Date</label>
+                                        <input type="date" class="form-control" id="start_date" name="start_date" value="{{ form.start_date.data.strftime('%Y-%m-%d') if form.start_date.data else '' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="end_date" class="form-label">End Date</label>
+                                        <input type="date" class="form-control" id="end_date" name="end_date" value="{{ form.end_date.data.strftime('%Y-%m-%d') if form.end_date.data else '' }}" {% if form.is_current.data %}disabled{% endif %}>
+                                    </div>
+                                </div>
+                                <div class="form-check mt-2">
+                                    <input class="form-check-input" type="checkbox" id="is_current" name="is_current" {% if form.is_current.data %}checked{% endif %}>
+                                    <label class="form-check-label" for="is_current">
+                                        Currently active
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description (Optional)</label>
+                            <textarea class="form-control" id="description" name="description" rows="3">{{ form.description.data or '' }}</textarea>
+                            <div class="form-text">
+                                A brief overview of this entry. Bullet points can be added separately below.
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="bullets" class="form-label">Bullet Points (One per line)</label>
+                            <textarea class="form-control" id="bullets" name="bullets" rows="6">{{ form.bullets.data or '' }}</textarea>
+                            <div class="form-text">
+                                Add key accomplishments, responsibilities, or details (one per line).
+                                Try to use action verbs and include quantifiable achievements when possible.
+                            </div>
+                            
+                            <button type="button" class="btn btn-sm btn-outline-info mt-2" id="generateSampleBullets">
+                                <i class="fas fa-magic me-1"></i> Generate Example Bullets
+                            </button>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('resume.edit', resume_id=resume.id) }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i> Back to Editor
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i> Add to Resume
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tips Sidebar for larger screens -->
+        <div class="col-lg-4 d-none d-lg-block">
+            <div class="card position-sticky" style="top: 20px;">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-lightbulb me-2 text-warning"></i> Tips</h3>
+                </div>
+                <div class="card-body">
+                    <div class="section-type-tip" id="experience-tip">
+                        <h5>Work Experience Tips</h5>
+                        <ul class="mb-0">
+                            <li>Use action verbs to start bullet points (e.g., "Developed", "Led", "Implemented")</li>
+                            <li>Include specific, quantifiable achievements (e.g., "Increased sales by 20%")</li>
+                            <li>Focus on relevant experience for your target role</li>
+                            <li>Keep bullet points concise (1-2 lines each)</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="section-type-tip" id="education-tip" style="display: none;">
+                        <h5>Education Tips</h5>
+                        <ul class="mb-0">
+                            <li>Include your GPA if it's 3.0 or higher</li>
+                            <li>List relevant coursework if you're a recent graduate</li>
+                            <li>Mention academic achievements, honors, or scholarships</li>
+                            <li>Include study abroad experiences if applicable</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="section-type-tip" id="project-tip" style="display: none;">
+                        <h5>Project Tips</h5>
+                        <ul class="mb-0">
+                            <li>Highlight the technologies and tools you used</li>
+                            <li>Explain your role and contributions to team projects</li>
+                            <li>Describe the problem you solved and the impact of your solution</li>
+                            <li>Include links to GitHub repositories or live demos if available</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="section-type-tip" id="volunteer-tip" style="display: none;">
+                        <h5>Volunteer Experience Tips</h5>
+                        <ul class="mb-0">
+                            <li>Treat volunteer work like professional experience</li>
+                            <li>Highlight leadership roles and responsibilities</li>
+                            <li>Quantify your impact when possible</li>
+                            <li>Connect skills developed to your career goals</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="section-type-tip" id="certification-tip" style="display: none;">
+                        <h5>Certification Tips</h5>
+                        <ul class="mb-0">
+                            <li>Include the full name of the certification</li>
+                            <li>Add the issuing organization</li>
+                            <li>Mention expiration date if applicable</li>
+                            <li>List certifications in order of relevance</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="section-type-tip" id="award-tip" style="display: none;">
+                        <h5>Award/Achievement Tips</h5>
+                        <ul class="mb-0">
+                            <li>Provide context about the significance of the award</li>
+                            <li>Mention if it was competitive (e.g., "Selected from 200+ applicants")</li>
+                            <li>Include the awarding organization</li>
+                            <li>Explain how the achievement relates to your skills</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="section-type-tip" id="custom-tip" style="display: none;">
+                        <h5>Custom Section Tips</h5>
+                        <ul class="mb-0">
+                            <li>Use clear, descriptive titles for your custom section</li>
+                            <li>Maintain consistency with other resume sections</li>
+                            <li>Ensure the content directly relates to your career goals</li>
+                            <li>Keep entries concise and impactful</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <h5>General Advice</h5>
+                        <p>Keep your resume focused on achievements rather than responsibilities. Show how you made a difference in each role.</p>
+                        
+                        <h6 class="mt-3">Strong Bullet Point Formula:</h6>
+                        <p class="mb-0"><strong>Action Verb + Task + Result/Impact</strong></p>
+                        <p class="fst-italic text-muted">Example: "Redesigned inventory system, reducing processing time by 35%"</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle date logic for "Currently active" checkbox
+    const isCurrentCheckbox = document.getElementById('is_current');
+    const endDateInput = document.getElementById('end_date');
+    
+    if (isCurrentCheckbox && endDateInput) {
+        isCurrentCheckbox.addEventListener('change', function() {
+            endDateInput.disabled = this.checked;
+            if (this.checked) {
+                endDateInput.value = '';
+            }
+        });
+    }
+    
+    // Show appropriate tips based on section type
+    const sectionTypeSelect = document.getElementById('section_type');
+    const sectionTips = document.querySelectorAll('.section-type-tip');
+    const titleHelp = document.querySelector('.title-help');
+    const organizationHelp = document.querySelector('.organization-help');
+    
+    function updateTipsAndHelp() {
+        const selectedType = sectionTypeSelect.value;
+        
+        // Hide all tip sections first
+        sectionTips.forEach(tip => {
+            tip.style.display = 'none';
+        });
+        
+        // Show the relevant tip section
+        const activeTip = document.getElementById(`${selectedType}-tip`);
+        if (activeTip) {
+            activeTip.style.display = 'block';
+        }
+        
+        // Update help text
+        if (titleHelp) {
+            switch(selectedType) {
+                case 'experience':
+                    titleHelp.textContent = 'Your job title (e.g., "Software Engineer")';
+                    break;
+                case 'education':
+                    titleHelp.textContent = 'Your degree (e.g., "Bachelor of Science in Computer Science")';
+                    break;
+                case 'project':
+                    titleHelp.textContent = 'Project name (e.g., "E-commerce Website")';
+                    break;
+                case 'volunteer':
+                    titleHelp.textContent = 'Your role (e.g., "Volunteer Coordinator")';
+                    break;
+                case 'certification':
+                    titleHelp.textContent = 'Certification name (e.g., "AWS Certified Solutions Architect")';
+                    break;
+                case 'award':
+                    titleHelp.textContent = 'Award name (e.g., "Employee of the Year")';
+                    break;
+                default:
+                    titleHelp.textContent = 'Title or name of this entry';
+            }
+        }
+        
+        if (organizationHelp) {
+            switch(selectedType) {
+                case 'experience':
+                    organizationHelp.textContent = 'Company name (e.g., "Google")';
+                    break;
+                case 'education':
+                    organizationHelp.textContent = 'School name (e.g., "Stanford University")';
+                    break;
+                case 'project':
+                    organizationHelp.textContent = 'Associated organization or "Personal Project"';
+                    break;
+                case 'volunteer':
+                    organizationHelp.textContent = 'Organization name (e.g., "Red Cross")';
+                    break;
+                case 'certification':
+                    organizationHelp.textContent = 'Issuing organization (e.g., "Microsoft")';
+                    break;
+                case 'award':
+                    organizationHelp.textContent = 'Awarding organization or event';
+                    break;
+                default:
+                    organizationHelp.textContent = 'Organization related to this entry';
+            }
+        }
+    }
+    
+    if (sectionTypeSelect) {
+        // Initial update
+        updateTipsAndHelp();
+        
+        // Update on change
+        sectionTypeSelect.addEventListener('change', updateTipsAndHelp);
+    }
+    
+    // Generate Example Bullets button
+    const generateBulletsBtn = document.getElementById('generateSampleBullets');
+    const bulletsTextarea = document.getElementById('bullets');
+    
+    if (generateBulletsBtn && bulletsTextarea) {
+        generateBulletsBtn.addEventListener('click', function() {
+            const sectionType = sectionTypeSelect.value;
+            const title = document.getElementById('title').value;
+            const organization = document.getElementById('organization').value;
+            
+            let sampleBullets = [];
+            
+            switch(sectionType) {
+                case 'experience':
+                    sampleBullets = [
+                        `Implemented new ${title.toLowerCase().includes('developer') ? 'software features' : 'processes'} that increased efficiency by 25%`,
+                        `Led a team of ${Math.floor(Math.random() * 5) + 2} professionals in delivering ${Math.floor(Math.random() * 3) + 1} key projects on time and under budget`,
+                        `Collaborated with cross-functional teams to improve ${title.toLowerCase().includes('sales') ? 'customer acquisition' : 'product quality'}`,
+                        `Reduced ${title.toLowerCase().includes('manager') ? 'operational costs' : 'processing time'} by 15% through implementation of best practices`
+                    ];
+                    break;
+                case 'education':
+                    sampleBullets = [
+                        `Graduated with a GPA of ${(Math.random() * 1 + 3).toFixed(1)}/4.0`,
+                        `Selected as ${organization ? organization : 'university'} representative for annual ${Math.random() > 0.5 ? 'research symposium' : 'industry conference'}`,
+                        `Completed thesis on "${title.split(' ').pop()} ${Math.random() > 0.5 ? 'Optimization Techniques' : 'Innovation Strategies'}"`,
+                        `Participated in ${Math.random() > 0.5 ? 'machine learning' : 'entrepreneurship'} extracurricular program`
+                    ];
+                    break;
+                case 'project':
+                    sampleBullets = [
+                        `Developed ${title} using ${Math.random() > 0.5 ? 'React, Node.js, and MongoDB' : 'Python, Django, and PostgreSQL'}`,
+                        `Implemented responsive design principles ensuring compatibility across all devices`,
+                        `Managed version control using Git and conducted code reviews for team members`,
+                        `Deployed application to ${Math.random() > 0.5 ? 'AWS' : 'Heroku'} with CI/CD pipeline for automated testing`
+                    ];
+                    break;
+                case 'volunteer':
+                    sampleBullets = [
+                        `Organized ${Math.random() > 0.5 ? 'weekly' : 'monthly'} events serving over ${Math.floor(Math.random() * 100) + 50} community members`,
+                        `Trained ${Math.floor(Math.random() * 10) + 5} new volunteers on organization procedures and best practices`,
+                        `Created documentation that improved volunteer onboarding process by 30%`,
+                        `Secured $${Math.floor(Math.random() * 5000) + 1000} in donations through community outreach initiatives`
+                    ];
+                    break;
+                default:
+                    sampleBullets = [
+                        `Demonstrated excellence in ${title.toLowerCase()}`,
+                        `Recognized for outstanding contributions to ${organization || 'the organization'}`,
+                        `Consistently exceeded expectations and goals`,
+                        `Applied innovative approaches to solve complex problems`
+                    ];
+            }
+            
+            // Add bullets to textarea
+            bulletsTextarea.value = sampleBullets.join('\n');
+            bulletsTextarea.style.height = 'auto';
+            bulletsTextarea.style.height = (bulletsTextarea.scrollHeight) + 'px';
+        });
+    }
+});
+</script>
+{% endblock %}
