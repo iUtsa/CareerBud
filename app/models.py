@@ -1134,3 +1134,1212 @@ def delete_post(post_id, user_id):
         print(f"Error deleting post: {type(e).__name__} - {str(e)}")
         db.session.rollback()
         return False
+    
+def advanced_ats_analyzer(resume_id, user_id, job_description=None, industry=None, company_size=None):
+    """
+    Advanced ATS Resume Analysis Algorithm
+    
+    Analyzes resumes using sophisticated techniques similar to those used by modern ATS systems 
+    in enterprise hiring processes.
+    
+    Parameters:
+    - resume_id: ID of the resume to analyze
+    - user_id: ID of the user who owns the resume
+    - job_description: Optional job description text for targeted analysis
+    - industry: Optional industry context (e.g., "tech", "finance", "healthcare")
+    - company_size: Optional company size context ("startup", "mid-size", "enterprise")
+    
+    Returns:
+    - Dictionary with analysis results and recommendations
+    """
+    try:
+        # Get resume and its components
+        resume = get_resume(resume_id, user_id)
+        if not resume:
+            return None
+            
+        sections = ResumeSection.query.filter_by(resume_id=resume_id).all()
+        skills = ResumeSkill.query.filter_by(resume_id=resume_id).all()
+        user = User.query.get(user_id)
+        
+        # Initialize analysis metrics
+        metrics = {
+            # Core metrics
+            'format_score': 0,
+            'content_score': 0,
+            'keyword_score': 0,
+            'impact_score': 0,
+            'readability_score': 0,
+            
+            # Section-specific metrics
+            'contact_score': 0,
+            'summary_score': 0,
+            'experience_score': 0,
+            'education_score': 0,
+            'skills_score': 0,
+            'projects_score': 0,
+            
+            # Additional metrics
+            'relevance_score': 0 if job_description else None,
+            'achievement_focus': 0,
+            'action_verb_usage': 0,
+            'quantification_score': 0,
+            'technical_match': 0,
+            'soft_skills_match': 0,
+            
+            # Completeness metrics
+            'section_completeness': 0,
+            'detail_level': 0,
+            
+            # Red flags
+            'red_flags': [],
+            
+            # Keywords
+            'extracted_keywords': [],
+            'found_keywords': [],
+            'missing_keywords': [],
+            'industry_keywords': [],
+            
+            # Feedback
+            'overall_feedback': [],
+            'section_feedback': {},
+            'improvement_suggestions': [],
+            'ats_optimization_tips': []
+        }
+        
+        # 1. FORMAT ANALYSIS
+        formats = analyze_resume_format(resume, sections)
+        metrics['format_score'] = formats['score']
+        metrics['section_completeness'] = formats['completeness']
+        metrics['red_flags'].extend(formats['red_flags'])
+        
+        # 2. CONTACT INFORMATION ANALYSIS
+        contact_analysis = analyze_contact_info(user, resume)
+        metrics['contact_score'] = contact_analysis['score']
+        metrics['section_feedback']['contact'] = contact_analysis['feedback']
+        
+        # 3. SKILLS ANALYSIS
+        skills_analysis = analyze_skills(skills, job_description, industry)
+        metrics['skills_score'] = skills_analysis['score']
+        metrics['technical_match'] = skills_analysis['technical_match']
+        metrics['soft_skills_match'] = skills_analysis['soft_skills_match']
+        metrics['section_feedback']['skills'] = skills_analysis['feedback']
+        
+        # 4. EXPERIENCE ANALYSIS
+        experience_sections = [s for s in sections if s.type == 'experience']
+        exp_analysis = analyze_experience(experience_sections, job_description)
+        metrics['experience_score'] = exp_analysis['score']
+        metrics['action_verb_usage'] = exp_analysis['action_verb_usage']
+        metrics['quantification_score'] = exp_analysis['quantification']
+        metrics['achievement_focus'] = exp_analysis['achievement_focus']
+        metrics['section_feedback']['experience'] = exp_analysis['feedback']
+        
+        # 5. EDUCATION ANALYSIS
+        education_sections = [s for s in sections if s.type == 'education']
+        edu_analysis = analyze_education(education_sections, job_description)
+        metrics['education_score'] = edu_analysis['score']
+        metrics['section_feedback']['education'] = edu_analysis['feedback']
+        
+        # 6. KEYWORD ANALYSIS
+        if job_description:
+            keyword_analysis = analyze_keywords(resume, sections, skills, job_description, industry)
+            metrics['keyword_score'] = keyword_analysis['score']
+            metrics['extracted_keywords'] = keyword_analysis['extracted_keywords']
+            metrics['found_keywords'] = keyword_analysis['found_keywords']
+            metrics['missing_keywords'] = keyword_analysis['missing_keywords']
+            metrics['industry_keywords'] = keyword_analysis['industry_keywords']
+            metrics['relevance_score'] = keyword_analysis['relevance']
+        
+        # 7. CONTENT & IMPACT ANALYSIS
+        content_analysis = analyze_content_quality(resume, sections)
+        metrics['content_score'] = content_analysis['score']
+        metrics['impact_score'] = content_analysis['impact']
+        metrics['readability_score'] = content_analysis['readability']
+        metrics['detail_level'] = content_analysis['detail_level']
+        
+        # 8. PROJECTS ANALYSIS
+        project_sections = [s for s in sections if s.type == 'project']
+        if project_sections:
+            proj_analysis = analyze_projects(project_sections, job_description)
+            metrics['projects_score'] = proj_analysis['score']
+            metrics['section_feedback']['projects'] = proj_analysis['feedback']
+        
+        # 9. SUMMARY/OBJECTIVE ANALYSIS
+        if resume.objective:
+            summary_analysis = analyze_summary(resume.objective, job_description)
+            metrics['summary_score'] = summary_analysis['score']
+            metrics['section_feedback']['summary'] = summary_analysis['feedback']
+        
+        # 10. CALCULATE OVERALL SCORE
+        weights = calculate_industry_weights(industry, company_size, job_description is not None)
+        overall_score = calculate_weighted_score(metrics, weights)
+        
+        # 11. GENERATE FEEDBACK & RECOMMENDATIONS
+        feedback = generate_comprehensive_feedback(metrics, overall_score)
+        metrics['overall_feedback'] = feedback['overall']
+        metrics['improvement_suggestions'] = feedback['improvements']
+        metrics['ats_optimization_tips'] = feedback['ats_tips']
+        
+        # 12. UPDATE RESUME WITH ANALYSIS RESULTS
+        resume.ats_score = overall_score
+        resume.feedback = "\n".join(metrics['overall_feedback'])
+        db.session.commit()
+        
+        # 13. RETURN COMPLETE ANALYSIS
+        return {
+            'score': overall_score,
+            'metrics': metrics,
+            'feedback': resume.feedback
+        }
+        
+    except Exception as e:
+        print(f"Error in advanced ATS analysis: {type(e).__name__} - {str(e)}")
+        db.session.rollback()
+        return None
+    
+def analyze_resume_format(resume, sections):
+    """Analyzes resume format and structure"""
+    score = 75  # Base score
+    red_flags = []
+    completeness = 0
+    
+    # Check for essential sections
+    required_sections = {
+        'contact': False,  # Assumed to be in user profile
+        'experience': False,
+        'education': False,
+        'skills': False
+    }
+    
+    # Verify section presence
+    for section in sections:
+        if section.type in required_sections:
+            required_sections[section.type] = True
+    
+    # Calculate completeness
+    completeness = sum(1 for present in required_sections.values() if present) / len(required_sections) * 100
+    
+    # Check for red flags
+    if not required_sections['experience']:
+        red_flags.append("Missing experience section")
+        score -= 15
+    
+    if not required_sections['education']:
+        red_flags.append("Missing education section")
+        score -= 10
+    
+    if not required_sections['skills']:
+        red_flags.append("Missing skills section")
+        score -= 10
+        
+    # Check section order (preferred order)
+    current_order = [s.type for s in sorted(sections, key=lambda x: x.order)]
+    preferred_order = ['experience', 'education', 'skills', 'project']
+    
+    # Calculate order correctness (partial match algorithm)
+    order_score = 0
+    if current_order:
+        for i, section_type in enumerate(preferred_order):
+            if section_type in current_order:
+                position_diff = abs(i - current_order.index(section_type))
+                order_score += max(0, 5 - position_diff)
+        order_score = min(20, order_score)
+        score += order_score
+    
+    return {
+        'score': min(100, max(0, score)),
+        'completeness': completeness,
+        'red_flags': red_flags
+    }
+
+def analyze_contact_info(user, resume):
+    """Analyzes contact information completeness"""
+    score = 0
+    feedback = []
+    
+    # Check for essential contact fields
+    if user.first_name and user.last_name:
+        score += 25
+    else:
+        feedback.append("Add your full name to your profile")
+    
+    if user.email:
+        score += 25
+    else:
+        feedback.append("Add your email address to your profile")
+    
+    # Check for phone number (assumed to be in user profile)
+    # This would need to be adjusted based on your actual user model
+    has_phone = True  # Placeholder - replace with actual check
+    if has_phone:
+        score += 20
+    else:
+        feedback.append("Add your phone number to improve contact information")
+    
+    # Check for LinkedIn or other professional profiles
+    # This would need to be adjusted based on your actual user model
+    has_linkedin = False  # Placeholder - replace with actual check
+    if has_linkedin:
+        score += 15
+    else:
+        feedback.append("Add your LinkedIn profile URL for better networking opportunities")
+    
+    # Check for location information
+    has_location = True  # Placeholder - replace with actual check
+    if has_location:
+        score += 15
+    else:
+        feedback.append("Add your location to your profile")
+    
+    if not feedback:
+        feedback.append("Contact information is complete and well-structured")
+        
+    return {
+        'score': score,
+        'feedback': feedback
+    }
+
+def analyze_skills(skills, job_description=None, industry=None):
+    """Analyzes skills relevance and presentation"""
+    score = 70  # Base score
+    feedback = []
+    
+    # Category distribution analysis
+    categories = {}
+    for skill in skills:
+        category = skill.category or "Other"
+        if category not in categories:
+            categories[category] = 0
+        categories[category] += 1
+    
+    # Check skill count
+    skill_count = len(skills)
+    if skill_count < 5:
+        score -= 20
+        feedback.append("Add more skills to your resume (aim for 10-15 relevant skills)")
+    elif skill_count > 20:
+        score -= 10
+        feedback.append("Consider focusing on your most relevant skills (10-15 is ideal)")
+    
+    # Calculate technical vs soft skills ratio
+    technical_count = sum(1 for skill in skills if skill.category in ['technical', 'tools', 'programming'])
+    soft_count = sum(1 for skill in skills if skill.category in ['soft', 'interpersonal'])
+    
+    technical_percentage = (technical_count / skill_count * 100) if skill_count > 0 else 0
+    soft_percentage = (soft_count / skill_count * 100) if skill_count > 0 else 0
+    
+    # Job description matching (if provided)
+    matching_score = 0
+    if job_description:
+        matches = 0
+        for skill in skills:
+            if skill.skill_name.lower() in job_description.lower():
+                matches += 1
+        
+        matching_percentage = (matches / skill_count * 100) if skill_count > 0 else 0
+        matching_score = min(30, matching_percentage * 0.3)
+        
+        if matching_percentage < 30:
+            feedback.append("Your skills don't strongly match the job description requirements")
+        elif matching_percentage > 70:
+            feedback.append("Excellent skills match with the job description")
+    
+    # Industry-specific skill analysis
+    industry_match = 0
+    if industry:
+        industry_skills = get_industry_skills(industry)
+        industry_matches = sum(1 for skill in skills if skill.skill_name.lower() in industry_skills)
+        
+        if industry_matches > 0:
+            industry_match = min(20, (industry_matches / len(industry_skills)) * 100 * 0.2)
+            
+            if industry_match < 10:
+                feedback.append(f"Add more {industry}-specific skills to your resume")
+            else:
+                feedback.append(f"Good inclusion of {industry}-specific skills")
+    
+    # Calculate final score
+    score += matching_score + industry_match
+    
+    # Balance feedback
+    if not feedback:
+        if technical_percentage > 80:
+            feedback.append("Consider adding more soft skills to balance your technical expertise")
+        elif soft_percentage > 80:
+            feedback.append("Consider adding more technical skills to balance your soft skills")
+        else:
+            feedback.append("Well-balanced mix of skills presented")
+    
+    return {
+        'score': min(100, max(0, score)),
+        'technical_match': technical_percentage,
+        'soft_skills_match': soft_percentage,
+        'feedback': feedback
+    }
+
+def analyze_experience(experience_sections, job_description=None):
+    """Analyzes work experience sections"""
+    if not experience_sections:
+        return {
+            'score': 0,
+            'action_verb_usage': 0,
+            'quantification': 0,
+            'achievement_focus': 0,
+            'feedback': ["Add work experience to your resume"]
+        }
+    
+    score = 70  # Base score
+    feedback = []
+    action_verb_count = 0
+    quantified_count = 0
+    achievement_count = 0
+    bullet_count = 0
+    
+    # Action verbs dictionary
+    action_verbs = [
+        'achieved', 'improved', 'trained', 'managed', 'created', 'resolved',
+        'developed', 'designed', 'implemented', 'launched', 'increased',
+        'decreased', 'reduced', 'negotiated', 'coordinated', 'led', 
+        'supervised', 'directed', 'established', 'streamlined', 'generated',
+        'delivered', 'produced', 'researched', 'analyzed', 'evaluated',
+        'organized', 'maintained', 'prepared', 'provided', 'presented'
+    ]
+    
+    # Analyze each section and its bullets
+    for section in experience_sections:
+        # Check for date completeness
+        if not section.start_date:
+            feedback.append(f"Add start date to your {section.title} position")
+            score -= 5
+        
+        if not section.is_current and not section.end_date:
+            feedback.append(f"Add end date to your {section.title} position")
+            score -= 5
+            
+        # Check bullet quality
+        if not section.bullets:
+            feedback.append(f"Add bullet points to your {section.title} position")
+            score -= 10
+            continue
+            
+        for bullet in section.bullets:
+            bullet_count += 1
+            content = bullet.content.lower()
+            
+            # Check for action verbs
+            has_action_verb = any(verb in content.split() for verb in action_verbs)
+            if has_action_verb:
+                action_verb_count += 1
+            
+            # Check for quantification
+            has_quantification = any(char.isdigit() for char in content) or \
+                                any(word in content for word in ['percent', '%', 'million', 'thousand', 'hundred'])
+            if has_quantification:
+                quantified_count += 1
+                
+            # Check for achievement focus (vs responsibility focus)
+            achievement_indicators = ['improved', 'increased', 'reduced', 'saved', 'achieved', 
+                                     'awarded', 'recognized', 'exceeded', 'generated']
+            has_achievement = any(indicator in content for indicator in achievement_indicators)
+            if has_achievement:
+                achievement_count += 1
+    
+    # Calculate metrics
+    if bullet_count > 0:
+        action_verb_usage = (action_verb_count / bullet_count) * 100
+        quantification = (quantified_count / bullet_count) * 100
+        achievement_focus = (achievement_count / bullet_count) * 100
+        
+        # Score adjustments based on metrics
+        if action_verb_usage < 50:
+            score -= 10
+            feedback.append("Use more action verbs to start your bullet points")
+        
+        if quantification < 30:
+            score -= 10
+            feedback.append("Add more measurable achievements with numbers and percentages")
+            
+        if achievement_focus < 40:
+            score -= 5
+            feedback.append("Focus more on achievements rather than responsibilities")
+    else:
+        action_verb_usage = 0
+        quantification = 0
+        achievement_focus = 0
+    
+    # Experience chronology check
+    if len(experience_sections) > 1:
+        is_chronological = is_experience_chronological(experience_sections)
+        if not is_chronological:
+            feedback.append("Ensure your experience is in reverse chronological order (most recent first)")
+            score -= 5
+    
+    # Job description matching (if provided)
+    if job_description:
+        relevance_score = calculate_experience_relevance(experience_sections, job_description)
+        score += relevance_score
+        
+        if relevance_score < 10:
+            feedback.append("Your experience doesn't strongly align with the job requirements")
+        elif relevance_score > 25:
+            feedback.append("Your experience aligns well with the job requirements")
+    
+    # Final feedback
+    if not feedback:
+        feedback.append("Strong experience section with good bullet points")
+    
+    return {
+        'score': min(100, max(0, score)),
+        'action_verb_usage': action_verb_usage,
+        'quantification': quantification,
+        'achievement_focus': achievement_focus,
+        'feedback': feedback
+    }
+
+def analyze_education(education_sections, job_description=None):
+    """Analyzes education sections"""
+    if not education_sections:
+        return {
+            'score': 0,
+            'feedback': ["Add education to your resume"]
+        }
+        
+    score = 80  # Base score
+    feedback = []
+    
+    # Analyze each education section
+    for section in education_sections:
+        # Check for degree title
+        if not section.title or len(section.title.strip()) < 5:
+            feedback.append(f"Add your degree title/major for {section.organization}")
+            score -= 10
+            
+        # Check for institution name
+        if not section.organization or len(section.organization.strip()) < 2:
+            feedback.append("Add the name of your educational institution")
+            score -= 10
+            
+        # Check for dates
+        if not section.start_date:
+            feedback.append(f"Add start date to your education at {section.organization}")
+            score -= 5
+            
+        if not section.is_current and not section.end_date:
+            feedback.append(f"Add graduation/end date for {section.organization}")
+            score -= 5
+            
+        # Check for location
+        if not section.location:
+            feedback.append(f"Add location for {section.organization}")
+            score -= 3
+            
+        # Check for GPA or honors (in description or bullets)
+        has_gpa = False
+        has_honors = False
+        
+        if section.description:
+            has_gpa = 'gpa' in section.description.lower() or 'grade point average' in section.description.lower()
+            has_honors = any(term in section.description.lower() for term in 
+                           ['honors', 'distinction', 'cum laude', 'magna cum laude', 'summa cum laude'])
+        
+        for bullet in section.bullets:
+            if 'gpa' in bullet.content.lower() or 'grade point average' in bullet.content.lower():
+                has_gpa = True
+            if any(term in bullet.content.lower() for term in 
+                 ['honors', 'distinction', 'cum laude', 'magna cum laude', 'summa cum laude']):
+                has_honors = True
+                
+        if not has_gpa:
+            feedback.append(f"Consider adding your GPA for {section.organization} if it's 3.0 or higher")
+            
+        if not has_honors and not has_gpa:
+            feedback.append(f"Consider adding academic achievements or honors for {section.organization}")
+    
+    # Job description matching (if provided)
+    if job_description:
+        # Check if education level matches job requirements
+        degree_levels = {
+            'bachelor': 0,
+            'master': 0,
+            'phd': 0,
+            'doctorate': 0,
+            'mba': 0
+        }
+        
+        for section in education_sections:
+            for level in degree_levels:
+                if level in section.title.lower():
+                    degree_levels[level] += 1
+                    
+        required_levels = []
+        for level in degree_levels:
+            if level in job_description.lower():
+                required_levels.append(level)
+                
+        if required_levels:
+            has_required = any(degree_levels[level] > 0 for level in required_levels)
+            if not has_required:
+                required_str = ', '.join(required_levels)
+                feedback.append(f"Job requires {required_str.title()} degree which doesn't appear in your education")
+                score -= 15
+    
+    # Final feedback
+    if not feedback:
+        feedback.append("Strong education section with good details")
+    
+    return {
+        'score': min(100, max(0, score)),
+        'feedback': feedback
+    }
+
+def analyze_summary(summary_text, job_description=None):
+    """Analyzes resume summary/objective section"""
+    score = 75  # Base score
+    feedback = []
+    
+    # Check length
+    word_count = len(summary_text.split())
+    if word_count < 30:
+        score -= 10
+        feedback.append("Your summary is too brief. Aim for 3-5 sentences that highlight your value proposition")
+    elif word_count > 100:
+        score -= 5
+        feedback.append("Your summary is too lengthy. Keep it concise at 3-5 sentences")
+        
+    # Check for clichés
+    cliches = ["results-driven", "team player", "detail-oriented", "self-starter",
+               "think outside the box", "go-getter", "hard worker", "win-win",
+               "proactive", "synergy", "goal-oriented"]
+    
+    cliche_count = sum(1 for cliche in cliches if cliche in summary_text.lower())
+    if cliche_count > 2:
+        score -= 10
+        feedback.append("Replace generic phrases with specific achievements and skills")
+        
+    # Check for first-person pronouns
+    first_person = ["i", "me", "my", "mine"]
+    uses_first_person = any(pronoun in summary_text.lower().split() for pronoun in first_person)
+    
+    if uses_first_person:
+        score -= 5
+        feedback.append("Avoid using first-person pronouns (I, me, my) in your professional summary")
+        
+    # Check job description alignment
+    if job_description:
+        summary_lower = summary_text.lower()
+        job_lower = job_description.lower()
+        
+        # Extract potential job title
+        job_titles = extract_job_titles(job_description)
+        has_job_title = any(title in summary_lower for title in job_titles)
+        
+        # Calculate keyword matching
+        keywords = extract_keywords_from_job_description(job_description, 10)
+        matches = sum(1 for keyword in keywords if keyword in summary_lower)
+        
+        relevance_score = min(25, matches * 5)
+        if not has_job_title:
+            relevance_score = max(0, relevance_score - 10)
+            
+        score += relevance_score
+        
+        if relevance_score < 10:
+            feedback.append("Your summary doesn't align well with the target position")
+        elif relevance_score > 20:
+            feedback.append("Excellent alignment between your summary and the job requirements")
+    
+    # Final feedback
+    if not feedback:
+        feedback.append("Effective summary that highlights your value proposition")
+        
+    return {
+        'score': min(100, max(0, score)),
+        'feedback': feedback
+    }
+
+def analyze_keywords(resume, sections, skills, job_description, industry=None):
+    """Analyzes keyword presence and relevance"""
+    # Extract keywords from job description
+    extracted_keywords = extract_keywords_from_job_description(job_description, 20)
+    
+    # Get industry-specific keywords
+    industry_keywords = []
+    if industry:
+        industry_keywords = get_industry_keywords(industry)
+        
+    # Combine with industry keywords but keep track separately
+    all_keywords = list(set(extracted_keywords + industry_keywords))
+    
+    # Search for keywords in resume
+    found_keywords = []
+    skill_keywords = [skill.skill_name.lower() for skill in skills]
+    
+    # Create a single text corpus from resume sections
+    resume_text = ''
+    if resume.objective:
+        resume_text += resume.objective + ' '
+        
+    for section in sections:
+        if section.title:
+            resume_text += section.title + ' '
+        if section.organization:
+            resume_text += section.organization + ' '
+        if section.description:
+            resume_text += section.description + ' '
+            
+        for bullet in section.bullets:
+            resume_text += bullet.content + ' '
+            
+    resume_text = resume_text.lower()
+    
+    # Check for keyword matches
+    for keyword in all_keywords:
+        # Check exact match
+        if keyword.lower() in resume_text or keyword.lower() in skill_keywords:
+            found_keywords.append(keyword)
+            continue
+            
+        # Check for variations (plurals, verb forms)
+        variations = get_keyword_variations(keyword)
+        for variation in variations:
+            if variation in resume_text or variation in skill_keywords:
+                found_keywords.append(keyword)
+                break
+    
+    # Calculate metrics
+    found_count = len(found_keywords)
+    missing_keywords = [k for k in extracted_keywords if k not in found_keywords]
+    
+    keyword_score = min(100, (found_count / len(all_keywords) * 100)) if all_keywords else 0
+    relevance_score = min(100, (len([k for k in found_keywords if k in extracted_keywords]) / 
+                        len(extracted_keywords) * 100)) if extracted_keywords else 0
+    
+    return {
+        'score': keyword_score,
+        'relevance': relevance_score,
+        'extracted_keywords': extracted_keywords,
+        'found_keywords': found_keywords,
+        'missing_keywords': missing_keywords,
+        'industry_keywords': industry_keywords
+    }
+
+def analyze_content_quality(resume, sections):
+    """Analyzes overall content quality, impact and readability"""
+    score = 70  # Base score
+    bullet_texts = []
+    
+    # Get all bullet points
+    for section in sections:
+        for bullet in section.bullets:
+            bullet_texts.append(bullet.content)
+    
+    # No bullets, no detailed analysis
+    if not bullet_texts:
+        return {
+            'score': 50,
+            'impact': 30,
+            'readability': 60,
+            'detail_level': 20
+        }
+    
+    # Impact analysis
+    impact_words = ['increased', 'decreased', 'improved', 'reduced', 'generated',
+                   'achieved', 'delivered', 'led', 'managed', 'created',
+                   'developed', 'designed', 'implemented', 'launched']
+    
+    impact_count = 0
+    for bullet in bullet_texts:
+        if any(word in bullet.lower() for word in impact_words):
+            impact_count += 1
+            
+    impact_score = (impact_count / len(bullet_texts)) * 100
+    
+    # Readability analysis
+    avg_words_per_bullet = sum(len(bullet.split()) for bullet in bullet_texts) / len(bullet_texts)
+    
+    readability_score = 100
+    if avg_words_per_bullet < 6:
+        readability_score -= 30  # Too short
+    elif avg_words_per_bullet > 20:
+        readability_score -= 20  # Too long
+        
+    # Detail level analysis
+    detail_score = 0
+    quantified_bullets = 0
+    specificity_words = 0
+    
+    for bullet in bullet_texts:
+        words = bullet.split()
+        
+        # Check for numbers (quantification)
+        if any(bool(re.search(r'\d', word)) for word in words):
+            quantified_bullets += 1
+            
+        # Check for specific technical terms
+        specificity_words += sum(1 for word in words if len(word) > 8)
+    
+    if bullet_texts:
+        quantified_ratio = quantified_bullets / len(bullet_texts)
+        specificity_ratio = specificity_words / len(bullet_texts)
+        
+        detail_score = (quantified_ratio * 50) + (specificity_ratio * 10)
+        detail_score = min(100, detail_score)
+    
+    # Final score adjustments
+    content_score = score + (impact_score * 0.3) - abs(readability_score - 80) * 0.1
+    
+    return {
+        'score': min(100, max(0, content_score)),
+        'impact': impact_score,
+        'readability': readability_score,
+        'detail_level': detail_score
+    }
+
+def analyze_projects(project_sections, job_description=None):
+    """Analyzes project sections (continued)"""
+    if not project_sections:
+        return {
+            'score': 0,
+            'feedback': ["Consider adding relevant projects to showcase your skills"]
+        }
+        
+    score = 75  # Base score
+    feedback = []
+    
+    # Job description relevance (if provided)
+    if job_description:
+        # Check if projects align with job requirements
+        relevance_count = 0
+        for section in project_sections:
+            project_text = section.title + ' ' + (section.description or '')
+            for bullet in section.bullets:
+                project_text += ' ' + bullet.content
+                
+            project_text = project_text.lower()
+            job_desc_lower = job_description.lower()
+            
+            # Extract key requirements from job description
+            requirements = extract_requirements_from_job(job_description)
+            matches = sum(1 for req in requirements if req in project_text)
+            
+            if matches >= 2:  # If at least 2 requirements match
+                relevance_count += 1
+                
+        # Calculate relevance percentage
+        relevance_percentage = (relevance_count / len(project_sections)) * 100 if project_sections else 0
+        
+        if relevance_percentage < 50:
+            feedback.append("Your projects don't strongly align with the job requirements")
+            score -= 10
+        elif relevance_percentage > 80:
+            feedback.append("Excellent alignment between your projects and the job requirements")
+            score += 10
+    
+    # Final feedback
+    if not feedback:
+        feedback.append("Strong project section that effectively showcases your skills")
+        
+    return {
+        'score': min(100, max(0, score)),
+        'feedback': feedback
+    }
+
+def is_experience_chronological(experience_sections):
+    """Checks if experience is in reverse chronological order"""
+    dated_sections = []
+    
+    for section in experience_sections:
+        if section.start_date:
+            dated_sections.append((section, section.start_date))
+            
+    if len(dated_sections) <= 1:
+        return True
+        
+    dated_sections.sort(key=lambda x: x[1], reverse=True)
+    original_order = [section for section, _ in dated_sections]
+    sorted_order = [section for section, _ in sorted(dated_sections, key=lambda x: x[1], reverse=True)]
+    
+    return original_order == sorted_order
+
+def calculate_experience_relevance(experience_sections, job_description):
+    """Calculates how relevant the experience is to the job description"""
+    if not experience_sections or not job_description:
+        return 0
+        
+    # Extract key requirements from job description
+    requirements = extract_requirements_from_job(job_description)
+    if not requirements:
+        return 0
+        
+    # Create a text corpus from all experience sections
+    experience_text = ""
+    for section in experience_sections:
+        if section.title:
+            experience_text += section.title + " "
+        if section.organization:
+            experience_text += section.organization + " "
+        if section.description:
+            experience_text += section.description + " "
+            
+        for bullet in section.bullets:
+            experience_text += bullet.content + " "
+            
+    experience_text = experience_text.lower()
+    
+    # Count matching requirements
+    matches = sum(1 for req in requirements if req.lower() in experience_text)
+    
+    # Calculate score (30 points max)
+    relevance_score = min(30, (matches / len(requirements)) * 30)
+    
+    return relevance_score
+
+def extract_requirements_from_job(job_description):
+    """Extracts key requirements from a job description"""
+    requirements = []
+    
+    # Look for common requirement indicators
+    requirement_sections = []
+    lines = job_description.split('\n')
+    
+    in_requirements = False
+    for line in lines:
+        line_lower = line.lower()
+        
+        # Check for section headers
+        if any(header in line_lower for header in ['requirements', 'qualifications', 'what you need', 'skills required']):
+            in_requirements = True
+            requirement_sections.append([])
+        elif in_requirements and any(header in line_lower for header in ['benefits', 'about us', 'what we offer', 'compensation']):
+            in_requirements = False
+        
+        if in_requirements and line.strip():
+            requirement_sections[-1].append(line)
+    
+    # If no structured requirements found, use NLP techniques to extract them
+    if not requirement_sections:
+        # Look for bullet points
+        bullets = re.findall(r'[•\-\*]\s+(.*?)(?=(?:[•\-\*])|$)', job_description, re.DOTALL)
+        if bullets:
+            requirement_sections.append(bullets)
+        else:
+            # Fall back to sentence-based extraction
+            sentences = re.split(r'[.!?]\s+', job_description)
+            requirement_sentences = [s for s in sentences if any(req in s.lower() for req in 
+                                   ['experience', 'skill', 'knowledge', 'ability', 'proficient', 
+                                    'familiar', 'degree', 'education', 'qualified'])]
+            if requirement_sentences:
+                requirement_sections.append(requirement_sentences)
+    
+    # Process requirement sections
+    for section in requirement_sections:
+        for item in section:
+            # Clean up the item
+            item = item.strip()
+            if not item:
+                continue
+                
+            # Remove bullets and numbers
+            item = re.sub(r'^[•\-\*\d.]+\s*', '', item)
+            
+            # Split compound requirements
+            if ' and ' in item:
+                parts = item.split(' and ')
+                requirements.extend(parts)
+            else:
+                requirements.append(item)
+    
+    # Remove duplicates and short entries
+    requirements = [req for req in requirements if len(req) > 5]
+    requirements = list(set(requirements))
+    
+    return requirements
+
+def extract_keywords_from_job_description(job_description, max_keywords=15):
+    """Extracts important keywords from job description"""
+    # In a production system, this would use NLP or ML techniques
+    # For this example, we'll use a simpler approach
+    
+    # Define common keyword categories
+    skill_keywords = [
+        'python', 'java', 'javascript', 'react', 'angular', 'vue', 'node', 'express',
+        'django', 'flask', 'spring', 'hibernate', 'sql', 'nosql', 'mongodb', 'postgresql',
+        'mysql', 'oracle', 'aws', 'azure', 'gcp', 'cloud', 'docker', 'kubernetes',
+        'ci/cd', 'jenkins', 'git', 'agile', 'scrum', 'devops', 'machine learning',
+        'deep learning', 'tensorflow', 'pytorch', 'nlp', 'data science', 'analytics',
+        'blockchain', 'ios', 'android', 'mobile', 'responsive', 'frontend', 'backend',
+        'fullstack', 'ui/ux', 'design', 'photoshop', 'illustrator', 'figma', 'sketch'
+    ]
+    
+    experience_keywords = [
+        'manager', 'senior', 'junior', 'lead', 'architect', 'supervisor', 'director',
+        'coordinator', 'specialist', 'analyst', 'consultant', 'administrator', 'developer',
+        'engineer', 'designer', 'product', 'project', 'program', 'researcher', 'scientist',
+        'head', 'chief', 'vp', 'president', 'executive', 'associate', 'assistant'
+    ]
+    
+    domain_keywords = [
+        'finance', 'healthcare', 'banking', 'insurance', 'retail', 'e-commerce',
+        'manufacturing', 'logistics', 'transportation', 'education', 'government',
+        'non-profit', 'media', 'entertainment', 'gaming', 'sports', 'technology',
+        'telecom', 'energy', 'utilities', 'real estate', 'construction', 'legal',
+        'consulting', 'marketing', 'advertising', 'hospitality', 'travel', 'automotive'
+    ]
+    
+    soft_skill_keywords = [
+        'communication', 'teamwork', 'leadership', 'problem solving', 'critical thinking',
+        'creativity', 'time management', 'organization', 'adaptability', 'flexibility',
+        'interpersonal', 'presentation', 'writing', 'negotiation', 'conflict resolution',
+        'decision making', 'analytical', 'attention to detail', 'self-motivated', 'initiative'
+    ]
+    
+    # Combine all keywords
+    all_keywords = skill_keywords + experience_keywords + domain_keywords + soft_skill_keywords
+    
+    # Find matches in job description
+    matches = []
+    job_desc_lower = job_description.lower()
+    
+    for keyword in all_keywords:
+        if keyword in job_desc_lower:
+            matches.append(keyword)
+    
+    # Extract job title (usually at the beginning)
+    job_title = extract_job_titles(job_description)
+    if job_title:
+        matches = job_title + [m for m in matches if m not in job_title]
+    
+    # Prioritize keywords that appear multiple times
+    keyword_counts = {}
+    for keyword in matches:
+        count = job_desc_lower.count(keyword)
+        keyword_counts[keyword] = count
+    
+    # Sort by count and limit to max_keywords
+    sorted_keywords = sorted(keyword_counts.items(), key=lambda x: x[1], reverse=True)
+    top_keywords = [k for k, v in sorted_keywords[:max_keywords]]
+    
+    return top_keywords
+
+def extract_job_titles(job_description):
+    """Extracts potential job titles from job description"""
+    common_titles = [
+        'software engineer', 'software developer', 'frontend developer', 'backend developer',
+        'full stack developer', 'data scientist', 'data analyst', 'machine learning engineer',
+        'devops engineer', 'systems administrator', 'network engineer', 'security engineer',
+        'product manager', 'project manager', 'program manager', 'business analyst',
+        'marketing manager', 'sales manager', 'account executive', 'customer success manager',
+        'ux designer', 'ui designer', 'graphic designer', 'content writer', 'content strategist'
+    ]
+    
+    # Check first few lines for job title
+    first_lines = job_description.split('\n')[:3]
+    first_paragraph = ' '.join(first_lines).lower()
+    
+    found_titles = []
+    for title in common_titles:
+        if title in first_paragraph:
+            found_titles.append(title)
+            
+    # If nothing found in first paragraph, check entire text
+    if not found_titles:
+        job_desc_lower = job_description.lower()
+        for title in common_titles:
+            if title in job_desc_lower:
+                found_titles.append(title)
+    
+    return found_titles
+
+def get_keyword_variations(keyword):
+    """Generates variations of a keyword for more flexible matching"""
+    variations = [keyword]
+    
+    # Simple singular/plural variations
+    if keyword.endswith('s'):
+        variations.append(keyword[:-1])  # Remove trailing 's'
+    else:
+        variations.append(keyword + 's')  # Add trailing 's'
+        
+    # Common verb forms
+    if keyword.endswith('ing'):
+        variations.append(keyword[:-3])  # develop from developing
+        variations.append(keyword[:-3] + 'e')  # manage from managing
+        
+    if keyword.endswith('ed'):
+        variations.append(keyword[:-2])  # develop from developed
+        variations.append(keyword[:-1])  # manage from managed
+        
+    # Adjective variations
+    if keyword.endswith('ability'):
+        variations.append(keyword[:-5] + 'le')  # scalable from scalability
+        
+    # Remove duplicates and empty strings
+    variations = [v for v in variations if v]
+    variations = list(set(variations))
+    
+    return variations
+
+def get_industry_skills(industry):
+    """Returns common skills for a specific industry"""
+    industry_skills = {
+        'tech': ['programming', 'software development', 'agile', 'scrum', 'cloud', 'architecture'],
+        'finance': ['financial analysis', 'banking', 'investment', 'portfolio management', 'risk assessment'],
+        'healthcare': ['patient care', 'medical terminology', 'clinical', 'hipaa', 'electronic health records'],
+        'marketing': ['digital marketing', 'social media', 'content strategy', 'seo', 'analytics'],
+        'retail': ['merchandising', 'inventory management', 'pos', 'sales', 'customer service'],
+        'manufacturing': ['quality control', 'lean', 'six sigma', 'supply chain', 'production planning'],
+        'consulting': ['client management', 'business analysis', 'requirements gathering', 'stakeholder management']
+    }
+    
+    return industry_skills.get(industry.lower(), [])
+
+def get_industry_keywords(industry):
+    """Returns common keywords for a specific industry"""
+    industry_keywords = {
+        'tech': ['innovation', 'digital transformation', 'cutting-edge', 'technical', 'startup'],
+        'finance': ['revenue', 'profit', 'budget', 'forecasting', 'compliance'],
+        'healthcare': ['patient', 'care', 'medical', 'clinical', 'treatment'],
+        'marketing': ['campaign', 'audience', 'engagement', 'conversion', 'brand'],
+        'retail': ['customer', 'sales', 'merchandise', 'inventory', 'ecommerce'],
+        'manufacturing': ['production', 'efficiency', 'quality', 'process improvement', 'operations'],
+        'consulting': ['client', 'solution', 'strategy', 'deliverable', 'engagement']
+    }
+    
+    return industry_keywords.get(industry.lower(), [])
+
+def calculate_industry_weights(industry, company_size, has_job_description):
+    """Calculates scoring weights based on industry and company size"""
+    weights = {
+        'format_score': 10,
+        'content_score': 25,
+        'keyword_score': 15 if has_job_description else 5,
+        'impact_score': 15,
+        'readability_score': 5,
+        'contact_score': 5,
+        'summary_score': 5,
+        'experience_score': 30,
+        'education_score': 15,
+        'skills_score': 20,
+        'projects_score': 10,
+        'relevance_score': 20 if has_job_description else 0
+    }
+    
+    # Adjust weights based on industry
+    if industry:
+        industry = industry.lower()
+        if industry == 'tech':
+            weights['skills_score'] += 5
+            weights['projects_score'] += 5
+            weights['experience_score'] -= 5
+            weights['education_score'] -= 5
+        elif industry == 'finance':
+            weights['education_score'] += 5
+            weights['format_score'] += 5
+            weights['projects_score'] -= 5
+            weights['impact_score'] -= 5
+        elif industry == 'creative':
+            weights['projects_score'] += 10
+            weights['impact_score'] += 5
+            weights['format_score'] -= 5
+            weights['education_score'] -= 10
+            
+    # Adjust weights based on company size
+    if company_size:
+        company_size = company_size.lower()
+        if company_size == 'startup':
+            weights['skills_score'] += 5
+            weights['impact_score'] += 5
+            weights['format_score'] -= 5
+            weights['education_score'] -= 5
+        elif company_size == 'enterprise':
+            weights['format_score'] += 5
+            weights['education_score'] += 5
+            weights['skills_score'] -= 5
+            weights['projects_score'] -= 5
+            
+    # Normalize weights to sum to 100
+    total = sum(weights.values())
+    weights = {k: (v / total) * 100 for k, v in weights.items()}
+    
+    return weights
+
+def calculate_weighted_score(metrics, weights):
+    """Calculates overall score based on metrics and weights"""
+    score = 0
+    
+    for metric, weight in weights.items():
+        if metric in metrics and metrics[metric] is not None:
+            score += (metrics[metric] * weight / 100)
+            
+    return min(100, max(0, score))
+
+def generate_comprehensive_feedback(metrics, overall_score):
+    """Generates comprehensive feedback based on metrics and score"""
+    overall = []
+    improvements = []
+    ats_tips = []
+    
+    # Overall assessment
+    if overall_score >= 90:
+        overall.append("Excellent resume that should perform very well with ATS systems and hiring managers.")
+    elif overall_score >= 80:
+        overall.append("Strong resume that meets most ATS requirements and should pass automated screening.")
+    elif overall_score >= 70:
+        overall.append("Good resume with some areas for improvement to enhance ATS performance.")
+    elif overall_score >= 60:
+        overall.append("Average resume that may pass some ATS systems but needs improvements to be competitive.")
+    else:
+        overall.append("Below average resume that needs significant improvements to pass ATS screening.")
+    
+    # Add section-specific feedback
+    if metrics['format_score'] < 70:
+        improvements.append("Improve resume structure and formatting for better ATS compatibility.")
+        ats_tips.append("Use standard section headings (Experience, Education, Skills) that ATS systems recognize.")
+    
+    if metrics['keyword_score'] < 70 and metrics['relevance_score'] is not None:
+        improvements.append("Add more relevant keywords that match the job description requirements.")
+        ats_tips.append("Most ATS systems rank resumes based on keyword matching. Include exact phrases from the job posting.")
+    
+    if metrics['skills_score'] < 70:
+        improvements.append("Enhance your skills section with more industry-relevant skills.")
+        ats_tips.append("List both technical skills and soft skills, and organize them by category for better readability.")
+    
+    if metrics['experience_score'] < 70:
+        improvements.append("Strengthen your experience section with more accomplishments and results.")
+        ats_tips.append("Begin each bullet point with a strong action verb and include measurable achievements.")
+    
+    if metrics['education_score'] < 70:
+        improvements.append("Provide more details in your education section, including relevant coursework.")
+    
+    if metrics['impact_score'] < 60:
+        improvements.append("Add more measurable achievements to demonstrate your impact.")
+        ats_tips.append("Quantify your achievements with numbers, percentages, and metrics wherever possible.")
+    
+    if metrics['action_verb_usage'] < 60:
+        improvements.append("Use more action verbs at the beginning of your bullet points.")
+    
+    if metrics['quantification_score'] < 50:
+        improvements.append("Include more numbers and metrics to quantify your achievements.")
+    
+    if metrics['readability_score'] < 70:
+        improvements.append("Improve the readability of your bullet points with clearer, more concise language.")
+        ats_tips.append("Use clean, simple formatting and avoid tables, headers, footers, and graphics that ATS may not process correctly.")
+    
+    # Add missing keywords suggestion if applicable
+    if metrics['missing_keywords'] and len(metrics['missing_keywords']) > 0:
+        keyword_list = ', '.join(metrics['missing_keywords'][:5])
+        improvements.append(f"Add these missing keywords from the job description: {keyword_list}.")
+    
+    # General ATS tips
+    ats_tips.extend([
+        "Save your resume as a standard PDF or .docx file to ensure proper parsing by ATS systems.",
+        "Avoid using text boxes, images, icons, or multiple columns that can confuse ATS software.",
+        "Use a clean, professional font such as Arial, Calibri, or Times New Roman.",
+        "Spell out acronyms at least once to ensure both the ATS and human reviewers understand them."
+    ])
+    
+    return {
+        'overall': overall,
+        'improvements': improvements,
+        'ats_tips': ats_tips
+    }

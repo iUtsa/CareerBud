@@ -10,17 +10,19 @@
                         <i class="fas fa-chart-line me-2"></i> Resume Analysis
                     </h2>
                     <div>
-                        <a href="{{ url_for('resume.edit', resume_id=resume.id) }}" class="btn btn-outline-secondary me-2">
+                        <a href="{{ url_for('resume.edit', resume_id=resume.id) }}"
+                            class="btn btn-outline-secondary me-2">
                             <i class="fas fa-edit me-1"></i> Edit Resume
                         </a>
-                        <a href="{{ url_for('resume.view', resume_id=resume.id) }}" class="btn btn-primary" target="_blank">
+                        <a href="{{ url_for('resume.view', resume_id=resume.id) }}" class="btn btn-primary"
+                            target="_blank">
                             <i class="fas fa-eye me-1"></i> View Resume
                         </a>
                     </div>
                 </div>
                 <div class="card-body">
                     <h3 class="mb-3">{{ resume.title }}</h3>
-                    
+
                     <!-- ATS Score -->
                     <div class="mb-4">
                         <div class="d-flex justify-content-between align-items-center mb-2">
@@ -38,102 +40,165 @@
                                 {% if score >= 80 %}bg-success
                                 {% elif score >= 60 %}bg-primary
                                 {% elif score >= 40 %}bg-warning
-                                {% else %}bg-danger{% endif %}" 
-                                role="progressbar" 
-                                style="width: {{ score }}%;" 
-                                aria-valuenow="{{ score }}" 
-                                aria-valuemin="0" 
-                                aria-valuemax="100">
+                                {% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ score }}%;"
+                                aria-valuenow="{{ score }}" aria-valuemin="0" aria-valuemax="100">
                             </div>
                         </div>
                         <div class="text-center mt-2 text-muted small">
                             {% if score >= 80 %}
-                                Excellent! Your resume is well-optimized for ATS systems.
+                            Excellent! Your resume is well-optimized for ATS systems.
                             {% elif score >= 60 %}
-                                Good job! Your resume performs well with ATS systems but has room for improvement.
+                            Good job! Your resume performs well with ATS systems but has room for improvement.
                             {% elif score >= 40 %}
-                                Your resume needs some optimization for better ATS performance.
+                            Your resume needs some optimization for better ATS performance.
                             {% else %}
-                                Your resume needs significant improvement to pass through ATS filters.
+                            Your resume needs significant improvement to pass through ATS filters.
                             {% endif %}
                         </div>
                     </div>
-                    
+
+                    <!-- Feedback -->
                     <!-- Feedback -->
                     <div class="mb-4">
                         <h4>Feedback</h4>
                         <div class="feedback-container">
                             {% if feedback %}
-                                {% for line in feedback.split('\n') %}
-                                    <div class="feedback-item">
-                                        <i class="fas fa-info-circle text-primary me-2"></i>
-                                        <span>{{ line }}</span>
-                                    </div>
-                                {% endfor %}
+                            {% if feedback is string %}
+                            {% for line in feedback.split('\n') %}
+                            <div class="feedback-item">
+                                <i class="fas fa-info-circle text-primary me-2"></i>
+                                <span>{{ line }}</span>
+                            </div>
+                            {% endfor %}
                             {% else %}
-                                <div class="feedback-item">
-                                    <i class="fas fa-check-circle text-success me-2"></i>
-                                    <span>Your resume meets basic ATS requirements.</span>
-                                </div>
+                            {% for line in feedback %}
+                            <div class="feedback-item">
+                                <i class="fas fa-info-circle text-primary me-2"></i>
+                                <span>{{ line }}</span>
+                            </div>
+                            {% endfor %}
+                            {% endif %}
+                            {% else %}
+                            <div class="feedback-item">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <span>Your resume meets basic ATS requirements.</span>
+                            </div>
                             {% endif %}
                         </div>
                     </div>
-                    
+
                     <!-- Job Description Matching -->
                     <div class="mb-4">
                         <h4>Job Description Matching</h4>
                         {% if job_description %}
-                            <div class="jd-analysis mb-3">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <h5>Input Job Description</h5>
-                                        <p class="pre-wrap mb-3">{{ job_description }}</p>
-                                        
-                                        <h5 class="mt-4">Keyword Matching</h5>
-                                        <div class="keyword-matching">
-                                            <div class="keywords-container">
-                                                {% for keyword in extracted_keywords %}
-                                                <span class="keyword-tag {% if keyword in found_keywords %}found{% else %}missing{% endif %}">
-                                                    {% if keyword in found_keywords %}
-                                                        <i class="fas fa-check-circle me-1"></i>
-                                                        {% else %}
-                                                        <i class="fas fa-times-circle me-1"></i>
-                                                    {% endif %}
-                                                    {{ keyword }}
-                                                </span>
-                                                {% endfor %}
-                                            </div>
-                                            <div class="text-center mt-3">
-                                                <p class="mb-0">
-                                                    <strong>Match rate:</strong> 
-                                                    {{ (found_keywords|length / extracted_keywords|length * 100)|round|int }}% 
-                                                    ({{ found_keywords|length }} of {{ extracted_keywords|length }} keywords)
-                                                </p>
-                                            </div>
+                        <div class="jd-analysis mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5>Input Job Description</h5>
+                                    <p class="pre-wrap mb-3">{{ job_description }}</p>
+
+                                    <h5 class="mt-4">Keyword Matching</h5>
+                                    <div class="keyword-matching">
+                                        <div class="keywords-container">
+                                            {% for keyword in extracted_keywords %}
+                                            <span
+                                                class="keyword-tag {% if keyword in found_keywords %}found{% else %}missing{% endif %}">
+                                                {% if keyword in found_keywords %}
+                                                <i class="fas fa-check-circle me-1"></i>
+                                                {% else %}
+                                                <i class="fas fa-times-circle me-1"></i>
+                                                {% endif %}
+                                                {{ keyword }}
+                                            </span>
+                                            {% endfor %}
+                                        </div>
+                                        <div class="text-center mt-3">
+                                            <p class="mb-0">
+                                                <strong>Match rate:</strong>
+                                                {{ (found_keywords|length / extracted_keywords|length * 100)|round|int
+                                                }}%
+                                                ({{ found_keywords|length }} of {{ extracted_keywords|length }}
+                                                keywords)
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                        </div>
                         {% else %}
-                            <div class="jd-form">
-                                <form method="POST" action="{{ url_for('resume.analyze', resume_id=resume.id) }}">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <div class="mb-3">
-                                        <label for="job_description" class="form-label">Paste a job description to check for keyword matches</label>
-                                        <textarea class="form-control" id="job_description" name="job_description" rows="6" placeholder="Paste the job description here..."></textarea>
+                        <div class="jd-form">
+                            <form method="POST" action="{{ url_for('resume.analyze', resume_id=resume.id) }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                                <!-- Analysis Type Selection -->
+                                <div class="mb-3">
+                                    <label class="form-label d-block">Analysis Type</label>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="analysis_type"
+                                            id="standardAnalysis" value="standard" checked>
+                                        <label class="form-check-label" for="standardAnalysis">
+                                            Standard Analysis
+                                        </label>
                                     </div>
-                                    <div class="text-end">
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="fas fa-search me-1"></i> Analyze Job Match
-                                        </button>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="analysis_type"
+                                            id="advancedAnalysis" value="advanced">
+                                        <label class="form-check-label" for="advancedAnalysis">
+                                            Advanced AI Analysis
+                                        </label>
                                     </div>
-                                </form>
-                            </div>
+                                    <div class="form-text">
+                                        Advanced analysis provides deeper insights and more detailed recommendations.
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="job_description" class="form-label">Paste a job description to check for
+                                        keyword matches</label>
+                                    <textarea class="form-control" id="job_description" name="job_description" rows="6"
+                                        placeholder="Paste the job description here..."></textarea>
+                                </div>
+
+                                <!-- Advanced options (hidden by default) -->
+                                <div id="advancedOptions" class="mb-3" style="display: none;">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="industry" class="form-label">Industry</label>
+                                            <select class="form-select" id="industry" name="industry">
+                                                <option value="">Select Industry</option>
+                                                <option value="tech">Technology</option>
+                                                <option value="finance">Finance/Banking</option>
+                                                <option value="healthcare">Healthcare</option>
+                                                <option value="marketing">Marketing/Advertising</option>
+                                                <option value="retail">Retail/E-commerce</option>
+                                                <option value="manufacturing">Manufacturing</option>
+                                                <option value="consulting">Consulting</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="company_size" class="form-label">Company Size</label>
+                                            <select class="form-select" id="company_size" name="company_size">
+                                                <option value="">Select Company Size</option>
+                                                <option value="startup">Startup</option>
+                                                <option value="midsize">Mid-size Company</option>
+                                                <option value="enterprise">Enterprise/Large Corp</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="text-end">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-search me-1"></i> Analyze Job Match
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                         {% endif %}
                     </div>
                 </div>
             </div>
-            
+
             <!-- Section-by-Section Analysis -->
             <div class="card mb-4">
                 <div class="card-header">
@@ -144,81 +209,374 @@
                         <div class="section-item">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <h4>Contact Information</h4>
-                                <span class="section-score {% if contact_score >= 80 %}good{% elif contact_score >= 50 %}average{% else %}poor{% endif %}">
+                                <span
+                                    class="section-score {% if contact_score >= 80 %}good{% elif contact_score >= 50 %}average{% else %}poor{% endif %}">
                                     {{ contact_score }}%
                                 </span>
                             </div>
                             <div class="section-feedback">
-                                {% if contact_score >= 80 %}
-                                    <p><i class="fas fa-check-circle text-success me-2"></i> Good contact information with all necessary details.</p>
-                                {% elif contact_score >= 50 %}
-                                    <p><i class="fas fa-info-circle text-warning me-2"></i> Consider adding more contact details like LinkedIn profile.</p>
+                                {% if section_feedback and section_feedback.contact %}
+                                {% for feedback_item in section_feedback.contact %}
+                                <p>
+                                    {% if contact_score >= 80 %}
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    {% elif contact_score >= 50 %}
+                                    <i class="fas fa-info-circle text-warning me-2"></i>
+                                    {% else %}
+                                    <i class="fas fa-exclamation-circle text-danger me-2"></i>
+                                    {% endif %}
+                                    {{ feedback_item }}
+                                </p>
+                                {% endfor %}
                                 {% else %}
-                                    <p><i class="fas fa-exclamation-circle text-danger me-2"></i> Insufficient contact information. Add more details.</p>
+                                {% if contact_score >= 80 %}
+                                <p><i class="fas fa-check-circle text-success me-2"></i> Good contact information with
+                                    all necessary details.</p>
+                                {% elif contact_score >= 50 %}
+                                <p><i class="fas fa-info-circle text-warning me-2"></i> Consider adding more contact
+                                    details like LinkedIn profile.</p>
+                                {% else %}
+                                <p><i class="fas fa-exclamation-circle text-danger me-2"></i> Insufficient contact
+                                    information. Add more details.</p>
+                                {% endif %}
                                 {% endif %}
                             </div>
                         </div>
-                        
+
                         <div class="section-item">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <h4>Experience</h4>
-                                <span class="section-score {% if experience_score >= 80 %}good{% elif experience_score >= 50 %}average{% else %}poor{% endif %}">
+                                <span
+                                    class="section-score {% if experience_score >= 80 %}good{% elif experience_score >= 50 %}average{% else %}poor{% endif %}">
                                     {{ experience_score }}%
                                 </span>
                             </div>
                             <div class="section-feedback">
-                                {% if experience_score >= 80 %}
-                                    <p><i class="fas fa-check-circle text-success me-2"></i> Strong experience section with impactful bullet points.</p>
-                                {% elif experience_score >= 50 %}
-                                    <p><i class="fas fa-info-circle text-warning me-2"></i> Experience section needs more quantifiable achievements.</p>
+                                {% if section_feedback and section_feedback.experience %}
+                                {% for feedback_item in section_feedback.experience %}
+                                <p>
+                                    {% if experience_score >= 80 %}
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    {% elif experience_score >= 50 %}
+                                    <i class="fas fa-info-circle text-warning me-2"></i>
+                                    {% else %}
+                                    <i class="fas fa-exclamation-circle text-danger me-2"></i>
+                                    {% endif %}
+                                    {{ feedback_item }}
+                                </p>
+                                {% endfor %}
                                 {% else %}
-                                    <p><i class="fas fa-exclamation-circle text-danger me-2"></i> Weak experience section. Add more details and achievements.</p>
+                                {% if experience_score >= 80 %}
+                                <p><i class="fas fa-check-circle text-success me-2"></i> Strong experience section with
+                                    impactful bullet points.</p>
+                                {% elif experience_score >= 50 %}
+                                <p><i class="fas fa-info-circle text-warning me-2"></i> Experience section needs more
+                                    quantifiable achievements.</p>
+                                {% else %}
+                                <p><i class="fas fa-exclamation-circle text-danger me-2"></i> Weak experience section.
+                                    Add more details and achievements.</p>
+                                {% endif %}
                                 {% endif %}
                             </div>
                         </div>
-                        
+
                         <div class="section-item">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <h4>Education</h4>
-                                <span class="section-score {% if education_score >= 80 %}good{% elif education_score >= 50 %}average{% else %}poor{% endif %}">
+                                <span
+                                    class="section-score {% if education_score >= 80 %}good{% elif education_score >= 50 %}average{% else %}poor{% endif %}">
                                     {{ education_score }}%
                                 </span>
                             </div>
                             <div class="section-feedback">
-                                {% if education_score >= 80 %}
-                                    <p><i class="fas fa-check-circle text-success me-2"></i> Comprehensive education section.</p>
-                                {% elif education_score >= 50 %}
-                                    <p><i class="fas fa-info-circle text-warning me-2"></i> Education section could benefit from more details.</p>
+                                {% if section_feedback and section_feedback.education %}
+                                {% for feedback_item in section_feedback.education %}
+                                <p>
+                                    {% if education_score >= 80 %}
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    {% elif education_score >= 50 %}
+                                    <i class="fas fa-info-circle text-warning me-2"></i>
+                                    {% else %}
+                                    <i class="fas fa-exclamation-circle text-danger me-2"></i>
+                                    {% endif %}
+                                    {{ feedback_item }}
+                                </p>
+                                {% endfor %}
                                 {% else %}
-                                    <p><i class="fas fa-exclamation-circle text-danger me-2"></i> Education section needs improvement.</p>
+                                {% if education_score >= 80 %}
+                                <p><i class="fas fa-check-circle text-success me-2"></i> Comprehensive education
+                                    section.</p>
+                                {% elif education_score >= 50 %}
+                                <p><i class="fas fa-info-circle text-warning me-2"></i> Education section could benefit
+                                    from more details.</p>
+                                {% else %}
+                                <p><i class="fas fa-exclamation-circle text-danger me-2"></i> Education section needs
+                                    improvement.</p>
+                                {% endif %}
                                 {% endif %}
                             </div>
                         </div>
-                        
+
                         <div class="section-item">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <h4>Skills</h4>
-                                <span class="section-score {% if skills_score >= 80 %}good{% elif skills_score >= 50 %}average{% else %}poor{% endif %}">
+                                <span
+                                    class="section-score {% if skills_score >= 80 %}good{% elif skills_score >= 50 %}average{% else %}poor{% endif %}">
                                     {{ skills_score }}%
                                 </span>
                             </div>
                             <div class="section-feedback">
-                                {% if skills_score >= 80 %}
-                                    <p><i class="fas fa-check-circle text-success me-2"></i> Great skills section with relevant keywords.</p>
-                                {% elif skills_score >= 50 %}
-                                    <p><i class="fas fa-info-circle text-warning me-2"></i> Skills section needs more industry-specific keywords.</p>
+                                {% if section_feedback and section_feedback.skills %}
+                                {% for feedback_item in section_feedback.skills %}
+                                <p>
+                                    {% if skills_score >= 80 %}
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    {% elif skills_score >= 50 %}
+                                    <i class="fas fa-info-circle text-warning me-2"></i>
+                                    {% else %}
+                                    <i class="fas fa-exclamation-circle text-danger me-2"></i>
+                                    {% endif %}
+                                    {{ feedback_item }}
+                                </p>
+                                {% endfor %}
                                 {% else %}
-                                    <p><i class="fas fa-exclamation-circle text-danger me-2"></i> Skills section is lacking. Add more relevant skills.</p>
+                                {% if skills_score >= 80 %}
+                                <p><i class="fas fa-check-circle text-success me-2"></i> Great skills section with
+                                    relevant keywords.</p>
+                                {% elif skills_score >= 50 %}
+                                <p><i class="fas fa-info-circle text-warning me-2"></i> Skills section needs more
+                                    industry-specific keywords.</p>
+                                {% else %}
+                                <p><i class="fas fa-exclamation-circle text-danger me-2"></i> Skills section is lacking.
+                                    Add more relevant skills.</p>
+                                {% endif %}
                                 {% endif %}
                             </div>
+                        </div>
+
+                        {% if summary_score and summary_score > 0 %}
+                        <div class="section-item">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h4>Summary/Objective</h4>
+                                <span
+                                    class="section-score {% if summary_score >= 80 %}good{% elif summary_score >= 50 %}average{% else %}poor{% endif %}">
+                                    {{ summary_score }}%
+                                </span>
+                            </div>
+                            <div class="section-feedback">
+                                {% if section_feedback and section_feedback.summary %}
+                                {% for feedback_item in section_feedback.summary %}
+                                <p>
+                                    {% if summary_score >= 80 %}
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    {% elif summary_score >= 50 %}
+                                    <i class="fas fa-info-circle text-warning me-2"></i>
+                                    {% else %}
+                                    <i class="fas fa-exclamation-circle text-danger me-2"></i>
+                                    {% endif %}
+                                    {{ feedback_item }}
+                                </p>
+                                {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if projects_score and projects_score > 0 %}
+                        <div class="section-item">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h4>Projects</h4>
+                                <span
+                                    class="section-score {% if projects_score >= 80 %}good{% elif projects_score >= 50 %}average{% else %}poor{% endif %}">
+                                    {{ projects_score }}%
+                                </span>
+                            </div>
+                            <div class="section-feedback">
+                                {% if section_feedback and section_feedback.projects %}
+                                {% for feedback_item in section_feedback.projects %}
+                                <p>
+                                    {% if projects_score >= 80 %}
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    {% elif projects_score >= 50 %}
+                                    <i class="fas fa-info-circle text-warning me-2"></i>
+                                    {% else %}
+                                    <i class="fas fa-exclamation-circle text-danger me-2"></i>
+                                    {% endif %}
+                                    {{ feedback_item }}
+                                </p>
+                                {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            {% if is_advanced %}
+            <!-- Content Quality Analysis (Advanced) -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="mb-0">Content Quality Analysis</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <h4>Action Verb Usage</h4>
+                            <div class="progress mt-2 mb-1" style="height: 10px;">
+                                <div class="progress-bar 
+                                    {% if action_verb_usage >= 80 %}bg-success
+                                    {% elif action_verb_usage >= 50 %}bg-primary
+                                    {% else %}bg-warning{% endif %}" role="progressbar"
+                                    style="width: {{ action_verb_usage }}%;" aria-valuenow="{{ action_verb_usage }}"
+                                    aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">0%</small>
+                                <small class="fw-bold">{{ action_verb_usage|round|int }}%</small>
+                                <small class="text-muted">100%</small>
+                            </div>
+                            <p class="text-muted small mt-2">
+                                {% if action_verb_usage >= 80 %}
+                                Excellent use of action verbs to begin bullet points.
+                                {% elif action_verb_usage >= 50 %}
+                                Good use of action verbs, but could be more consistent.
+                                {% else %}
+                                Start more bullet points with strong action verbs.
+                                {% endif %}
+                            </p>
+                        </div>
+
+                        <div class="col-md-6 mb-4">
+                            <h4>Quantification</h4>
+                            <div class="progress mt-2 mb-1" style="height: 10px;">
+                                <div class="progress-bar 
+                                    {% if quantification_score >= 70 %}bg-success
+                                    {% elif quantification_score >= 40 %}bg-primary
+                                    {% else %}bg-warning{% endif %}" role="progressbar"
+                                    style="width: {{ quantification_score }}%;"
+                                    aria-valuenow="{{ quantification_score }}" aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">0%</small>
+                                <small class="fw-bold">{{ quantification_score|round|int }}%</small>
+                                <small class="text-muted">100%</small>
+                            </div>
+                            <p class="text-muted small mt-2">
+                                {% if quantification_score >= 70 %}
+                                Excellent use of metrics to quantify achievements.
+                                {% elif quantification_score >= 40 %}
+                                Good inclusion of numbers, but could add more metrics.
+                                {% else %}
+                                Include more numbers, percentages, and metrics.
+                                {% endif %}
+                            </p>
+                        </div>
+
+                        <div class="col-md-6 mb-4">
+                            <h4>Achievement Focus</h4>
+                            <div class="progress mt-2 mb-1" style="height: 10px;">
+                                <div class="progress-bar 
+                                    {% if achievement_focus >= 70 %}bg-success
+                                    {% elif achievement_focus >= 40 %}bg-primary
+                                    {% else %}bg-warning{% endif %}" role="progressbar"
+                                    style="width: {{ achievement_focus }}%;" aria-valuenow="{{ achievement_focus }}"
+                                    aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">0%</small>
+                                <small class="fw-bold">{{ achievement_focus|round|int }}%</small>
+                                <small class="text-muted">100%</small>
+                            </div>
+                            <p class="text-muted small mt-2">
+                                {% if achievement_focus >= 70 %}
+                                Excellent focus on achievements rather than responsibilities.
+                                {% elif achievement_focus >= 40 %}
+                                Good balance of achievements and responsibilities.
+                                {% else %}
+                                Focus more on achievements rather than job duties.
+                                {% endif %}
+                            </p>
+                        </div>
+
+                        <div class="col-md-6 mb-4">
+                            <h4>Readability</h4>
+                            <div class="progress mt-2 mb-1" style="height: 10px;">
+                                <div class="progress-bar 
+                                    {% if readability_score >= 80 %}bg-success
+                                    {% elif readability_score >= 60 %}bg-primary
+                                    {% else %}bg-warning{% endif %}" role="progressbar"
+                                    style="width: {{ readability_score }}%;" aria-valuenow="{{ readability_score }}"
+                                    aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">0%</small>
+                                <small class="fw-bold">{{ readability_score|round|int }}%</small>
+                                <small class="text-muted">100%</small>
+                            </div>
+                            <p class="text-muted small mt-2">
+                                {% if readability_score >= 80 %}
+                                Excellent clarity and conciseness in your writing.
+                                {% elif readability_score >= 60 %}
+                                Good readability, but some sections could be clearer.
+                                {% else %}
+                                Improve clarity with shorter, more direct sentences.
+                                {% endif %}
+                            </p>
                         </div>
                     </div>
                 </div>
             </div>
+            {% endif %}
         </div>
-        
+
         <div class="col-lg-4">
-            <!-- Tips sidebar -->
+            {% if is_advanced and improvement_suggestions %}
+            <!-- Improvement Suggestions sidebar (Advanced) -->
+            <div class="card mb-4 sticky-top" style="top: 20px;">
+                <div class="card-header">
+                    <h3 class="mb-0"><i class="fas fa-lightbulb text-warning me-2"></i> Improvement Suggestions</h3>
+                </div>
+                <div class="card-body">
+                    <div class="suggestions-content">
+                        <ul class="list-group list-group-flush">
+                            {% for suggestion in improvement_suggestions %}
+                            <li class="list-group-item bg-transparent">
+                                <i class="fas fa-arrow-right text-primary me-2"></i> {{ suggestion }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ATS Tips (Advanced) -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="mb-0"><i class="fas fa-robot text-info me-2"></i> ATS Optimization Tips</h3>
+                </div>
+                <div class="card-body">
+                    <div class="tips-content">
+                        {% if ats_optimization_tips %}
+                        <ul class="list-group list-group-flush">
+                            {% for tip in ats_optimization_tips %}
+                            <li class="list-group-item bg-transparent">
+                                <i class="fas fa-check-circle text-success me-2"></i> {{ tip }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <p class="text-center text-muted">No specific ATS tips available.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <!-- Tips sidebar (Standard) -->
             <div class="card mb-4 sticky-top" style="top: 20px;">
                 <div class="card-header">
                     <h3 class="mb-0"><i class="fas fa-lightbulb text-warning me-2"></i> ATS Tips</h3>
@@ -226,25 +584,31 @@
                 <div class="card-body">
                     <div class="tips-content">
                         <h5>What is ATS?</h5>
-                        <p>Applicant Tracking Systems (ATS) are software that companies use to scan, filter, and rank resumes before human review.</p>
-                        
+                        <p>Applicant Tracking Systems (ATS) are software that companies use to scan, filter, and rank
+                            resumes before human review.</p>
+
                         <h5 class="mt-4">How to Pass ATS</h5>
                         <ul class="ps-3">
-                            <li><strong>Use standard formatting</strong> - Avoid complex layouts, tables, or headers/footers</li>
+                            <li><strong>Use standard formatting</strong> - Avoid complex layouts, tables, or
+                                headers/footers</li>
                             <li><strong>Include keywords</strong> - Match terms from the job description</li>
-                            <li><strong>Spell out acronyms</strong> - Use both the acronym and full term (e.g., "AI (Artificial Intelligence)")</li>
-                            <li><strong>Use standard section headings</strong> - Like "Experience," "Education," and "Skills"</li>
+                            <li><strong>Spell out acronyms</strong> - Use both the acronym and full term (e.g., "AI
+                                (Artificial Intelligence)")</li>
+                            <li><strong>Use standard section headings</strong> - Like "Experience," "Education," and
+                                "Skills"</li>
                             <li><strong>Submit as PDF</strong> - For consistent formatting across devices</li>
                         </ul>
-                        
+
                         <div class="alert alert-primary mt-4">
                             <i class="fas fa-info-circle me-2"></i>
-                            <strong>Pro Tip:</strong> Customize your resume for each job application by incorporating relevant keywords from the job description.
+                            <strong>Pro Tip:</strong> Customize your resume for each job application by incorporating
+                            relevant keywords from the job description.
                         </div>
                     </div>
                 </div>
             </div>
-            
+            {% endif %}
+
             <!-- Actions Card -->
             <div class="card mb-4">
                 <div class="card-header">
@@ -253,7 +617,8 @@
                 <div class="card-body">
                     <div class="recommended-actions">
                         <div class="action-item">
-                            <a href="{{ url_for('resume.edit', resume_id=resume.id) }}#skills" class="d-flex align-items-center action-link">
+                            <a href="{{ url_for('resume.edit', resume_id=resume.id) }}#skills"
+                                class="d-flex align-items-center action-link">
                                 <div class="action-icon">
                                     <i class="fas fa-tools"></i>
                                 </div>
@@ -266,9 +631,10 @@
                                 </div>
                             </a>
                         </div>
-                        
+
                         <div class="action-item">
-                            <a href="{{ url_for('resume.edit', resume_id=resume.id) }}#experience" class="d-flex align-items-center action-link">
+                            <a href="{{ url_for('resume.edit', resume_id=resume.id) }}#experience"
+                                class="d-flex align-items-center action-link">
                                 <div class="action-icon">
                                     <i class="fas fa-briefcase"></i>
                                 </div>
@@ -281,9 +647,10 @@
                                 </div>
                             </a>
                         </div>
-                        
+
                         <div class="action-item">
-                            <a href="{{ url_for('resume.edit', resume_id=resume.id) }}#basics" class="d-flex align-items-center action-link">
+                            <a href="{{ url_for('resume.edit', resume_id=resume.id) }}#basics"
+                                class="d-flex align-items-center action-link">
                                 <div class="action-icon">
                                     <i class="fas fa-pen"></i>
                                 </div>
@@ -296,7 +663,7 @@
                                 </div>
                             </a>
                         </div>
-                        
+
                         <div class="action-item">
                             <a href="{{ url_for('resume.templates') }}" class="d-flex align-items-center action-link">
                                 <div class="action-icon">
@@ -319,181 +686,213 @@
 </div>
 
 <style>
-/* Analysis page styles */
-.score-badge {
-    padding: 6px 12px;
-    border-radius: 20px;
-    color: white;
-    font-weight: bold;
-    min-width: 60px;
-    text-align: center;
-}
+    /* Analysis page styles */
+    .score-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        color: white;
+        font-weight: bold;
+        min-width: 60px;
+        text-align: center;
+    }
 
-.feedback-container {
-    margin-top: 15px;
-}
+    .feedback-container {
+        margin-top: 15px;
+    }
 
-.feedback-item {
-    padding: 10px 15px;
-    background-color: rgba(var(--primary-color-rgb), 0.05);
-    border-radius: 8px;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: flex-start;
-}
+    .feedback-item {
+        padding: 10px 15px;
+        background-color: rgba(var(--primary-color-rgb), 0.05);
+        border-radius: 8px;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: flex-start;
+    }
 
-.feedback-item i {
-    margin-top: 3px;
-}
+    .feedback-item i {
+        margin-top: 3px;
+    }
 
-.pre-wrap {
-    white-space: pre-wrap;
-    max-height: 200px;
-    overflow-y: auto;
-    background-color: rgba(0, 0, 0, 0.03);
-    padding: 15px;
-    border-radius: 5px;
-}
+    .pre-wrap {
+        white-space: pre-wrap;
+        max-height: 200px;
+        overflow-y: auto;
+        background-color: rgba(0, 0, 0, 0.03);
+        padding: 15px;
+        border-radius: 5px;
+    }
 
-.keywords-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 10px;
-}
+    .keywords-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+    }
 
-.keyword-tag {
-    padding: 5px 10px;
-    border-radius: 20px;
-    font-size: 0.85rem;
-}
+    .keyword-tag {
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+    }
 
-.keyword-tag.found {
-    background-color: rgba(40, 167, 69, 0.1);
-    border: 1px solid rgba(40, 167, 69, 0.2);
-    color: #28a745;
-}
+    .keyword-tag.found {
+        background-color: rgba(40, 167, 69, 0.1);
+        border: 1px solid rgba(40, 167, 69, 0.2);
+        color: #28a745;
+    }
 
-.keyword-tag.missing {
-    background-color: rgba(220, 53, 69, 0.1);
-    border: 1px solid rgba(220, 53, 69, 0.2);
-    color: #dc3545;
-}
+    .keyword-tag.missing {
+        background-color: rgba(220, 53, 69, 0.1);
+        border: 1px solid rgba(220, 53, 69, 0.2);
+        color: #dc3545;
+    }
 
-.section-item {
-    padding: 15px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-}
+    .section-item {
+        padding: 15px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
 
-.section-item:last-child {
-    border-bottom: none;
-}
+    .section-item:last-child {
+        border-bottom: none;
+    }
 
-.section-score {
-    font-weight: bold;
-    padding: 4px 10px;
-    border-radius: 20px;
-}
+    .section-score {
+        font-weight: bold;
+        padding: 4px 10px;
+        border-radius: 20px;
+    }
 
-.section-score.good {
-    background-color: rgba(40, 167, 69, 0.1);
-    color: #28a745;
-}
+    .section-score.good {
+        background-color: rgba(40, 167, 69, 0.1);
+        color: #28a745;
+    }
 
-.section-score.average {
-    background-color: rgba(255, 193, 7, 0.1);
-    color: #ffc107;
-}
+    .section-score.average {
+        background-color: rgba(255, 193, 7, 0.1);
+        color: #ffc107;
+    }
 
-.section-score.poor {
-    background-color: rgba(220, 53, 69, 0.1);
-    color: #dc3545;
-}
+    .section-score.poor {
+        background-color: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+    }
 
-.recommended-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
+    .recommended-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
 
-.action-item {
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
-    overflow: hidden;
-    transition: all 0.3s;
-}
+    .action-item {
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        overflow: hidden;
+        transition: all 0.3s;
+    }
 
-.action-item:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    transform: translateY(-2px);
-}
+    .action-item:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
 
-.action-link {
-    padding: 12px 15px;
-    text-decoration: none;
-    color: inherit;
-}
+    .action-link {
+        padding: 12px 15px;
+        text-decoration: none;
+        color: inherit;
+    }
 
-.action-icon {
-    width: 40px;
-    height: 40px;
-    background: rgba(var(--primary-color-rgb), 0.1);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--primary-color);
-    margin-right: 15px;
-    font-size: 1.2rem;
-}
+    .action-icon {
+        width: 40px;
+        height: 40px;
+        background: rgba(var(--primary-color-rgb), 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary-color);
+        margin-right: 15px;
+        font-size: 1.2rem;
+    }
 
-.action-content {
-    flex-grow: 1;
-}
+    .action-content {
+        flex-grow: 1;
+    }
 
-.action-content h5 {
-    margin-bottom: 0;
-    font-size: 1rem;
-}
+    .action-content h5 {
+        margin-bottom: 0;
+        font-size: 1rem;
+    }
 
-.action-content p {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-}
+    .action-content p {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
 
-.action-arrow {
-    margin-left: 10px;
-    color: var(--text-secondary);
-}
+    .action-arrow {
+        margin-left: 10px;
+        color: var(--text-secondary);
+    }
+
+    /* Additional styles for the suggestions/tips sections */
+    .suggestions-content .list-group-item,
+    .tips-content .list-group-item {
+        border: none;
+        padding: 10px 0;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .suggestions-content .list-group-item:last-child,
+    .tips-content .list-group-item:last-child {
+        border-bottom: none;
+    }
 </style>
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Extract RGB values from hex color for CSS variables
-    function hexToRgb(hex) {
-        hex = hex.replace('#', '');
-        const r = parseInt(hex.substring(0, 2), 16);
-        const g = parseInt(hex.substring(2, 4), 16);
-        const b = parseInt(hex.substring(4, 6), 16);
-        return `${r}, ${g}, ${b}`;
-    }
-    
-    // Set CSS variable for primary color RGB
-    const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
-    if (primaryColor) {
-        document.documentElement.style.setProperty('--primary-color-rgb', hexToRgb(primaryColor));
-    }
-    
-    // Auto expand textarea
-    const textarea = document.getElementById('job_description');
-    if (textarea) {
-        textarea.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = (this.scrollHeight) + 'px';
-        });
-    }
-});
+    document.addEventListener('DOMContentLoaded', function () {
+        // Extract RGB values from hex color for CSS variables
+        function hexToRgb(hex) {
+            hex = hex.replace('#', '');
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            return `${r}, ${g}, ${b}`;
+        }
+
+        // Set CSS variable for primary color RGB
+        const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
+        if (primaryColor) {
+            document.documentElement.style.setProperty('--primary-color-rgb', hexToRgb(primaryColor));
+        }
+
+        // Auto expand textarea
+        const textarea = document.getElementById('job_description');
+        if (textarea) {
+            textarea.addEventListener('input', function () {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+        }
+
+        // Toggle advanced options based on analysis type selection
+        const standardAnalysis = document.getElementById('standardAnalysis');
+        const advancedAnalysis = document.getElementById('advancedAnalysis');
+        const advancedOptions = document.getElementById('advancedOptions');
+
+        if (standardAnalysis && advancedAnalysis && advancedOptions) {
+            standardAnalysis.addEventListener('change', function () {
+                if (this.checked) {
+                    advancedOptions.style.display = 'none';
+                }
+            });
+
+            advancedAnalysis.addEventListener('change', function () {
+                if (this.checked) {
+                    advancedOptions.style.display = 'block';
+                }
+            });
+        }
+    });
 </script>
 {% endblock %}

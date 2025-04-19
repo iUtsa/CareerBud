@@ -1,0 +1,801 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h2 class="card-title-primary mb-0">
+                        <i class="fas fa-chart-line me-2"></i> Advanced ATS Analysis
+                    </h2>
+                    <div>
+                        <a href="{{ url_for('resume.edit', resume_id=resume.id) }}" class="btn btn-outline-secondary me-2">
+                            <i class="fas fa-edit me-1"></i> Edit Resume
+                        </a>
+                        <a href="{{ url_for('resume.view', resume_id=resume.id) }}" class="btn btn-primary" target="_blank">
+                            <i class="fas fa-eye me-1"></i> View Resume
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h3 class="mb-3">{{ resume.title }}</h3>
+                    
+                    <!-- Overall ATS Score -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h4>Overall ATS Score</h4>
+                            <div class="score-badge 
+                                {% if score >= 80 %}bg-success
+                                {% elif score >= 60 %}bg-primary
+                                {% elif score >= 40 %}bg-warning
+                                {% else %}bg-danger{% endif %}">
+                                {{ score|round|int }}%
+                            </div>
+                        </div>
+                        <div class="progress" style="height: 15px; background-color: #e9ecef;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated 
+                                {% if score >= 80 %}bg-success
+                                {% elif score >= 60 %}bg-primary
+                                {% elif score >= 40 %}bg-warning
+                                {% else %}bg-danger{% endif %}" 
+                                role="progressbar" 
+                                style="width: {{ score }}%;" 
+                                aria-valuenow="{{ score }}" 
+                                aria-valuemin="0" 
+                                aria-valuemax="100">
+                            </div>
+                        </div>
+                        <div class="text-center mt-2 text-muted small">
+                            {% if score >= 80 %}
+                                Excellent! Your resume is well-optimized for ATS systems.
+                            {% elif score >= 60 %}
+                                Good job! Your resume performs well with ATS systems but has room for improvement.
+                            {% elif score >= 40 %}
+                                Your resume needs some optimization for better ATS performance.
+                            {% else %}
+                                Your resume needs significant improvement to pass through ATS filters.
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Feedback -->
+                    <div class="mb-4">
+                        <h4>Key Findings</h4>
+                        <div class="feedback-container">
+                            {% if metrics.overall_feedback %}
+                                {% for line in metrics.overall_feedback %}
+                                    <div class="feedback-item">
+                                        <i class="fas fa-info-circle text-primary me-2"></i>
+                                        <span>{{ line }}</span>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Score Breakdown -->
+                    <div class="mb-4">
+                        <h4>Score Breakdown</h4>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Content Quality</h5>
+                                        <div class="progress mt-2 mb-1" style="height: 10px;">
+                                            <div class="progress-bar bg-primary" role="progressbar" 
+                                                style="width: {{ metrics.content_score }}%;" 
+                                                aria-valuenow="{{ metrics.content_score }}" 
+                                                aria-valuemin="0" aria-valuemax="100">
+                                            </div>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <small class="text-muted">0%</small>
+                                            <small class="text-primary fw-bold">{{ metrics.content_score|round|int }}%</small>
+                                            <small class="text-muted">100%</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Keyword Optimization</h5>
+                                        <div class="progress mt-2 mb-1" style="height: 10px;">
+                                            <div class="progress-bar bg-primary" role="progressbar" 
+                                                style="width: {{ metrics.keyword_score }}%;" 
+                                                aria-valuenow="{{ metrics.keyword_score }}" 
+                                                aria-valuemin="0" aria-valuemax="100">
+                                            </div>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <small class="text-muted">0%</small>
+                                            <small class="text-primary fw-bold">{{ metrics.keyword_score|round|int }}%</small>
+                                            <small class="text-muted">100%</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Impact & Achievement Focus</h5>
+                                        <div class="progress mt-2 mb-1" style="height: 10px;">
+                                            <div class="progress-bar bg-primary" role="progressbar" 
+                                                style="width: {{ metrics.impact_score }}%;" 
+                                                aria-valuenow="{{ metrics.impact_score }}" 
+                                                aria-valuemin="0" aria-valuemax="100">
+                                            </div>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <small class="text-muted">0%</small>
+                                            <small class="text-primary fw-bold">{{ metrics.impact_score|round|int }}%</small>
+                                            <small class="text-muted">100%</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Format & Structure</h5>
+                                        <div class="progress mt-2 mb-1" style="height: 10px;">
+                                            <div class="progress-bar bg-primary" role="progressbar" 
+                                                style="width: {{ metrics.format_score }}%;" 
+                                                aria-valuenow="{{ metrics.format_score }}" 
+                                                aria-valuemin="0" aria-valuemax="100">
+                                            </div>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <small class="text-muted">0%</small>
+                                            <small class="text-primary fw-bold">{{ metrics.format_score|round|int }}%</small>
+                                            <small class="text-muted">100%</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Job Description Matching -->
+                    {% if job_description %}
+                    <div class="mb-4">
+                        <h4>Job Description Matching</h4>
+                        <div class="jd-analysis mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5>Relevance Score</h5>
+                                    <div class="progress mt-2 mb-1" style="height: 10px;">
+                                        <div class="progress-bar 
+                                            {% if metrics.relevance_score >= 80 %}bg-success
+                                            {% elif metrics.relevance_score >= 60 %}bg-primary
+                                            {% elif metrics.relevance_score >= 40 %}bg-warning
+                                            {% else %}bg-danger{% endif %}" 
+                                            role="progressbar" 
+                                            style="width: {{ metrics.relevance_score }}%;" 
+                                            aria-valuenow="{{ metrics.relevance_score }}" 
+                                            aria-valuemin="0" aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-3">
+                                        <small class="text-muted">0%</small>
+                                        <small class="fw-bold 
+                                            {% if metrics.relevance_score >= 80 %}text-success
+                                            {% elif metrics.relevance_score >= 60 %}text-primary
+                                            {% elif metrics.relevance_score >= 40 %}text-warning
+                                            {% else %}text-danger{% endif %}">
+                                            {{ metrics.relevance_score|round|int }}%
+                                        </small>
+                                        <small class="text-muted">100%</small>
+                                    </div>
+                                    
+                                    <h5 class="mt-4">Keyword Matching</h5>
+                                    <div class="keyword-matching">
+                                        <div class="keywords-container">
+                                            <!-- Continuing the template from where we left off -->
+                                            {% for keyword in metrics.extracted_keywords %}
+                                            <span class="keyword-tag {% if keyword in metrics.found_keywords %}found{% else %}missing{% endif %}">
+                                                {% if keyword in metrics.found_keywords %}
+                                                    <i class="fas fa-check-circle me-1"></i>
+                                                {% else %}
+                                                    <i class="fas fa-times-circle me-1"></i>
+                                                {% endif %}
+                                                {{ keyword }}
+                                            </span>
+                                            {% endfor %}
+                                        </div>
+                                        <div class="text-center mt-3">
+                                            <p class="mb-0">
+                                                <strong>Match rate:</strong> 
+                                                {{ (metrics.found_keywords|length / metrics.extracted_keywords|length * 100)|round|int }}% 
+                                                ({{ metrics.found_keywords|length }} of {{ metrics.extracted_keywords|length }} keywords)
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    <h5 class="mt-4">Input Job Description</h5>
+                                    <p class="pre-wrap mb-3">{{ job_description }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="mb-4">
+                        <h4>Job Description Analysis</h4>
+                        <div class="jd-form">
+                            <form method="POST" action="{{ url_for('resume.advanced_analyze', resume_id=resume.id) }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <div class="mb-3">
+                                    <label for="job_description" class="form-label">Paste a job description to get a targeted analysis</label>
+                                    <textarea class="form-control" id="job_description" name="job_description" rows="6" placeholder="Paste the job description here..."></textarea>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="industry" class="form-label">Industry</label>
+                                        <select class="form-select" id="industry" name="industry">
+                                            <option value="">Select Industry</option>
+                                            <option value="tech">Technology</option>
+                                            <option value="finance">Finance/Banking</option>
+                                            <option value="healthcare">Healthcare</option>
+                                            <option value="marketing">Marketing/Advertising</option>
+                                            <option value="retail">Retail/E-commerce</option>
+                                            <option value="manufacturing">Manufacturing</option>
+                                            <option value="consulting">Consulting</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="company_size" class="form-label">Company Size</label>
+                                        <select class="form-select" id="company_size" name="company_size">
+                                            <option value="">Select Company Size</option>
+                                            <option value="startup">Startup</option>
+                                            <option value="midsize">Mid-size Company</option>
+                                            <option value="enterprise">Enterprise/Large Corp</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-search me-1"></i> Analyze Job Match
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Section-by-Section Analysis -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="mb-0">Section-by-Section Analysis</h3>
+                </div>
+                <div class="card-body">
+                    <div class="section-analysis">
+                        <div class="section-item">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h4>Contact Information</h4>
+                                <span class="section-score {% if metrics.contact_score >= 80 %}good{% elif metrics.contact_score >= 50 %}average{% else %}poor{% endif %}">
+                                    {{ metrics.contact_score|round|int }}%
+                                </span>
+                            </div>
+                            <div class="section-feedback">
+                                {% if metrics.section_feedback.contact %}
+                                    {% for feedback in metrics.section_feedback.contact %}
+                                        <p>
+                                            {% if metrics.contact_score >= 80 %}
+                                                <i class="fas fa-check-circle text-success me-2"></i>
+                                            {% elif metrics.contact_score >= 50 %}
+                                                <i class="fas fa-info-circle text-warning me-2"></i>
+                                            {% else %}
+                                                <i class="fas fa-exclamation-circle text-danger me-2"></i>
+                                            {% endif %}
+                                            {{ feedback }}
+                                        </p>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="section-item">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h4>Experience</h4>
+                                <span class="section-score {% if metrics.experience_score >= 80 %}good{% elif metrics.experience_score >= 50 %}average{% else %}poor{% endif %}">
+                                    {{ metrics.experience_score|round|int }}%
+                                </span>
+                            </div>
+                            <div class="section-feedback">
+                                {% if metrics.section_feedback.experience %}
+                                    {% for feedback in metrics.section_feedback.experience %}
+                                        <p>
+                                            {% if metrics.experience_score >= 80 %}
+                                                <i class="fas fa-check-circle text-success me-2"></i>
+                                            {% elif metrics.experience_score >= 50 %}
+                                                <i class="fas fa-info-circle text-warning me-2"></i>
+                                            {% else %}
+                                                <i class="fas fa-exclamation-circle text-danger me-2"></i>
+                                            {% endif %}
+                                            {{ feedback }}
+                                        </p>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="section-item">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h4>Education</h4>
+                                <span class="section-score {% if metrics.education_score >= 80 %}good{% elif metrics.education_score >= 50 %}average{% else %}poor{% endif %}">
+                                    {{ metrics.education_score|round|int }}%
+                                </span>
+                            </div>
+                            <div class="section-feedback">
+                                {% if metrics.section_feedback.education %}
+                                    {% for feedback in metrics.section_feedback.education %}
+                                        <p>
+                                            {% if metrics.education_score >= 80 %}
+                                                <i class="fas fa-check-circle text-success me-2"></i>
+                                            {% elif metrics.education_score >= 50 %}
+                                                <i class="fas fa-info-circle text-warning me-2"></i>
+                                            {% else %}
+                                                <i class="fas fa-exclamation-circle text-danger me-2"></i>
+                                            {% endif %}
+                                            {{ feedback }}
+                                        </p>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="section-item">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h4>Skills</h4>
+                                <span class="section-score {% if metrics.skills_score >= 80 %}good{% elif metrics.skills_score >= 50 %}average{% else %}poor{% endif %}">
+                                    {{ metrics.skills_score|round|int }}%
+                                </span>
+                            </div>
+                            <div class="section-feedback">
+                                {% if metrics.section_feedback.skills %}
+                                    {% for feedback in metrics.section_feedback.skills %}
+                                        <p>
+                                            {% if metrics.skills_score >= 80 %}
+                                                <i class="fas fa-check-circle text-success me-2"></i>
+                                            {% elif metrics.skills_score >= 50 %}
+                                                <i class="fas fa-info-circle text-warning me-2"></i>
+                                            {% else %}
+                                                <i class="fas fa-exclamation-circle text-danger me-2"></i>
+                                            {% endif %}
+                                            {{ feedback }}
+                                        </p>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if metrics.summary_score > 0 %}
+                        <div class="section-item">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h4>Summary/Objective</h4>
+                                <span class="section-score {% if metrics.summary_score >= 80 %}good{% elif metrics.summary_score >= 50 %}average{% else %}poor{% endif %}">
+                                    {{ metrics.summary_score|round|int }}%
+                                </span>
+                            </div>
+                            <div class="section-feedback">
+                                {% if metrics.section_feedback.summary %}
+                                    {% for feedback in metrics.section_feedback.summary %}
+                                        <p>
+                                            {% if metrics.summary_score >= 80 %}
+                                                <i class="fas fa-check-circle text-success me-2"></i>
+                                            {% elif metrics.summary_score >= 50 %}
+                                                <i class="fas fa-info-circle text-warning me-2"></i>
+                                            {% else %}
+                                                <i class="fas fa-exclamation-circle text-danger me-2"></i>
+                                            {% endif %}
+                                            {{ feedback }}
+                                        </p>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if metrics.projects_score > 0 %}
+                        <div class="section-item">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h4>Projects</h4>
+                                <span class="section-score {% if metrics.projects_score >= 80 %}good{% elif metrics.projects_score >= 50 %}average{% else %}poor{% endif %}">
+                                    {{ metrics.projects_score|round|int }}%
+                                </span>
+                            </div>
+                            <div class="section-feedback">
+                                {% if metrics.section_feedback.projects %}
+                                    {% for feedback in metrics.section_feedback.projects %}
+                                        <p>
+                                            {% if metrics.projects_score >= 80 %}
+                                                <i class="fas fa-check-circle text-success me-2"></i>
+                                            {% elif metrics.projects_score >= 50 %}
+                                                <i class="fas fa-info-circle text-warning me-2"></i>
+                                            {% else %}
+                                                <i class="fas fa-exclamation-circle text-danger me-2"></i>
+                                            {% endif %}
+                                            {{ feedback }}
+                                        </p>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Content Quality Analysis -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="mb-0">Content Quality Analysis</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <h4>Action Verb Usage</h4>
+                            <div class="progress mt-2 mb-1" style="height: 10px;">
+                                <div class="progress-bar 
+                                    {% if metrics.action_verb_usage >= 80 %}bg-success
+                                    {% elif metrics.action_verb_usage >= 50 %}bg-primary
+                                    {% else %}bg-warning{% endif %}" 
+                                    role="progressbar" 
+                                    style="width: {{ metrics.action_verb_usage }}%;" 
+                                    aria-valuenow="{{ metrics.action_verb_usage }}" 
+                                    aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">0%</small>
+                                <small class="fw-bold">{{ metrics.action_verb_usage|round|int }}%</small>
+                                <small class="text-muted">100%</small>
+                            </div>
+                            <p class="text-muted small mt-2">
+                                {% if metrics.action_verb_usage >= 80 %}
+                                    Excellent use of action verbs to begin bullet points.
+                                {% elif metrics.action_verb_usage >= 50 %}
+                                    Good use of action verbs, but could be more consistent.
+                                {% else %}
+                                    Start more bullet points with strong action verbs.
+                                {% endif %}
+                            </p>
+                        </div>
+                        
+                        <div class="col-md-6 mb-4">
+                            <h4>Quantification</h4>
+                            <div class="progress mt-2 mb-1" style="height: 10px;">
+                                <div class="progress-bar 
+                                    {% if metrics.quantification_score >= 70 %}bg-success
+                                    {% elif metrics.quantification_score >= 40 %}bg-primary
+                                    {% else %}bg-warning{% endif %}" 
+                                    role="progressbar" 
+                                    style="width: {{ metrics.quantification_score }}%;" 
+                                    aria-valuenow="{{ metrics.quantification_score }}" 
+                                    aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">0%</small>
+                                <small class="fw-bold">{{ metrics.quantification_score|round|int }}%</small>
+                                <small class="text-muted">100%</small>
+                            </div>
+                            <p class="text-muted small mt-2">
+                                {% if metrics.quantification_score >= 70 %}
+                                    Excellent use of metrics to quantify achievements.
+                                {% elif metrics.quantification_score >= 40 %}
+                                    Good inclusion of numbers, but could add more metrics.
+                                {% else %}
+                                    Include more numbers, percentages, and metrics.
+                                {% endif %}
+                            </p>
+                        </div>
+                        
+                        <div class="col-md-6 mb-4">
+                            <h4>Achievement Focus</h4>
+                            <div class="progress mt-2 mb-1" style="height: 10px;">
+                                <div class="progress-bar 
+                                    {% if metrics.achievement_focus >= 70 %}bg-success
+                                    {% elif metrics.achievement_focus >= 40 %}bg-primary
+                                    {% else %}bg-warning{% endif %}" 
+                                    role="progressbar" 
+                                    style="width: {{ metrics.achievement_focus }}%;" 
+                                    aria-valuenow="{{ metrics.achievement_focus }}" 
+                                    aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">0%</small>
+                                <small class="fw-bold">{{ metrics.achievement_focus|round|int }}%</small>
+                                <small class="text-muted">100%</small>
+                            </div>
+                            <p class="text-muted small mt-2">
+                                {% if metrics.achievement_focus >= 70 %}
+                                    Excellent focus on achievements rather than responsibilities.
+                                {% elif metrics.achievement_focus >= 40 %}
+                                    Good balance of achievements and responsibilities.
+                                {% else %}
+                                    Focus more on achievements rather than job duties.
+                                {% endif %}
+                            </p>
+                        </div>
+                        
+                        <div class="col-md-6 mb-4">
+                            <h4>Readability</h4>
+                            <div class="progress mt-2 mb-1" style="height: 10px;">
+                                <div class="progress-bar 
+                                    {% if metrics.readability_score >= 80 %}bg-success
+                                    {% elif metrics.readability_score >= 60 %}bg-primary
+                                    {% else %}bg-warning{% endif %}" 
+                                    role="progressbar" 
+                                    style="width: {{ metrics.readability_score }}%;" 
+                                    aria-valuenow="{{ metrics.readability_score }}" 
+                                    aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">0%</small>
+                                <small class="fw-bold">{{ metrics.readability_score|round|int }}%</small>
+                                <small class="text-muted">100%</small>
+                            </div>
+                            <p class="text-muted small mt-2">
+                                {% if metrics.readability_score >= 80 %}
+                                    Excellent clarity and conciseness in your writing.
+                                {% elif metrics.readability_score >= 60 %}
+                                    Good readability, but some sections could be clearer.
+                                {% else %}
+                                    Improve clarity with shorter, more direct sentences.
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Improvement Suggestions sidebar -->
+            <div class="card mb-4 sticky-top" style="top: 20px;">
+                <div class="card-header">
+                    <h3 class="mb-0"><i class="fas fa-lightbulb text-warning me-2"></i> Improvement Suggestions</h3>
+                </div>
+                <div class="card-body">
+                    <div class="suggestions-content">
+                        {% if metrics.improvement_suggestions %}
+                            <ul class="list-group list-group-flush">
+                                {% for suggestion in metrics.improvement_suggestions %}
+                                    <li class="list-group-item bg-transparent">
+                                        <i class="fas fa-arrow-right text-primary me-2"></i> {{ suggestion }}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="text-center text-muted">No specific suggestions available.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ATS Tips -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="mb-0"><i class="fas fa-robot text-info me-2"></i> ATS Optimization Tips</h3>
+                </div>
+                <div class="card-body">
+                    <div class="tips-content">
+                        {% if metrics.ats_optimization_tips %}
+                            <ul class="list-group list-group-flush">
+                                {% for tip in metrics.ats_optimization_tips %}
+                                    <li class="list-group-item bg-transparent">
+                                        <i class="fas fa-check-circle text-success me-2"></i> {{ tip }}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="text-center text-muted">No specific ATS tips available.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Actions Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="mb-0">Recommended Actions</h3>
+                </div>
+                <div class="card-body">
+                    <div class="recommended-actions">
+                        <div class="action-item">
+                            <a href="{{ url_for('resume.edit', resume_id=resume.id) }}#skills" class="d-flex align-items-center action-link">
+                                <div class="action-icon">
+                                    <i class="fas fa-tools"></i>
+                                </div>
+                                <div class="action-content">
+                                    <h5>Optimize Keywords</h5>
+                                    <p class="mb-0">Add missing keywords from the job description</p>
+                                </div>
+                                <div class="action-arrow">
+                                    <i class="fas fa-chevron-right"></i>
+                                </div>
+                            </a>
+                        </div>
+                        
+                        <div class="action-item">
+                            <a href="{{ url_for('resume.edit', resume_id=resume.id) }}#experience" class="d-flex align-items-center action-link">
+                                <div class="action-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div class="action-content">
+                                    <h5>Quantify Achievements</h5>
+                                    <p class="mb-0">Add numbers and metrics to your bullet points</p>
+                                </div>
+                                <div class="action-arrow">
+                                    <i class="fas fa-chevron-right"></i>
+                                </div>
+                            </a>
+                        </div>
+                        
+                        <div class="action-item">
+                            <a href="{{ url_for('resume.edit', resume_id=resume.id) }}#basics" class="d-flex align-items-center action-link">
+                                <div class="action-icon">
+                                    <i class="fas fa-pen"></i>
+                                </div>
+                                <div class="action-content">
+                                    <h5>Enhance Summary</h5>
+                                    <p class="mb-0">Align your summary with job requirements</p>
+                                </div>
+                                <div class="action-arrow">
+                                    <i class="fas fa-chevron-right"></i>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Analysis page styles similar to before */
+.score-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    color: white;
+    font-weight: bold;
+    min-width: 60px;
+    text-align: center;
+}
+
+.feedback-container {
+    margin-top: 15px;
+}
+
+.feedback-item {
+    padding: 10px 15px;
+    background-color: rgba(var(--primary-color-rgb), 0.05);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: flex-start;
+}
+
+.pre-wrap {
+    white-space: pre-wrap;
+    max-height: 200px;
+    overflow-y: auto;
+    background-color: rgba(0, 0, 0, 0.03);
+    padding: 15px;
+    border-radius: 5px;
+}
+
+.keywords-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.keyword-tag {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+}
+
+.keyword-tag.found {
+    background-color: rgba(40, 167, 69, 0.1);
+    border: 1px solid rgba(40, 167, 69, 0.2);
+    color: #28a745;
+}
+
+.keyword-tag.missing {
+    background-color: rgba(220, 53, 69, 0.1);
+    border: 1px solid rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+}
+
+.section-item {
+    padding: 15px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.section-item:last-child {
+    border-bottom: none;
+}
+
+.section-score {
+    font-weight: bold;
+    padding: 4px 10px;
+    border-radius: 20px;
+}
+
+.section-score.good {
+    background-color: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+}
+
+.section-score.average {
+    background-color: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+}
+
+.section-score.poor {
+    background-color: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+}
+
+.action-item {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s;
+    margin-bottom: 10px;
+}
+
+.action-item:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.action-link {
+    padding: 12px 15px;
+    text-decoration: none;
+    color: inherit;
+}
+
+.action-icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(var(--primary-color-rgb), 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-color);
+    margin-right: 15px;
+    font-size: 1.2rem;
+}
+
+.action-content {
+    flex-grow: 1;
+}
+
+.action-content h5 {
+    margin-bottom: 0;
+    font-size: 1rem;
+}
+
+.action-content p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.action-arrow {
+    margin-left: 10px;
+    color: var(--text-secondary);
+}
+</style>
+{% endblock %}

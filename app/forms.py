@@ -105,3 +105,27 @@ class ResumeAnalysisForm(FlaskForm):
     job_description = TextAreaField('Job Description', validators=[DataRequired()])
     job_title = StringField('Job Title', validators=[Optional(), Length(max=100)])
     company = StringField('Company', validators=[Optional(), Length(max=100)])
+
+
+class AdvancedResumeAnalysisForm(FlaskForm):
+    """
+    Form for advanced resume analysis
+    """
+    job_description = TextAreaField('Job Description', validators=[Optional()])
+    industry = SelectField('Industry', choices=[
+        ('', 'Select Industry'),
+        ('tech', 'Technology'),
+        ('finance', 'Finance/Banking'),
+        ('healthcare', 'Healthcare'),
+        ('marketing', 'Marketing/Advertising'),
+        ('retail', 'Retail/E-commerce'),
+        ('manufacturing', 'Manufacturing'),
+        ('consulting', 'Consulting')
+    ], validators=[Optional()])
+    company_size = SelectField('Company Size', choices=[
+        ('', 'Select Company Size'),
+        ('startup', 'Startup'),
+        ('midsize', 'Mid-size Company'),
+        ('enterprise', 'Enterprise/Large Corp')
+    ], validators=[Optional()])
+    submit = SubmitField('Analyze Resume')

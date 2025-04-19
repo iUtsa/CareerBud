@@ -4,7 +4,7 @@ from app.forms import ResumeForm, ResumeSectionForm, ResumeSkillForm
 from app.models import (
     create_resume, get_user_resumes, get_resume, update_resume, delete_resume,
     add_resume_section, add_resume_skill, generate_resume_summary, analyze_resume_ats,
-    Resume, ResumeSection, ResumeBullet, ResumeSkill
+    Resume, ResumeSection, ResumeBullet, ResumeSkill, advanced_ats_analyzer
 )
 import json
 from werkzeug.utils import secure_filename
@@ -256,66 +256,114 @@ def analyze(resume_id):
         return redirect(url_for('resume.resume_dashboard'))
     
     job_description = request.form.get('job_description', None)
+    industry = request.form.get('industry', None)
+    company_size = request.form.get('company_size', None)
     
-    result = analyze_resume_ats(resume_id, current_user.id, job_description)
+    # Determine whether to use advanced analysis or basic analysis
+    use_advanced = request.form.get('analysis_type') == 'advanced'
     
-    if result:
-        # Calculate section scores - these were missing
-        contact_score = 85  # Default value or calculate based on user profile completeness
+    if use_advanced:
+        # Use advanced ATS analyzer
+        result = advanced_ats_analyzer(resume_id, current_user.id, job_description, industry, company_size)
         
-        # Get sections for this resume to calculate section scores
-        sections = ResumeSection.query.filter_by(resume_id=resume_id).all()
-        skills = ResumeSkill.query.filter_by(resume_id=resume_id).all()
-        
-        # Calculate experience score
-        experience_sections = [s for s in sections if s.type == 'experience']
-        experience_score = 80 if experience_sections else 30
-        
-        # Calculate education score
-        education_sections = [s for s in sections if s.type == 'education']
-        education_score = 80 if education_sections else 30
-        
-        # Calculate skills score
-        skills_score = min(90, len(skills) * 10) if skills else 30
-        
-        # If job description is provided, extract keywords
-        extracted_keywords = []
-        found_keywords = []
-        
-        if job_description:
-            # Extract keywords from job description (simple implementation)
-            common_keywords = [
-                'Python', 'Java', 'JavaScript', 'C++', 'HTML', 'CSS', 'SQL', 'React',
-                'management', 'leadership', 'communication', 'teamwork', 'problem-solving'
-            ]
-            
-            # Simple keyword extraction - in a real app, use NLP
-            for keyword in common_keywords:
-                if keyword.lower() in job_description.lower():
-                    extracted_keywords.append(keyword)
-                    
-                    # Check if keyword is in resume content
-                    skill_names = [skill.skill_name.lower() for skill in skills]
-                    if keyword.lower() in skill_names:
-                        found_keywords.append(keyword)
-        
-        return render_template(
-            'resume/analysis.html', 
-            resume=resume, 
-            score=result['score'], 
-            feedback=result['feedback'],
-            job_description=job_description,
-            # Add missing variables
-            contact_score=contact_score,
-            experience_score=experience_score,
-            education_score=education_score,
-            skills_score=skills_score,
-            extracted_keywords=extracted_keywords,
-            found_keywords=found_keywords
-        )
+        if result:
+            return render_template(
+                'resume/analysis.html',
+                resume=resume,
+                score=result['score'],
+                feedback=result['metrics']['overall_feedback'],
+                job_description=job_description,
+                industry=industry,
+                company_size=company_size,
+                
+                # Add all metrics for the template
+                contact_score=result['metrics']['contact_score'],
+                experience_score=result['metrics']['experience_score'],
+                education_score=result['metrics']['education_score'],
+                skills_score=result['metrics']['skills_score'],
+                extracted_keywords=result['metrics']['extracted_keywords'],
+                found_keywords=result['metrics']['found_keywords'],
+                
+                # Additional metrics for advanced analysis
+                content_score=result['metrics']['content_score'],
+                keyword_score=result['metrics']['keyword_score'],
+                impact_score=result['metrics']['impact_score'],
+                format_score=result['metrics']['format_score'],
+                action_verb_usage=result['metrics']['action_verb_usage'],
+                quantification_score=result['metrics']['quantification_score'],
+                achievement_focus=result['metrics']['achievement_focus'],
+                readability_score=result['metrics']['readability_score'],
+                section_feedback=result['metrics']['section_feedback'],
+                improvement_suggestions=result['metrics']['improvement_suggestions'],
+                ats_optimization_tips=result['metrics']['ats_optimization_tips'],
+                is_advanced=True
+            )
+        else:
+            flash('Error analyzing resume. Please try again.', 'danger')
+            return redirect(url_for('resume.edit', resume_id=resume_id))
     else:
-        flash('Error analyzing resume. Please try again.', 'danger')
-        return redirect(url_for('resume.edit', resume_id=resume_id))
+        # Use standard ATS analyzer
+        result = analyze_resume_ats(resume_id, current_user.id, job_description)
+        
+        if result:
+            # Calculate section scores - these were missing
+            contact_score = 85  # Default value or calculate based on user profile completeness
+            
+            # Get sections for this resume to calculate section scores
+            sections = ResumeSection.query.filter_by(resume_id=resume_id).all()
+            skills = ResumeSkill.query.filter_by(resume_id=resume_id).all()
+            
+            # Calculate experience score
+            experience_sections = [s for s in sections if s.type == 'experience']
+            experience_score = 80 if experience_sections else 30
+            
+            # Calculate education score
+            education_sections = [s for s in sections if s.type == 'education']
+            education_score = 80 if education_sections else 30
+            
+            # Calculate skills score
+            skills_score = min(90, len(skills) * 10) if skills else 30
+            
+            # If job description is provided, extract keywords
+            extracted_keywords = []
+            found_keywords = []
+            
+            if job_description:
+                # Extract keywords from job description (simple implementation)
+                common_keywords = [
+                    'Python', 'Java', 'JavaScript', 'C++', 'HTML', 'CSS', 'SQL', 'React',
+                    'management', 'leadership', 'communication', 'teamwork', 'problem-solving'
+                ]
+                
+                # Simple keyword extraction - in a real app, use NLP
+                for keyword in common_keywords:
+                    if keyword.lower() in job_description.lower():
+                        extracted_keywords.append(keyword)
+                        
+                        # Check if keyword is in resume content
+                        skill_names = [skill.skill_name.lower() for skill in skills]
+                        if keyword.lower() in skill_names:
+                            found_keywords.append(keyword)
+            
+            return render_template(
+                'resume/analysis.html', 
+                resume=resume, 
+                score=result['score'], 
+                feedback=result['feedback'],
+                job_description=job_description,
+                # Add missing variables
+                contact_score=contact_score,
+                experience_score=experience_score,
+                education_score=education_score,
+                skills_score=skills_score,
+                extracted_keywords=extracted_keywords,
+                found_keywords=found_keywords,
+                is_advanced=False
+            )
+        else:
+            flash('Error analyzing resume. Please try again.', 'danger')
+            return redirect(url_for('resume.edit', resume_id=resume_id))
+        
 
 
 def analyze_resume_ats(resume_id, user_id, job_description=None):
@@ -405,7 +453,41 @@ def analyze_resume_ats(resume_id, user_id, job_description=None):
         print(f"Error analyzing resume: {type(e).__name__} - {str(e)}")
         db.session.rollback()
         return None
+@resume_bp.route('/<int:resume_id>/advanced-analyze', methods=['GET', 'POST'])
+@login_required
+def advanced_analyze(resume_id):
+    """
+    Perform advanced ATS analysis on a resume
+    """
+    resume = get_resume(resume_id, current_user.id)
+    if not resume:
+        flash('Resume not found.', 'danger')
+        return redirect(url_for('resume.resume_dashboard'))
     
+    # Get form data
+    job_description = request.form.get('job_description', None)
+    industry = request.form.get('industry', None)
+    company_size = request.form.get('company_size', None)
+    
+    # Perform advanced analysis
+    result = advanced_ats_analyzer(resume_id, current_user.id, job_description, industry, company_size)
+    
+    if result:
+        return render_template(
+            'resume/advanced_analysis.html', 
+            resume=resume, 
+            score=result['score'], 
+            metrics=result['metrics'],
+            feedback=result['feedback'],
+            job_description=job_description,
+            industry=industry,
+            company_size=company_size
+        )
+    else:
+        flash('Error analyzing resume. Please try again.', 'danger')
+        return redirect(url_for('resume.edit', resume_id=resume_id))
+
+
 @resume_bp.route('/<int:resume_id>/export', methods=['GET'])
 @login_required
 def export(resume_id):
