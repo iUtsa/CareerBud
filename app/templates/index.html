@@ -1,96 +1,1227 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html lang="en">
 
-{% block content %}
-<div class="landing-container">
-    <div class="landing-header">
-        <h1 class="landing-title">Welcome to CareersBud</h1>
-        <p class="landing-subtitle">Your All-in-One Platform for Academic and Professional Success</p>
-        
-        <div class="d-flex justify-content-center mt-4">
-            <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg me-3">Get Started</a>
-            <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary btn-lg">Login</a>
-        </div>
-    </div>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ site_title|default('CareersBud - Your All-in-One Platform for Academic and Professional Success') }}
+    </title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    {% block styles %}
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --primary-light: #93c5fd;
+            --secondary: #f1f5f9;
+            --text-dark: #1e293b;
+            --text-light: #64748b;
+            --text-lighter: #94a3b8;
+            --bg-light: #f8fafc;
+            --white: #ffffff;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border: #e2e8f0;
+            --transition-speed: 0.3s;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
     
-    <div class="landing-features">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-4 mb-4">
-                    <div class="text-center">
-                        <div class="feature-icon">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <h3 class="feature-title">Track Your Progress</h3>
-                        <p>Monitor your GPA, completed credits, and skill development in one place.</p>
-                    </div>
-                </div>
-                <div class="col-md-4 mb-4">
-                    <div class="text-center">
-                        <div class="feature-icon">
-                            <i class="fas fa-briefcase"></i>
-                        </div>
-                        <h3 class="feature-title">Find Opportunities</h3>
-                        <p>Discover internships and job opportunities tailored to your skills and interests.</p>
-                    </div>
-                </div>
-                <div class="col-md-4 mb-4">
-                    <div class="text-center">
-                        <div class="feature-icon">
-                            <i class="fas fa-book"></i>
-                        </div>
-                        <h3 class="feature-title">Access Courses</h3>
-                        <p>Enroll in courses to expand your knowledge and boost your career prospects.</p>
-                    </div>
-                </div>
-            </div>
+        /* Reset & Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+    
+        html, body {
+            width: 100%;
+            max-width: 100vw;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+    
+        body {
+            font-family: 'Manrope', sans-serif;
+            color: var(--text-dark);
+            line-height: 1.5;
+            background-color: var(--bg-light);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+    
+        /* Container Styles */
+        .page-wrapper {
+            width: 100%;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            box-sizing: border-box;
+        }
+    
+        /* Navigation */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+    
+        .navbar.scrolled {
+            background-color: var(--white);
+            box-shadow: var(--shadow);
+            padding: 0.75rem 0;
+        }
+    
+        .logo {
+            display: flex;
+            align-items: center;
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--primary);
+            text-decoration: none;
+        }
+    
+        .logo svg {
+            margin-right: 0.5rem;
+            height: 32px;
+            width: auto;
+        }
+    
+        .nav-cta {
+            display: flex;
+            gap: 1rem;
+        }
+    
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-dark);
+        }
+    
+        /* Buttons */
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all var(--transition-speed);
+            text-align: center;
+            font-size: 0.9375rem;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+    
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: -1;
+            transition: width 0.4s ease;
+        }
+    
+        .btn:hover::before {
+            width: 100%;
+        }
+    
+        .btn-primary {
+            background-color: var(--primary);
+            color: var(--white);
+            border: 1px solid var(--primary);
+        }
+    
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+    
+        .btn-outline {
+            background-color: transparent;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+    
+        .btn-outline:hover {
+            background-color: var(--primary);
+            color: var(--white);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+    
+        .btn-lg {
+            padding: 0.875rem 2rem;
+            font-size: 1.125rem;
+        }
+    
+        /* Hero Section */
+        .landing-container {
+            padding-top: 5rem;
+            width: 100%;
+            max-width: 100vw;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+    
+        .landing-header {
+            text-align: center;
+            padding: 8rem 0 5rem;
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            width: 100%;
+        }
+    
+        .landing-header-bg {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.3;
+        }
+    
+        .landing-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+            background: linear-gradient(135deg, var(--primary), #6366f1);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeUp 1s forwards 0.3s;
+        }
+    
+        .landing-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-light);
+            margin-bottom: 2.5rem;
+            padding: 0 1rem;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeUp 1s forwards 0.5s;
+        }
+    
+        .landing-cta {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeUp 1s forwards 0.7s;
+        }
+    
+        /* Features Section */
+        .landing-features {
+            padding: 5rem 0;
+            background-color: var(--white);
+            margin: 2rem auto;
+            position: relative;
+            overflow: hidden;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            width: 100%;
+            max-width: 1280px;
+        }
+    
+        .section-title {
+            text-align: center;
+            font-size: 2.25rem;
+            font-weight: 800;
+            margin-bottom: 3rem;
+            background: linear-gradient(135deg, var(--primary), #6366f1);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            position: relative;
+            display: inline-block;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+    
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background: linear-gradient(135deg, var(--primary), #6366f1);
+            border-radius: 3px;
+        }
+    
+        .features-blob {
+            position: absolute;
+            opacity: 0.1;
+            z-index: 0;
+        }
+    
+        .blob-1 {
+            top: -100px;
+            left: -100px;
+            fill: var(--primary);
+            animation: float1 8s ease-in-out infinite;
+        }
+    
+        .blob-2 {
+            bottom: -100px;
+            right: -100px;
+            fill: var(--primary-light);
+            animation: float2 9s ease-in-out infinite;
+        }
+    
+        @keyframes float1 {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+        }
+    
+        @keyframes float2 {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(20px) rotate(-5deg); }
+        }
+    
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2rem;
+            position: relative;
+            z-index: 1;
+            padding: 0 2rem;
+            width: 100%;
+        }
+    
+        .feature-card {
+            background-color: var(--white);
+            border-radius: 1rem;
+            overflow: hidden;
+            transition: all var(--transition-speed);
+            box-shadow: var(--shadow-sm);
+            position: relative;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+    
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: var(--shadow-md);
+        }
+    
+        .feature-icon-wrapper {
+            position: relative;
+            height: 160px;
+            background: linear-gradient(135deg, var(--primary-light), var(--primary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+    
+        .feature-pattern {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            opacity: 0.2;
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='1' fill-rule='evenodd'/%3E%3C/svg%3E");
+        }
+    
+        .feature-icon {
+            width: 80px;
+            height: 80px;
+            z-index: 1;
+            transition: transform 0.5s ease;
+        }
+    
+        .feature-card:hover .feature-icon {
+            transform: scale(1.1) rotate(5deg);
+        }
+    
+        .feature-content {
+            padding: 1.5rem;
+        }
+    
+        .feature-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            color: var(--text-dark);
+        }
+    
+        .feature-description {
+            color: var(--text-light);
+            font-size: 0.9375rem;
+            line-height: 1.6;
+        }
+    
+        /* CTA Section */
+        .cta-section {
+            text-align: center;
+            padding: 6rem 0;
+            margin: 5rem auto;
+            position: relative;
+            overflow: hidden;
+            border-radius: 20px;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeUp 1s forwards 0.9s;
+            width: 100%;
+            max-width: 1280px;
+        }
+    
+        .cta-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary), #6366f1);
+            z-index: -2;
+        }
+    
+        .cta-pattern {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            z-index: -1;
+        }
+    
+        .cta-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 2rem;
+            color: var(--white);
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+    
+        .btn-cta {
+            background-color: var(--white);
+            color: var(--primary);
+            border: none;
+            font-weight: 700;
+            padding: 1rem 2.5rem;
+            box-shadow: var(--shadow);
+        }
+    
+        .btn-cta:hover {
+            background-color: var(--bg-light);
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: var(--shadow-lg);
+        }
+    
+        /* Footer */
+        .footer {
+            background-color: var(--text-dark);
+            color: var(--white);
+            padding: 4rem 0 2rem;
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            margin-top: auto;
+        }
+    
+        .footer-pattern {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            z-index: 0;
+        }
+    
+        .footer-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+    
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--white);
+        }
+    
+        .footer-logo svg {
+            height: 24px;
+            width: auto;
+            margin-right: 0.5rem;
+        }
+    
+        .footer-about p {
+            color: var(--text-lighter);
+            margin-bottom: 1.5rem;
+            font-size: 0.9375rem;
+            max-width: 300px;
+        }
+    
+        .footer-links h3 {
+            font-size: 1.125rem;
+            margin-bottom: 1.25rem;
+            color: var(--white);
+            position: relative;
+            display: inline-block;
+        }
+    
+        .footer-links h3::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            width: 40px;
+            height: 2px;
+            background-color: var(--primary);
+        }
+    
+        .footer-links ul {
+            list-style: none;
+        }
+    
+        .footer-links li {
+            margin-bottom: 0.75rem;
+        }
+    
+        .footer-links a {
+            color: var(--text-lighter);
+            text-decoration: none;
+            transition: color var(--transition-speed);
+            font-size: 0.9375rem;
+            display: flex;
+            align-items: center;
+        }
+    
+        .footer-links a:hover {
+            color: var(--white);
+        }
+    
+        .footer-links a i {
+            margin-right: 0.5rem;
+            font-size: 0.75rem;
+        }
+    
+        .social-links {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+    
+        .social-links a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--white);
+            font-size: 1rem;
+            transition: all var(--transition-speed);
+        }
+    
+        .social-links a:hover {
+            background-color: var(--primary);
+            transform: translateY(-3px);
+        }
+    
+        .copyright {
+            text-align: center;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-lighter);
+            font-size: 0.875rem;
+            position: relative;
+            z-index: 1;
+        }
+    
+        /* Cool SVG Animations */
+        .floating {
+            animation: floating 3s ease-in-out infinite;
+        }
+    
+        @keyframes floating {
+            0% {
+                transform: translateY(0px) rotate(0deg);
+            }
+            50% {
+                transform: translateY(-15px) rotate(2deg);
+            }
+            100% {
+                transform: translateY(0px) rotate(0deg);
+            }
+        }
+    
+        .pulsating {
+            animation: pulsate 3s ease-in-out infinite;
+        }
+    
+        @keyframes pulsate {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+    
+        .rotating {
+            animation: rotate 20s linear infinite;
+        }
+    
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    
+        /* Dynamic SVG Backgrounds */
+        .dynamic-bg {
+            position: absolute;
+            z-index: -1;
+        }
+    
+        .shape-top {
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: auto;
+        }
+    
+        .shape-bottom {
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: auto;
+        }
+    
+        /* Animations */
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+    
+        /* Responsive */
+        @media (max-width: 992px) {
+            .landing-title {
+                font-size: 2.75rem;
+            }
             
-            <div class="row mt-4">
-                <div class="col-md-4 mb-4">
-                    <div class="text-center">
-                        <div class="feature-icon">
-                            <i class="fas fa-tasks"></i>
-                        </div>
-                        <h3 class="feature-title">Stay Organized</h3>
-                        <p>Manage your tasks, deadlines, and projects with our intuitive todo system.</p>
-                    </div>
-                </div>
-                <div class="col-md-4 mb-4">
-                    <div class="text-center">
-                        <div class="feature-icon">
-                            <i class="fas fa-trophy"></i>
-                        </div>
-                        <h3 class="feature-title">Track Achievements</h3>
-                        <p>Record and showcase your academic and professional accomplishments.</p>
-                    </div>
-                </div>
-                <div class="col-md-4 mb-4">
-                    <div class="text-center">
-                        <div class="feature-icon">
-                            <i class="fas fa-coins"></i>
-                        </div>
-                        <h3 class="feature-title">Build Passive Income</h3>
-                        <p>Discover strategies to generate income while focusing on your studies.</p>
-                    </div>
-                </div>
-                <!-- Social Media Feature Section -->
-            <div class="row mt-4">
-                <div class="col-md-12 mb-4">
-                    <div class="text-center">
-                        <div class="feature-icon">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <h3 class="feature-title">Connect & Share</h3>
-                        <p>Engage with fellow students through real-time chats, group discussions, and social media integration.</p>
-                    </div>
-                </div>
+            .cta-title {
+                font-size: 2rem;
+            }
+        }
+    
+        @media (max-width: 768px) {
+            .nav-cta {
+                display: none;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .landing-title {
+                font-size: 2.25rem;
+            }
+            
+            .landing-subtitle {
+                font-size: 1.125rem;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr;
+                padding: 0 1rem;
+            }
+            
+            .cta-title {
+                font-size: 1.75rem;
+            }
+    
+            .landing-cta {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    
+        /* Mobile Menu */
+        .mobile-menu {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 80%;
+            height: 100%;
+            background-color: var(--white);
+            z-index: 1001;
+            padding: 2rem;
+            transition: right var(--transition-speed);
+            box-shadow: -4px 0 10px rgba(0, 0, 0, 0.1);
+        }
+    
+        .mobile-menu.active {
+            right: 0;
+        }
+    
+        .close-menu {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-dark);
+        }
+    
+        .mobile-nav-links {
+            margin-top: 4rem;
+        }
+    
+        .mobile-nav-links a {
+            display: block;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-dark);
+            text-decoration: none;
+            font-weight: 500;
+        }
+    
+        .mobile-nav-cta {
+            margin-top: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+    
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--transition-speed), visibility var(--transition-speed);
+        }
+    
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+    
+        /* SVG Waves */
+        .wave-divider {
+            width: 100%;
+            position: relative;
+            margin: -1px 0;
+            display: flex;
+        }
+    
+        .wave-top {
+            transform: rotate(180deg);
+        }
+        
+        /* Scroll reveal animation for features */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s ease;
+        }
+        
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+    {% endblock %}
+
+    {% block custom_styles %}{% endblock %}
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="page-wrapper">
+            <a href="{{ url_for('dashboard.index') }}" class="logo">
+                {% include 'components/logo.html' %}
+                {{ site_name|default('CareersBud') }}
+            </a>
+            <div class="nav-cta">
+                {% if not current_user.is_authenticated %}
+                <a href="{{ url_for('auth.login') }}" class="btn btn-outline">Login</a>
+                <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Get Started</a>
+                {% else %}
+                <a href="{{ url_for('dashboard.index')|default('#') }}" class="btn btn-primary">Dashboard</a>
+                {% endif %}
             </div>
-            </div>
+            <button class="mobile-menu-btn">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu">
+        <button class="close-menu">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="mobile-nav-cta">
+            {% if not current_user.is_authenticated %}
+            <a href="{{ url_for('auth.login')|default('#') }}" class="btn btn-outline">Login</a>
+            <a href="{{ url_for('auth.register')|default('#') }}" class="btn btn-primary">Get Started</a>
+            {% else %}
+            <a href="{{ url_for('dashboard')|default('#') }}" class="btn btn-primary">Dashboard</a>
+            {% endif %}
         </div>
     </div>
-    
-    <div class="cta-section">
-        <h2 class="cta-title">Ready to Take Control of Your Academic Journey?</h2>
-        <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg btn-cta">Create Your Account Now</a>
+    <div class="overlay"></div>
+
+    <!-- Main Content -->
+    <div class="landing-container">
+        <div class="page-wrapper">
+            {% block content %}
+            <!-- Hero Section with Dynamic SVG Background -->
+            <div class="landing-header">
+                <!-- Dynamic Background Blobs -->
+                <div class="landing-header-bg">
+                    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="floating">
+                        <path fill="#3B82F6"
+                            d="M42.8,-66.1C55.5,-60.2,66,-48.3,69.4,-35.2C72.8,-22.1,69.1,-7.7,64.8,4.2C60.5,16.1,55.7,25.4,48.7,32.9C41.7,40.4,32.6,46,22.9,48.9C13.1,51.9,2.8,52.1,-8.9,54C-20.6,56,-33.7,59.7,-40.9,55.4C-48.1,51.1,-49.5,38.7,-54.9,27.4C-60.2,16,-69.6,5.6,-71.2,-5.8C-72.8,-17.3,-66.6,-29.9,-57.7,-38.4C-48.9,-46.9,-37.4,-51.4,-26.2,-57.9C-15,-64.4,-4.1,-72.9,7.8,-75.5C19.7,-78.1,30.1,-72,42.8,-66.1Z"
+                            transform="translate(100 100)" />
+                    </svg>
+                    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="pulsating"
+                        style="position: absolute; top: 50px; right: -50px; width: 150px; opacity: 0.2;">
+                        <path fill="#6366f1"
+                            d="M47.7,-73.4C59.5,-66.3,65.9,-49.5,69.9,-33.6C73.9,-17.7,75.5,-2.7,72.5,10.6C69.5,23.8,61.8,35.3,51.6,44.1C41.4,53,28.7,59.2,15.4,62.9C2,66.6,-12,67.7,-26.2,65.1C-40.3,62.5,-54.7,56.1,-64.9,45.2C-75.2,34.3,-81.3,18.9,-81.4,3.6C-81.4,-11.7,-75.3,-23.4,-67.4,-34.7C-59.5,-46,-49.9,-56.9,-38,-63.8C-26.2,-70.7,-12.1,-73.7,2.8,-78C17.7,-82.3,35.9,-80.5,47.7,-73.4Z"
+                            transform="translate(100 100)" />
+                    </svg>
+                </div>
+                <h1 class="landing-title">{{ hero_title|default('Welcome to CareersBud') }}</h1>
+                <p class="landing-subtitle">{{ hero_subtitle|default('Your All-in-One Platform for Academic and
+                    Professional Success') }}</p>
+
+                <div class="landing-cta">
+                    <a href="{{ url_for('auth.register')|default('#') }}" class="btn btn-primary btn-lg">{{
+                        cta_primary_text|default('Get Started') }}</a>
+                    <a href="{{ url_for('auth.login')|default('#') }}" class="btn btn-outline btn-lg">{{
+                        cta_secondary_text|default('Login') }}</a>
+                </div>
+            </div>
+
+            <!-- Features Section -->
+            <div class="landing-features">
+                <h2 class="section-title">{{ features_title|default('Our Features') }}</h2>
+                
+                <!-- Cool Background Blobs -->
+                <svg class="features-blob blob-1" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" width="400" height="400">
+                    <path d="M47.5,-72.3C59.1,-66.1,64.9,-48.1,70.2,-31.3C75.5,-14.6,80.3,0.9,76.8,14.2C73.3,27.5,61.5,38.5,48.7,44.2C35.9,49.9,22.1,50.2,7.7,55.4C-6.7,60.5,-21.6,70.6,-32.3,69.1C-43,67.6,-49.5,54.5,-58.4,41.8C-67.2,29.1,-78.5,16.9,-78.8,4.2C-79.2,-8.4,-68.6,-21.5,-58.7,-31.3C-48.7,-41.1,-39.4,-47.5,-29.3,-52.8C-19.2,-58.2,-8.5,-62.4,5.1,-69.9C18.7,-77.4,35.9,-78.4,47.5,-72.3Z" transform="translate(100 100)" />
+                </svg>
+                
+                <svg class="features-blob blob-2" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" width="400" height="400">
+                    <path d="M38.9,-63.5C49.9,-57.4,58.1,-45.8,63.2,-33.3C68.3,-20.8,70.3,-7.5,68.7,5.1C67.2,17.6,62.1,29.3,54.3,39.1C46.5,48.9,36,56.8,24.2,61.7C12.5,66.7,-0.4,68.8,-12.3,66.1C-24.2,63.5,-35,56.2,-42.9,46.6C-50.8,37,-55.8,25.2,-60.6,12.3C-65.4,-0.6,-70,-14.6,-67.2,-27.4C-64.4,-40.2,-54.1,-51.9,-41.9,-57.4C-29.6,-62.9,-15.6,-62.2,-0.9,-60.8C13.8,-59.4,27.8,-69.6,38.9,-63.5Z" transform="translate(100 100)" />
+                </svg>
+                
+                <div class="features-grid">
+                    {% for feature in features %}
+                    <div class="feature-card reveal">
+                        <div class="feature-icon-wrapper">
+                            <div class="feature-pattern"></div>
+                            {{ feature.icon|safe }}
+                        </div>
+                        <div class="feature-content">
+                            <h3 class="feature-title">{{ feature.title }}</h3>
+                            <p class="feature-description">{{ feature.description }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    
+                    {% if not features %}
+                    <!-- Default Features if none provided -->
+                    <div class="feature-card reveal">
+                        <div class="feature-icon-wrapper">
+                            <div class="feature-pattern"></div>
+                            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 4.5V6.75M12 6.75C10.7574 6.75 9.75 7.75736 9.75 9C9.75 10.2426 10.7574 11.25 12 11.25C13.2426 11.25 14.25 12.2574 14.25 13.5C14.25 14.7426 13.2426 15.75 12 15.75M12 6.75C13.2426 6.75 14.25 7.75736 14.25 9M12 18V15.75M6 20.25H18C19.2426 20.25 20.25 19.2426 20.25 18V6C20.25 4.75736 19.2426 3.75 18 3.75H6C4.75736 3.75 3.75 4.75736 3.75 6V18C3.75 19.2426 4.75736 20.25 6 20.25Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <div class="feature-content">
+                            <h3 class="feature-title">Smart Career Planning</h3>
+                            <p class="feature-description">Advanced AI tools to analyze your skills, education, and goals to create a personalized career roadmap that evolves with you.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card reveal">
+                        <div class="feature-icon-wrapper">
+                            <div class="feature-pattern"></div>
+                            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M16.862 4.487L18.549 6.174L16.5 8.223L15.682 7.4L14.5 8.582L15.319 9.4L13.677 11.042C13.1076 10.3946 12.3521 9.93921 11.5126 9.7359C10.673 9.53259 9.7889 9.59239 8.98539 9.90764C8.18189 10.2229 7.49609 10.775 7.01834 11.4917C6.54059 12.2083 6.29103 13.0532 6.3 13.917C6.28596 15.0498 6.71716 16.1427 7.5 16.95M7.5 16.95L7.5 13.5H11M7.5 16.95C8.30736 17.7426 9.38766 18.178 10.5126 18.1764C11.6375 18.1749 12.7167 17.7366 13.522 16.942M18 9.75L18.75 9M12.75 3.75L12 3M21 12.75L20.25 12M12 20.25C7.44365 20.25 3.75 16.5563 3.75 12C3.75 7.44365 7.44365 3.75 12 3.75C16.5563 3.75 20.25 7.44365 20.25 12C20.25 16.5563 16.5563 20.25 12 20.25Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <div class="feature-content">
+                            <h3 class="feature-title">Skill Enrichment</h3>
+                            <p class="feature-description">Identify your strengths and growth areas through comprehensive assessments that benchmark your skills against industry standards with our amazing courses.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card reveal">
+                        <div class="feature-icon-wrapper">
+                            <div class="feature-pattern"></div>
+                            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M5.25 5.653C5.25 5.10857 5.69447 4.65383 6.2736 4.73137C7.95435 4.97906 9.59139 5.36426 11.1671 5.88467C11.7461 6.09324 12.2539 6.09324 12.8329 5.88467C14.4086 5.36426 16.0457 4.97906 17.7264 4.73137C18.3055 4.65383 18.75 5.10857 18.75 5.653C18.75 13.0396 17.5326 18.3446 12.8329 20.1154C12.2539 20.3239 11.7461 20.3239 11.1671 20.1154C6.46742 18.3446 5.25 13.0396 5.25 5.653Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M9 12L11 14L15 10" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <div class="feature-content">
+                            <h3 class="feature-title">Learning Paths</h3>
+                            <p class="feature-description">Customized learning journeys with curated resources from top educational platforms to help you master the skills needed for your dream career.</p>
+                        </div>
+                    </div>
+                    
+                    
+                    <!-- Progress Tracker Feature -->
+                    <div class="feature-card reveal">
+                        <div class="feature-icon-wrapper">
+                            <div class="feature-pattern"></div>
+                            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M9 16.5V21M15 16.5V21M8.4 3.6C5.07452 3.6 2.4 6.27452 2.4 9.6V14.4C2.4 17.7255 5.07452 20.4 8.4 20.4H15.6C18.9255 20.4 21.6 17.7255 21.6 14.4V9.6C21.6 6.27452 18.9255 3.6 15.6 3.6H8.4Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M8.4 10.8C9.50457 10.8 10.2 10.1046 10.2 9C10.2 7.89543 9.50457 7.2 8.4 7.2C7.29543 7.2 6.6 7.89543 6.6 9C6.6 10.1046 7.29543 10.8 8.4 10.8Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M15.6 10.8C16.7046 10.8 17.4 10.1046 17.4 9C17.4 7.89543 16.7046 7.2 15.6 7.2C14.4954 7.2 13.8 7.89543 13.8 9C13.8 10.1046 14.4954 10.8 15.6 10.8Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M10.8 9.6H13.2" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <div class="feature-content">
+                            <h3 class="feature-title">Progress Tracker</h3>
+                            <p class="feature-description">Monitor your career development journey with visual dashboards that track completion of learning modules, skill improvements, and application milestones.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Todo/Task Management Feature -->
+                    <div class="feature-card reveal">
+                        <div class="feature-icon-wrapper">
+                            <div class="feature-pattern"></div>
+                            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M9 12.75L11.25 15L15 9.75M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <div class="feature-content">
+                            <h3 class="feature-title">Task Management</h3>
+                            <p class="feature-description">Organize your career development with a powerful task manager that helps you prioritize learning, networking, and job application activities.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Resume Builder Feature -->
+                    <div class="feature-card reveal">
+                        <div class="feature-icon-wrapper">
+                            <div class="feature-pattern"></div>
+                            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M8.25 7.5V6.75C8.25 5.64543 9.14543 4.75 10.25 4.75H17.25C18.3546 4.75 19.25 5.64543 19.25 6.75V17.25C19.25 18.3546 18.3546 19.25 17.25 19.25H10.25C9.14543 19.25 8.25 18.3546 8.25 17.25V16.5M4.75 12L14.25 12M4.75 12L7.25 9.75M4.75 12L7.25 14.25" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <div class="feature-content">
+                            <h3 class="feature-title">Resume Builder</h3>
+                            <p class="feature-description">Create professional, ATS-friendly resumes with customizable templates that highlight your skills and achievements in the most effective way.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Organization Feature -->
+                    <div class="feature-card reveal">
+                        <div class="feature-icon-wrapper">
+                            <div class="feature-pattern"></div>
+                            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M2.25 12.75V12C2.25 11.5858 2.58579 11.25 3 11.25H5.25C5.66421 11.25 6 11.5858 6 12V12.75M2.25 12.75V18C2.25 18.4142 2.58579 18.75 3 18.75H5.25C5.66421 18.75 6 18.4142 6 18V12.75M2.25 12.75H6M14.25 6.75V6C14.25 5.58579 14.5858 5.25 15 5.25H17.25C17.6642 5.25 18 5.58579 18 6V6.75M14.25 6.75V12C14.25 12.4142 14.5858 12.75 15 12.75H17.25C17.6642 12.75 18 12.4142 18 12V6.75M14.25 6.75H18M8.25 6.75V6C8.25 5.58579 8.58579 5.25 9 5.25H11.25C11.6642 5.25 12 5.58579 12 6V6.75M8.25 6.75V18C8.25 18.4142 8.58579 18.75 9 18.75H11.25C11.6642 18.75 12 18.4142 12 18V6.75M8.25 6.75H12M14.25 18.75V18C14.25 17.5858 14.5858 17.25 15 17.25H17.25C17.6642 17.25 18 17.5858 18 18V18.75M14.25 18.75V21C14.25 21.4142 14.5858 21.75 15 21.75H17.25C17.6642 21.75 18 21.4142 18 21V18.75M14.25 18.75H18" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <div class="feature-content">
+                            <h3 class="feature-title">Career Organization</h3>
+                            <p class="feature-description">Keep all your career-related documents, applications, and communications organized in one central hub for easy access and management.</p>
+                        </div>
+                    </div>
+                    
+                    
+                    
+                    <!-- Passive Income Feature -->
+                    <div class="feature-card reveal">
+                        <div class="feature-icon-wrapper">
+                            <div class="feature-pattern"></div>
+                            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M2.25 18.75C7.5 18.75 7.5 13.5 12.75 13.5C18 13.5 18 18.75 23.25 18.75V12.75C18 12.75 18 7.5 12.75 7.5C7.5 7.5 7.5 12.75 2.25 12.75V18.75Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M2.25 18.75V6.75" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <div class="feature-content">
+                            <h3 class="feature-title">Passive Income Guidance</h3>
+                            <p class="feature-description">Discover opportunities to monetize your skills and create additional income streams through freelancing, digital products, and other passive income strategies.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Networking Feature -->
+                    <div class="feature-card reveal">
+                        <div class="feature-icon-wrapper">
+                            <div class="feature-pattern"></div>
+                            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M18 7.5V13.5M18 7.5C19.6569 7.5 21 6.15685 21 4.5C21 2.84315 19.6569 1.5 18 1.5C16.3431 1.5 15 2.84315 15 4.5C15 6.15685 16.3431 7.5 18 7.5ZM18 13.5C16.3431 13.5 15 14.8431 15 16.5C15 18.1569 16.3431 19.5 18 19.5C19.6569 19.5 21 18.1569 21 16.5C21 14.8431 19.6569 13.5 18 13.5ZM6 7.5V13.5M6 7.5C7.65685 7.5 9 6.15685 9 4.5C9 2.84315 7.65685 1.5 6 1.5C4.34315 1.5 3 2.84315 3 4.5C3 6.15685 4.34315 7.5 6 7.5ZM6 13.5C4.34315 13.5 3 14.8431 3 16.5C3 18.1569 4.34315 19.5 6 19.5C7.65685 19.5 9 18.1569 9 16.5C9 14.8431 7.65685 13.5 6 13.5ZM17.163 7.1543L6.83697 13.8458M6.837 7.1543L17.163 13.8458" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <div class="feature-content">
+                            <h3 class="feature-title">Social & Networking</h3>
+                            <p class="feature-description">Build and nurture your professional network with tools for connecting with industry professionals, mentors, and peers who can help advance your career.</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- CTA Section with Animated Background -->
+            <div class="cta-section">
+                <div class="cta-bg"></div>
+                <div class="cta-pattern"></div>
+
+                <!-- Dynamic SVG Decoration -->
+                <svg width="100" height="100" viewBox="0 0 100 100" class="rotating"
+                    style="position: absolute; top: 20px; left: 10%; opacity: 0.15;">
+                    <circle cx="50" cy="50" r="40" stroke="white" stroke-width="8" fill="none"
+                        stroke-dasharray="10 10" />
+                </svg>
+
+                <svg width="80" height="80" viewBox="0 0 100 100" class="floating"
+                    style="position: absolute; bottom: 30px; right: 15%; opacity: 0.15;">
+                    <polygon points="50,0 100,50 50,100 0,50" fill="white" />
+                </svg>
+
+                <h2 class="cta-title">{{ cta_heading|default('Ready to Take Your Career to the Next Level?') }}</h2>
+                <a href="{{ url_for('auth.register')|default('#') }}" class="btn btn-cta">{{
+                    cta_button_text|default('Get Started Today') }}</a>
+            </div>
+
+            <!-- Wave Divider -->
+            <div class="wave-divider">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none"
+                    style="width: 100%; height: 100px;">
+                    <path fill="#1e293b" fill-opacity="1"
+                        d="M0,96L48,106.7C96,117,192,139,288,133.3C384,128,480,96,576,90.7C672,85,768,107,864,122.7C960,139,1056,149,1152,138.7C1248,128,1344,96,1392,80L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z">
+                    </path>
+                </svg>
+            </div>
+            {% endblock content %}
+            <!-- Footer with Links -->
+            {% block footer %}
+            <footer class="footer">
+                <div class="footer-pattern"></div>
+                <div class="page-wrapper">
+                    <div class="footer-container">
+                        <div class="footer-about">
+                            <div class="footer-logo">
+                                {% include 'components/logo-small.html' %}
+                                {{ site_name|default('CareersBud') }}
+                            </div>
+                            <p>{{ company_description|default('Empowering individuals to achieve their full professional
+                                potential through personalized career guidance and continuous learning.') }}</p>
+                            <div class="social-links">
+                                {% for social in social_links %}
+                                <a href="{{ social.url }}"><i class="fab fa-{{ social.icon }}"></i></a>
+                                {% endfor %}
+
+                                {% if not social_links %}
+                                <!-- Default social links if none provided -->
+                                <a href="#"><i class="fab fa-twitter"></i></a>
+                                <a href="#"><i class="fab fa-facebook-f"></i></a>
+                                <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                                <a href="#"><i class="fab fa-instagram"></i></a>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Company Links -->
+                        <div class="footer-links">
+                            <h3>{{ company_links_title|default('Company') }}</h3>
+                            <ul>
+                                {% for link in company_links %}
+                                <li><a href="{{ link.url }}"><i class="fas fa-chevron-right"></i> {{ link.text }}</a>
+                                </li>
+                                {% endfor %}
+
+                                {% if not company_links %}
+                                <!-- Default company links if none provided -->
+                                <li><a href="#"><i class="fas fa-chevron-right"></i> About Us</a></li>
+                                <li><a href="#"><i class="fas fa-chevron-right"></i> Our Team</a></li>
+                                <li><a href="#"><i class="fas fa-chevron-right"></i> Careers</a></li>
+                                <li><a href="#"><i class="fas fa-chevron-right"></i> Partners</a></li>
+                                {% endif %}
+
+                            </ul>
+                        </div>
+
+                        <!-- Support Links -->
+                        <div class="footer-links">
+                            <h3>{{ support_links_title|default('Support') }}</h3>
+                            <ul>
+                                {% for link in support_links %}
+                                <li><a href="{{ link.url }}"><i class="fas fa-chevron-right"></i> {{ link.text }}</a>
+                                </li>
+                                {% endfor %}
+
+                                {% if not support_links %}
+                                <!-- Default support links if none provided -->
+                                <li><a href="#"><i class="fas fa-chevron-right"></i> Help Center</a></li>
+                                <li><a href="#"><i class="fas fa-chevron-right"></i> Contact Us</a></li>
+                                <li><a href="#"><i class="fas fa-chevron-right"></i> FAQ</a></li>
+                                <li><a href="#"><i class="fas fa-chevron-right"></i> Community</a></li>
+                                {% endif %}
+                            </ul>
+                        </div>
+
+
+                        <!-- Legal Links -->
+                        <div class="footer-links">
+                            <h3>{{ legal_links_title|default('Legal') }}</h3>
+                            <ul>
+                                {% for link in legal_links %}
+                                <li><a href="{{ link.url }}"><i class="fas fa-chevron-right"></i> {{ link.text }}</a>
+                                </li>
+                                {% endfor %}
+
+                                {% if not legal_links %}
+                                <!-- Default legal links if none provided -->
+                                <li><a href="#"><i class="fas fa-chevron-right"></i> Terms & Conditions</a></li>
+                                <li><a href="#"><i class="fas fa-chevron-right"></i> Privacy Policy</a></li>
+                                <li><a href="#"><i class="fas fa-chevron-right"></i> Cookies</a></li>
+                                <li><a href="#"><i class="fas fa-chevron-right"></i> Licenses</a></li>
+                                {% endif %}
+                            </ul>
+                        </div>
+
+                    </div>
+
+                    <div class="copyright">
+                        &copy; {{ current_year|default('2025') }} {{ site_name|default('CareersBud') }}. {{
+                        copyright_text|default('All rights reserved.') }}
+                    </div>
+                </div>
+            </footer>
+            {% endblock footer %}
+
+            {% block scripts %}
+            <script>
+                // Navbar scroll effect
+                window.addEventListener('scroll', function () {
+                    const navbar = document.querySelector('.navbar');
+                    if (window.scrollY > 50) {
+                        navbar.classList.add('scrolled');
+                    } else {
+                        navbar.classList.remove('scrolled');
+                    }
+                });
+
+                // Mobile menu toggle
+                const menuBtn = document.querySelector('.mobile-menu-btn');
+                const closeBtn = document.querySelector('.close-menu');
+                const mobileMenu = document.querySelector('.mobile-menu');
+                const overlay = document.querySelector('.overlay');
+
+                menuBtn.addEventListener('click', function () {
+                    mobileMenu.classList.add('active');
+                    overlay.classList.add('active');
+                });
+
+                closeBtn.addEventListener('click', function () {
+                    mobileMenu.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+
+                overlay.addEventListener('click', function () {
+                    mobileMenu.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+
+                // Scroll reveal for feature cards
+                function revealOnScroll() {
+                    const reveals = document.querySelectorAll('.reveal');
+
+                    for (let i = 0; i < reveals.length; i++) {
+                        const windowHeight = window.innerHeight;
+                        const revealTop = reveals[i].getBoundingClientRect().top;
+                        const revealPoint = 150;
+
+                        if (revealTop < windowHeight - revealPoint) {
+                            reveals[i].classList.add('active');
+                        }
+                    }
+                }
+
+                window.addEventListener('scroll', revealOnScroll);
+                // Initial check in case elements are already in view on page load
+                revealOnScroll();
+            </script>
+            {% endblock scripts %}
+
+            {% block custom_scripts %}{% endblock %}
+        </div>
     </div>
-</div>
-{% endblock %}
+</body>
+
+</html>
