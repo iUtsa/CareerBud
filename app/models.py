@@ -6,6 +6,9 @@ from app import db  # Ensure this is at the top of your models.py
 from flask import current_app
 from flask_sqlalchemy import SQLAlchemy
 from app.extensions import db, bcrypt
+from typing import Optional, Dict, Union
+import re
+
 
 
 
@@ -562,93 +565,92 @@ def generate_resume_summary(resume_id, user_id):
         return False
 
 
-def analyze_resume_ats(resume_id, user_id, job_description=None):
+
+
+def analyze_resume_ats(resume_id: int, user_id: int, job_description: Optional[str] = None) -> Optional[Dict[str, Union[int, str]]]:
     """
-    Analyze a resume against ATS systems and potentially a job description
+    Analyze a resume against ATS criteria with optional job description for keyword matching.
+    
+    Parameters:
+    - resume_id: Resume ID to analyze
+    - user_id: ID of the user who owns the resume
+    - job_description: Optional job description to compare against resume skills
+    
+    Returns:
+    - dict with score and feedback, or None if error
     """
     try:
         resume = get_resume(resume_id, user_id)
         if not resume:
-            return False
-            
-        # Get resume sections and skills
+            return None
+
+        # Fetch associated resume data
         sections = ResumeSection.query.filter_by(resume_id=resume_id).all()
         skills = ResumeSkill.query.filter_by(resume_id=resume_id).all()
-        
-        # Basic checks - these would be more sophisticated in a real implementation
-        has_contact = True  # Assume user profile has contact info
+
+        # Criteria checks
         has_experience = any(section.type == 'experience' for section in sections)
         has_education = any(section.type == 'education' for section in sections)
         has_skills = len(skills) > 0
         bullet_count = sum(len(section.bullets) for section in sections)
         has_enough_bullets = bullet_count >= 5
-        
-        # Calculate basic ATS score - this would be more sophisticated in reality
+
+        # Basic scoring breakdown (max 70)
         base_score = 0
-        if has_contact: base_score += 20
-        if has_experience: base_score += 25
-        if has_education: base_score += 20
-        if has_skills: base_score += 15
-        if has_enough_bullets: base_score += 20
-        
-        # Calculate more sophisticated score if job description is provided
-        job_match_score = 0
+        if has_experience:
+            base_score += 25
+        if has_education:
+            base_score += 20
+        if has_skills:
+            base_score += 15
+        if has_enough_bullets:
+            base_score += 10  # slightly lower to make room for advanced scoring
+
         feedback = []
-        
+
+        # Job match scoring (max 25)
+        job_match_score = 0
         if job_description:
-            # This simulates keyword matching - in a real implementation, 
-            # you'd use more sophisticated NLP
             job_description = job_description.lower()
-            skill_matches = 0
-            
-            for skill in skills:
-                if skill.skill_name.lower() in job_description:
-                    skill_matches += 1
-            
-            # Calculate match percentage
+            matched_skills = sum(1 for skill in skills if skill.skill_name.lower() in job_description)
+
             if skills:
-                match_percentage = (skill_matches / len(skills)) * 100
-                job_match_score = min(30, match_percentage * 0.3)  # Max 30 points from keyword matching
-            
-            # Add feedback based on analysis
-            if skill_matches < len(skills) * 0.3:
-                feedback.append("Your skills don't strongly match the job description. Consider adding more relevant skills.")
-            
-            if not has_experience:
-                feedback.append("Add professional experience to improve your resume's strength.")
-            
-            if bullet_count < 10:
-                feedback.append("Add more bullet points to detail your experiences.")
-        else:
-            # General feedback without job description
-            if not has_experience:
-                feedback.append("Add professional experience to improve your resume's strength.")
-            
-            if not has_education:
-                feedback.append("Add your educational background.")
-                
-            if not has_skills:
-                feedback.append("Add your technical and soft skills.")
-                
-            if bullet_count < 5:
-                feedback.append("Add more details to your experiences with bullet points.")
-        
-        # Calculate final score
-        final_score = min(100, base_score + job_match_score)
-        
-        # Update resume with score and feedback
+                match_ratio = matched_skills / len(skills)
+                job_match_score = min(25, match_ratio * 25)
+
+                if match_ratio < 0.3:
+                    feedback.append("Your skills don't strongly match the job description. Add more relevant keywords.")
+            else:
+                feedback.append("Your resume is missing technical or soft skills.")
+
+        # General feedback
+        if not has_experience:
+            feedback.append("Add work experience to make your resume stronger.")
+        if not has_education:
+            feedback.append("Include your educational qualifications.")
+        if not has_skills:
+            feedback.append("Add technical and soft skills to strengthen your resume.")
+        if bullet_count < 5:
+            feedback.append("Use bullet points to describe your responsibilities and achievements.")
+
+        # Final score (max 95%)
+        total_score = base_score + job_match_score
+        final_score = round(min(95, total_score * 0.97))  # Apply slight deduction for realism
+
         resume.ats_score = final_score
-        resume.feedback = "\n".join(feedback) if feedback else "Your resume meets basic ATS requirements."
+        resume.feedback = "\n".join(feedback) if feedback else "Your resume is well-balanced and ATS-friendly."
         db.session.commit()
-        
+
         return {
             'score': final_score,
             'feedback': resume.feedback
         }
+
     except Exception as e:
-        print(f"Error analyzing resume: {type(e).__name__} - {str(e)}")
+        print(f"[ATS Analyzer Error] {type(e).__name__}: {e}")
         db.session.rollback()
         return None
+
 
 
 def send_message(sender_id, recipient_id, content):
@@ -1136,6 +1138,13 @@ def delete_post(post_id, user_id):
         return False
     
 def advanced_ats_analyzer(resume_id, user_id, job_description=None, industry=None, company_size=None):
+    print("[DEBUG] Advanced analyzer called with:")
+    print("resume_id:", resume_id)
+    print("user_id:", user_id)
+    print("job_description:", job_description)
+    print("industry:", industry)
+    print("company_size:", company_size)
+
     """
     Advanced ATS Resume Analysis Algorithm
     
@@ -1943,7 +1952,6 @@ def analyze_projects(project_sections, job_description=None):
         'score': min(100, max(0, score)),
         'feedback': feedback
     }
-
 def is_experience_chronological(experience_sections):
     """Checks if experience is in reverse chronological order"""
     dated_sections = []
@@ -1986,176 +1994,506 @@ def calculate_experience_relevance(experience_sections, job_description):
             
     experience_text = experience_text.lower()
     
-    # Count matching requirements
-    matches = sum(1 for req in requirements if req.lower() in experience_text)
+    # Enhanced relevance analysis with semantic matching
+    matches = 0
+    weighted_matches = 0
     
-    # Calculate score (30 points max)
-    relevance_score = min(30, (matches / len(requirements)) * 30)
+    # Identify critical requirements vs. nice-to-have
+    critical_requirements = []
+    preferred_requirements = []
+    
+    for req in requirements:
+        req_lower = req.lower()
+        if any(term in req_lower for term in ["must", "required", "essential", "necessary"]):
+            critical_requirements.append(req_lower)
+        else:
+            preferred_requirements.append(req_lower)
+    
+    # If no explicit categorization, treat all as critical
+    if not critical_requirements:
+        critical_requirements = requirements
+    
+    # Check for exact matches in critical requirements (higher weight)
+    for req in critical_requirements:
+        req_lower = req.lower()
+        if req_lower in experience_text:
+            matches += 2
+            weighted_matches += 3  # Higher weight for critical requirements
+        else:
+            # Check for partial matches using key phrases
+            key_phrases = [phrase for phrase in req_lower.split() if len(phrase) > 4]
+            phrase_matches = sum(1 for phrase in key_phrases if phrase in experience_text)
+            if phrase_matches > len(key_phrases) * 0.5:  # If more than half of key phrases match
+                matches += 1
+                weighted_matches += 1.5
+    
+    # Check for matches in preferred requirements (lower weight)
+    for req in preferred_requirements:
+        req_lower = req.lower()
+        if req_lower in experience_text:
+            matches += 1
+            weighted_matches += 1  # Standard weight for preferred requirements
+        else:
+            # Check for partial matches
+            key_phrases = [phrase for phrase in req_lower.split() if len(phrase) > 4]
+            phrase_matches = sum(1 for phrase in key_phrases if phrase in experience_text)
+            if phrase_matches > len(key_phrases) * 0.5:
+                matches += 0.5
+                weighted_matches += 0.5
+    
+    # Check for years of experience requirements
+    years_of_experience_pattern = re.compile(r'(\d+)[\+]?\s*(?:years|yrs)')
+    years_matches = years_of_experience_pattern.findall(job_description.lower())
+    
+    if years_matches:
+        required_years = max([int(years) for years in years_matches])
+        actual_years = calculate_total_experience_years(experience_sections)
+        
+        if actual_years >= required_years:
+            weighted_matches += 5  # Significant bonus for meeting years requirement
+        elif actual_years >= required_years * 0.8:
+            weighted_matches += 2  # Partial bonus for being close
+    
+    # Calculate final relevance score (30 points max)
+    total_requirements = len(critical_requirements) + len(preferred_requirements)
+    if total_requirements > 0:
+        base_relevance = (matches / total_requirements) * 20
+        weighted_relevance = (weighted_matches / (total_requirements * 2)) * 30  # Normalized to account for weights
+        
+        # Combine both metrics with emphasis on weighted relevance
+        relevance_score = min(30, (base_relevance * 0.3) + (weighted_relevance * 0.7))
+    else:
+        relevance_score = 0
     
     return relevance_score
 
+def calculate_total_experience_years(experience_sections):
+    """Calculates total years of experience from all positions"""
+    total_years = 0
+    
+    for section in experience_sections:
+        if section.start_date:
+            end_date = datetime.now() if section.is_current else (section.end_date or datetime.now())
+            duration = (end_date - section.start_date).days / 365
+            total_years += duration
+            
+    return total_years
+
 def extract_requirements_from_job(job_description):
-    """Extracts key requirements from a job description"""
+    """Extracts key requirements from a job description with enhanced semantic understanding"""
     requirements = []
     
     # Look for common requirement indicators
     requirement_sections = []
     lines = job_description.split('\n')
     
+    # Track if we're in a requirements section
     in_requirements = False
     for line in lines:
         line_lower = line.lower()
         
-        # Check for section headers
-        if any(header in line_lower for header in ['requirements', 'qualifications', 'what you need', 'skills required']):
+        # Check for section headers that indicate requirements
+        if any(header in line_lower for term in ['requirements', 'qualifications', 'what you need', 'skills required', 
+                                               'must have', 'required skills', 'job requirements']
+              for header in [f"{term}:", f"{term}", f"{term.title()}", f"{term.upper()}"]):
             in_requirements = True
             requirement_sections.append([])
-        elif in_requirements and any(header in line_lower for header in ['benefits', 'about us', 'what we offer', 'compensation']):
+        # Check for section headers that indicate end of requirements
+        elif in_requirements and any(header in line_lower for term in ['benefits', 'about us', 'what we offer', 
+                                                                      'compensation', 'perks', 'why join us']
+                                   for header in [f"{term}:", f"{term}", f"{term.title()}", f"{term.upper()}"]):
             in_requirements = False
         
+        # Add line to current requirement section if we're in one
         if in_requirements and line.strip():
             requirement_sections[-1].append(line)
     
-    # If no structured requirements found, use NLP techniques to extract them
+    # If no structured requirements found, use enhanced extraction techniques
     if not requirement_sections:
-        # Look for bullet points
-        bullets = re.findall(r'[•\-\*]\s+(.*?)(?=(?:[•\-\*])|$)', job_description, re.DOTALL)
-        if bullets:
-            requirement_sections.append(bullets)
-        else:
-            # Fall back to sentence-based extraction
+        # Look for bullet points or numbered lists
+        bullet_patterns = [
+            r'[•\-\*]\s+(.*?)(?=(?:[•\-\*])|$)',  # Bullet points
+            r'^\d+\.\s+(.*?)(?=(?:^\d+\.)|$)',     # Numbered lists
+            r'[\n■►◆●]\s+(.*?)(?=(?:[\n■►◆●])|$)'  # Special bullets
+        ]
+        
+        for pattern in bullet_patterns:
+            bullets = re.findall(pattern, job_description, re.MULTILINE | re.DOTALL)
+            if bullets:
+                requirement_sections.append(bullets)
+                break
+                
+        # If still no requirements found, try sentence-based extraction
+        if not requirement_sections:
             sentences = re.split(r'[.!?]\s+', job_description)
-            requirement_sentences = [s for s in sentences if any(req in s.lower() for req in 
-                                   ['experience', 'skill', 'knowledge', 'ability', 'proficient', 
-                                    'familiar', 'degree', 'education', 'qualified'])]
+            
+            # Look for requirement indicators in sentences
+            requirement_indicators = [
+                'experience', 'skill', 'knowledge', 'ability', 'proficient', 
+                'familiar', 'degree', 'education', 'qualified', 'proficiency',
+                'expertise', 'understanding', 'background', 'capable',
+                'competent', 'required', 'must have', 'should have'
+            ]
+            
+            requirement_sentences = [s for s in sentences if any(indicator in s.lower() for indicator in requirement_indicators)]
+            
             if requirement_sentences:
                 requirement_sections.append(requirement_sentences)
     
-    # Process requirement sections
+    # Process requirement sections with enhanced parsing
     for section in requirement_sections:
         for item in section:
             # Clean up the item
             item = item.strip()
-            if not item:
+            if not item or len(item) < 5:
                 continue
                 
-            # Remove bullets and numbers
+            # Remove bullets, numbers, and other prefixes
             item = re.sub(r'^[•\-\*\d.]+\s*', '', item)
             
-            # Split compound requirements
-            if ' and ' in item:
-                parts = item.split(' and ')
-                requirements.extend(parts)
+            # Check if the item contains multiple requirements
+            if any(conjunction in item.lower() for conjunction in [' and ', '; ', ', ']):
+                # Split by various conjunctions
+                parts = re.split(r' and |; |, ', item)
+                
+                # Filter out very short parts (likely not complete requirements)
+                valid_parts = [part.strip() for part in parts if len(part.strip()) > 10]
+                
+                # Add valid parts to requirements
+                requirements.extend(valid_parts)
             else:
                 requirements.append(item)
     
-    # Remove duplicates and short entries
-    requirements = [req for req in requirements if len(req) > 5]
-    requirements = list(set(requirements))
+    # Enhanced filtering for meaningful requirements
+    filtered_requirements = []
+    for req in requirements:
+        # Skip very short items
+        if len(req) < 10:
+            continue
+            
+        # Skip items that don't contain any informative words
+        if not any(word in req.lower() for word in ['experience', 'skill', 'knowledge', 'degree', 'ability', 
+                                                   'proficient', 'familiar', 'education', 'qualified']):
+            continue
+            
+        filtered_requirements.append(req)
     
-    return requirements
+    # If we have too few requirements, try a more lenient approach
+    if len(filtered_requirements) < 3:
+        filtered_requirements = [req for req in requirements if len(req) >= 10]
+    
+    # Remove duplicates and near-duplicates
+    unique_requirements = []
+    for req in filtered_requirements:
+        req_lower = req.lower()
+        # Check if this requirement is similar to any we've already included
+        if not any(similarity(req_lower, existing.lower()) > 0.7 for existing in unique_requirements):
+            unique_requirements.append(req)
+    
+    return unique_requirements
 
-def extract_keywords_from_job_description(job_description, max_keywords=15):
-    """Extracts important keywords from job description"""
-    # In a production system, this would use NLP or ML techniques
-    # For this example, we'll use a simpler approach
+def similarity(text1, text2):
+    """Calculates a simple similarity score between two texts"""
+    # Convert texts to sets of words
+    words1 = set(text1.split())
+    words2 = set(text2.split())
     
-    # Define common keyword categories
-    skill_keywords = [
-        'python', 'java', 'javascript', 'react', 'angular', 'vue', 'node', 'express',
-        'django', 'flask', 'spring', 'hibernate', 'sql', 'nosql', 'mongodb', 'postgresql',
-        'mysql', 'oracle', 'aws', 'azure', 'gcp', 'cloud', 'docker', 'kubernetes',
-        'ci/cd', 'jenkins', 'git', 'agile', 'scrum', 'devops', 'machine learning',
-        'deep learning', 'tensorflow', 'pytorch', 'nlp', 'data science', 'analytics',
-        'blockchain', 'ios', 'android', 'mobile', 'responsive', 'frontend', 'backend',
-        'fullstack', 'ui/ux', 'design', 'photoshop', 'illustrator', 'figma', 'sketch'
-    ]
+    # Calculate Jaccard similarity
+    intersection = len(words1.intersection(words2))
+    union = len(words1.union(words2))
     
-    experience_keywords = [
-        'manager', 'senior', 'junior', 'lead', 'architect', 'supervisor', 'director',
-        'coordinator', 'specialist', 'analyst', 'consultant', 'administrator', 'developer',
-        'engineer', 'designer', 'product', 'project', 'program', 'researcher', 'scientist',
-        'head', 'chief', 'vp', 'president', 'executive', 'associate', 'assistant'
-    ]
-    
-    domain_keywords = [
-        'finance', 'healthcare', 'banking', 'insurance', 'retail', 'e-commerce',
-        'manufacturing', 'logistics', 'transportation', 'education', 'government',
-        'non-profit', 'media', 'entertainment', 'gaming', 'sports', 'technology',
-        'telecom', 'energy', 'utilities', 'real estate', 'construction', 'legal',
-        'consulting', 'marketing', 'advertising', 'hospitality', 'travel', 'automotive'
-    ]
-    
-    soft_skill_keywords = [
-        'communication', 'teamwork', 'leadership', 'problem solving', 'critical thinking',
-        'creativity', 'time management', 'organization', 'adaptability', 'flexibility',
-        'interpersonal', 'presentation', 'writing', 'negotiation', 'conflict resolution',
-        'decision making', 'analytical', 'attention to detail', 'self-motivated', 'initiative'
-    ]
-    
-    # Combine all keywords
-    all_keywords = skill_keywords + experience_keywords + domain_keywords + soft_skill_keywords
-    
-    # Find matches in job description
-    matches = []
-    job_desc_lower = job_description.lower()
-    
-    for keyword in all_keywords:
-        if keyword in job_desc_lower:
-            matches.append(keyword)
-    
-    # Extract job title (usually at the beginning)
-    job_title = extract_job_titles(job_description)
-    if job_title:
-        matches = job_title + [m for m in matches if m not in job_title]
-    
-    # Prioritize keywords that appear multiple times
-    keyword_counts = {}
-    for keyword in matches:
-        count = job_desc_lower.count(keyword)
-        keyword_counts[keyword] = count
-    
-    # Sort by count and limit to max_keywords
-    sorted_keywords = sorted(keyword_counts.items(), key=lambda x: x[1], reverse=True)
-    top_keywords = [k for k, v in sorted_keywords[:max_keywords]]
-    
-    return top_keywords
+    return intersection / union if union > 0 else 0
 
 def extract_job_titles(job_description):
-    """Extracts potential job titles from job description"""
+    """Extracts potential job titles from job description with enhanced accuracy"""
+    # Common job titles dictionary - expanded for better coverage
     common_titles = [
+        # Technology
         'software engineer', 'software developer', 'frontend developer', 'backend developer',
         'full stack developer', 'data scientist', 'data analyst', 'machine learning engineer',
         'devops engineer', 'systems administrator', 'network engineer', 'security engineer',
-        'product manager', 'project manager', 'program manager', 'business analyst',
-        'marketing manager', 'sales manager', 'account executive', 'customer success manager',
-        'ux designer', 'ui designer', 'graphic designer', 'content writer', 'content strategist'
+        'cloud architect', 'database administrator', 'qa engineer', 'quality assurance',
+        'site reliability engineer', 'infrastructure engineer', 'mobile developer',
+        'solutions architect', 'technical lead', 'data engineer', 'ai researcher',
+        'blockchain developer', 'game developer', 'web developer', 'ui developer',
+        
+        # Management
+        'product manager', 'project manager', 'program manager', 'technical project manager',
+        'engineering manager', 'director of engineering', 'cto', 'vp of engineering',
+        'it manager', 'chief information officer', 'chief technology officer',
+        'development manager', 'scrum master', 'product owner', 'delivery manager',
+        
+        # Business
+        'business analyst', 'systems analyst', 'marketing manager', 'sales manager', 
+        'account executive', 'customer success manager', 'operations manager',
+        'finance manager', 'financial analyst', 'accountant', 'business development',
+        'human resources', 'hr manager', 'talent acquisition', 'recruiter',
+        
+        # Design
+        'ux designer', 'ui designer', 'graphic designer', 'product designer',
+        'visual designer', 'interaction designer', 'user researcher', 'ux researcher',
+        
+        # Content/Marketing
+        'content writer', 'content strategist', 'technical writer', 'copywriter',
+        'content marketing', 'seo specialist', 'social media manager', 'digital marketer',
+        'marketing specialist', 'brand manager'
     ]
     
-    # Check first few lines for job title
-    first_lines = job_description.split('\n')[:3]
-    first_paragraph = ' '.join(first_lines).lower()
+    # Enhanced title patterns to look for in job description
+    title_patterns = [
+        # Job title as the first line or heading
+        r'^[^\n]{0,30}?([A-Z][a-z]+(?:[\s\-]+[A-Z]?[a-z]+){1,5})[^\n]{0,30}?$',
+        
+        # Job title after "Title:", "Position:", "Role:", etc.
+        r'(?:job title|position|role|job|title)[\s\:]{1,3}([A-Za-z]+(?:[\s\-]+[A-Za-z]+){1,5})',
+        
+        # "We are looking for a [Title]", "... seeking a [Title]", etc.
+        r'(?:looking|seeking|hiring|searching|recruiting)(?:\s\w+){0,3}\s(?:for|a|an)\s([A-Za-z]+(?:[\s\-]+[A-Za-z]+){1,5})',
+        
+        # Title in all caps or title case at the beginning of the document
+        r'(?:^|\n)([A-Z][A-Za-z]*(?:[\s\-]+[A-Za-z]+){1,4})'
+    ]
     
     found_titles = []
-    for title in common_titles:
-        if title in first_paragraph:
-            found_titles.append(title)
+    
+    # First try to extract title using patterns
+    for pattern in title_patterns:
+        matches = re.findall(pattern, job_description, re.MULTILINE)
+        if matches:
+            for match in matches:
+                match = match.strip()
+                # Filter out very short or very long matches
+                if 5 <= len(match) <= 50:
+                    found_titles.append(match.lower())
+    
+    # If pattern matching found titles, clean them
+    if found_titles:
+        cleaned_titles = []
+        for title in found_titles:
+            # Remove common prefixes/suffixes
+            for prefix in ['position:', 'title:', 'job:', 'role:']:
+                if title.startswith(prefix):
+                    title = title[len(prefix):].strip()
             
-    # If nothing found in first paragraph, check entire text
+            # Remove location information
+            title = re.sub(r'\s+\-\s+[A-Za-z\s,]+$', '', title)
+            
+            # Remove employment type
+            title = re.sub(r'\s+\(?(full[\-\s]time|part[\-\s]time|contract|temporary|permanent)\)?$', '', title, flags=re.IGNORECASE)
+            
+            cleaned_titles.append(title)
+            
+        found_titles = cleaned_titles
+    
+    # If no titles found with patterns, try dictionary matching
     if not found_titles:
-        job_desc_lower = job_description.lower()
+        # Check first few lines for common job titles
+        first_lines = ' '.join(job_description.split('\n')[:5]).lower()
+        
         for title in common_titles:
-            if title in job_desc_lower:
+            if title in first_lines:
                 found_titles.append(title)
+                
+        # If still nothing, check entire text
+        if not found_titles:
+            job_desc_lower = job_description.lower()
+            for title in common_titles:
+                if title in job_desc_lower:
+                    found_titles.append(title)
+    
+    # If we found titles, sort by specificity (prefer longer titles)
+    if found_titles:
+        found_titles.sort(key=len, reverse=True)
+        
+        # Remove near-duplicates
+        unique_titles = []
+        for title in found_titles:
+            # Only add if not already a substring of a longer title we've added
+            if not any(title in existing for existing in unique_titles):
+                unique_titles.append(title)
+                
+        # Limit to top 3 most specific titles
+        found_titles = unique_titles[:3]
     
     return found_titles
+
+def extract_keywords_from_job_description(job_description, max_keywords=15):
+    """Extracts important keywords from job description with industry intelligence"""
+    # Define enhanced keyword categories for more comprehensive extraction
+    keyword_categories = {
+        # Technical skills - expanded with trending technologies
+        'technical_skills': [
+            # Programming languages
+            'python', 'java', 'javascript', 'typescript', 'c++', 'c#', 'ruby', 'go', 'rust',
+            'php', 'swift', 'kotlin', 'scala', 'perl', 'r', 'matlab', 'bash', 'powershell',
+            
+            # Frontend
+            'react', 'angular', 'vue', 'svelte', 'jquery', 'bootstrap', 'tailwind', 
+            'css', 'html', 'sass', 'less', 'webpack', 'nextjs', 'gatsby', 'html5',
+            
+            # Backend
+            'node', 'express', 'django', 'flask', 'spring', 'rails', 'laravel', 'aspnet',
+            'fastapi', 'graphql', 'rest', 'api', 'microservices', 'serverless',
+            
+            # Database
+            'sql', 'nosql', 'mongodb', 'postgresql', 'mysql', 'oracle', 'dynamodb', 'redis',
+            'elasticsearch', 'neo4j', 'cassandra', 'mariadb', 'sqlite', 'couchdb',
+            
+            # Cloud
+            'aws', 'azure', 'gcp', 'cloud', 'ec2', 's3', 'lambda', 'kubernetes', 'docker',
+            'terraform', 'cloudformation', 'pulumi', 'ansible', 'chef', 'puppet',
+            
+            # DevOps
+            'ci/cd', 'jenkins', 'git', 'github', 'gitlab', 'bitbucket', 'azure devops',
+            'travis', 'circleci', 'github actions', 'teamcity', 'bamboo',
+            
+            # AI/ML
+            'machine learning', 'deep learning', 'tensorflow', 'pytorch', 'keras', 'scikit-learn',
+            'nlp', 'computer vision', 'neural networks', 'ai', 'artificial intelligence',
+            'transformers', 'llm', 'reinforcement learning', 'generative ai',
+            
+            # Data
+            'data science', 'big data', 'data analytics', 'data engineering', 'etl',
+            'hadoop', 'spark', 'tableau', 'power bi', 'looker', 'dbt', 'airflow',
+            
+            # Other tech
+            'blockchain', 'ios', 'android', 'mobile', 'responsive', 'architecture',
+            'ui/ux', 'design', 'figma', 'sketch', 'photoshop', 'illustrator',
+            'security', 'agile', 'scrum', 'kanban', 'lean', 'devops'
+        ],
+        
+        # Soft skills - expanded
+        'soft_skills': [
+            'communication', 'teamwork', 'leadership', 'problem solving', 'critical thinking',
+            'creativity', 'time management', 'organization', 'adaptability', 'flexibility',
+            'interpersonal', 'presentation', 'writing', 'negotiation', 'conflict resolution',
+            'decision making', 'analytical', 'attention to detail', 'self-motivated', 'initiative',
+            'collaboration', 'mentoring', 'coaching', 'customer service', 'client management',
+            'stakeholder management', 'strategic thinking', 'prioritization', 'emotional intelligence',
+            'cross-functional', 'public speaking', 'active listening', 'empathy', 'resilience'
+        ],
+        
+        # Experience levels - expanded
+        'experience_levels': [
+            'entry level', 'junior', 'mid-level', 'senior', 'principal', 'lead', 'manager',
+            'director', 'vp', 'chief', 'head of', 'executive', 'c-level', 'ceo', 'cto', 'cio',
+            'cfo', 'coo', 'years of experience', 'background in', 'expertise in', 'proficiency',
+            'mastery', 'specialist', 'subject matter expert', 'architect', 'consultant',
+            'intern', 'associate', 'staff', 'individual contributor', 'technical lead'
+        ],
+        
+        # Industry domains - expanded
+        'industry_domains': [
+            'finance', 'banking', 'healthcare', 'medical', 'retail', 'e-commerce',
+            'manufacturing', 'logistics', 'transportation', 'education', 'government',
+            'non-profit', 'media', 'entertainment', 'gaming', 'sports', 'technology',
+            'telecom', 'energy', 'utilities', 'real estate', 'construction', 'legal',
+            'consulting', 'marketing', 'advertising', 'hospitality', 'travel', 'automotive',
+            'aerospace', 'defense', 'pharma', 'biotech', 'insurance', 'agriculture',
+            'food & beverage', 'consumer goods', 'fashion', 'luxury', 'environmental',
+            'renewable energy', 'oil & gas', 'mining', 'chemicals', 'pharmaceuticals'
+        ],
+        
+        # Domain-specific skills
+        'domain_specific': [
+            # Finance
+            'financial analysis', 'accounting', 'investment', 'trading', 'portfolio management',
+            'risk assessment', 'compliance', 'auditing', 'tax', 'budgeting', 'forecasting',
+            
+            # Healthcare
+            'patient care', 'clinical', 'medical records', 'hipaa', 'ehr', 'telemedicine',
+            'healthcare compliance', 'medical coding', 'patient management', 'clinical trials',
+            
+            # Marketing
+            'seo', 'sem', 'ppc', 'social media', 'content marketing', 'email marketing',
+            'growth hacking', 'conversion optimization', 'google analytics', 'ab testing',
+            
+            # Business
+            'business intelligence', 'strategy', 'operations', 'supply chain', 'procurement',
+            'vendor management', 'contract negotiation', 'business development', 'sales',
+            'customer success', 'product management', 'project management', 'scrum'
+        ],
+        
+        # Certifications - expanded
+        'certifications': [
+            'certification', 'certified', 'license', 'licensed', 'pmp', 'cpa', 'cfa',
+            'aws certified', 'azure certified', 'google certified', 'scrum', 'agile',
+            'itil', 'six sigma', 'cissp', 'ceh', 'comptia', 'ccna', 'mcsa', 'mcse',
+            'cism', 'cisa', 'capm', 'prince2', 'cma', 'shrm', 'phr', 'sphr',
+            'csm', 'safe', 'ccnp', 'ccie', 'rhce', 'lpic', 'gcp', 'oracle certified',
+            'salesforce certified', 'pmi', 'cka', 'ckad', 'security+', 'network+',
+            'a+', 'cloud+', 'linux+', 'project+', 'server+', 'ccsp', 'oscp'
+        ]
+    }
+    
+    # Flatten the categories for easier searching
+    all_keywords = []
+    for category, keywords in keyword_categories.items():
+        all_keywords.extend([(keyword, category) for keyword in keywords])
+    
+    # Find matches in job description
+    job_desc_lower = job_description.lower()
+    matches = []
+    
+    # First pass: exact matches
+    for keyword, category in all_keywords:
+        if keyword in job_desc_lower:
+            count = job_desc_lower.count(keyword)
+            importance = 1
+            
+            # Apply importance weighting based on location in the document
+            if keyword in job_desc_lower[:int(len(job_desc_lower)/3)]:  # Appears in first third
+                importance += 1
+                
+            # Apply importance weighting based on emphasis
+            if re.search(r'required|must\s+have|essential', job_desc_lower[max(0, job_desc_lower.find(keyword)-30):job_desc_lower.find(keyword)]):
+                importance += 2
+                
+            matches.append((keyword, category, count, importance))
+    
+    # Extract job title for priority weighting
+    job_title = extract_job_titles(job_description)
+    
+    # Prioritize keywords in different ways:
+    # 1. First by importance score
+    # 2. Then by frequency
+    # 3. Then by length (prefer longer, more specific terms)
+    sorted_matches = sorted(matches, key=lambda x: (x[3], x[2], len(x[0])), reverse=True)
+    
+    # Balance keywords across categories for diversity
+    final_keywords = []
+    used_categories = set()
+    
+    # First, add job title keywords if found
+    if job_title:
+        for title in job_title:
+            final_keywords.append(title)
+            
+    # Then, add one from each category to ensure diversity
+    for keyword, category, _, _ in sorted_matches:
+        if category not in used_categories and keyword not in final_keywords:
+            final_keywords.append(keyword)
+            used_categories.add(category)
+            
+            if len(final_keywords) >= max_keywords * 0.5:
+                break
+    
+    # Finally, add remaining top keywords up to max_keywords
+    for keyword, _, _, _ in sorted_matches:
+        if keyword not in final_keywords:
+            final_keywords.append(keyword)
+            
+            if len(final_keywords) >= max_keywords:
+                break
+    
+    return final_keywords
 
 def get_keyword_variations(keyword):
     """Generates variations of a keyword for more flexible matching"""
     variations = [keyword]
     
     # Simple singular/plural variations
-    if keyword.endswith('s'):
+    if keyword.endswith('s') and not keyword.endswith('ss'):
         variations.append(keyword[:-1])  # Remove trailing 's'
     else:
         variations.append(keyword + 's')  # Add trailing 's'
@@ -2164,15 +2502,62 @@ def get_keyword_variations(keyword):
     if keyword.endswith('ing'):
         variations.append(keyword[:-3])  # develop from developing
         variations.append(keyword[:-3] + 'e')  # manage from managing
+        variations.append(keyword[:-3] + 'ed')  # develop from developing -> developed
         
     if keyword.endswith('ed'):
         variations.append(keyword[:-2])  # develop from developed
         variations.append(keyword[:-1])  # manage from managed
+        variations.append(keyword[:-2] + 'ing')  # develop from developed -> developing
         
     # Adjective variations
     if keyword.endswith('ability'):
         variations.append(keyword[:-5] + 'le')  # scalable from scalability
         
+    if keyword.endswith('able'):
+        variations.append(keyword[:-4] + 'ability')  # scalable -> scalability
+        
+    # Handle common prefixes
+    if keyword.startswith('pre'):
+        variations.append(keyword[3:])  # pre-process -> process
+    
+    if keyword.startswith('re'):
+        variations.append(keyword[2:])  # redesign -> design
+        
+    # Hyphenated variations
+    if '-' in keyword:
+        variations.append(keyword.replace('-', ' '))  # user-friendly -> user friendly
+        variations.append(keyword.replace('-', ''))  # user-friendly -> userfriendly
+    elif ' ' in keyword:
+        variations.append(keyword.replace(' ', '-'))  # user friendly -> user-friendly
+        variations.append(keyword.replace(' ', ''))  # user friendly -> userfriendly
+        
+    # Common abbreviations and full forms
+    abbreviations = {
+        'ui': 'user interface',
+        'ux': 'user experience',
+        'db': 'database',
+        'admin': 'administrator',
+        'dev': 'development',
+        'ops': 'operations',
+        'app': 'application',
+        'tech': 'technology',
+        'mgmt': 'management',
+        'sr': 'senior',
+        'jr': 'junior',
+        'qa': 'quality assurance',
+        'ai': 'artificial intelligence',
+        'ml': 'machine learning'
+    }
+    
+    # Add abbreviation variations
+    if keyword in abbreviations:
+        variations.append(abbreviations[keyword])
+    else:
+        # Check if it's a full form that has an abbreviation
+        for abbr, full in abbreviations.items():
+            if keyword == full:
+                variations.append(abbr)
+                
     # Remove duplicates and empty strings
     variations = [v for v in variations if v]
     variations = list(set(variations))
@@ -2180,35 +2565,304 @@ def get_keyword_variations(keyword):
     return variations
 
 def get_industry_skills(industry):
-    """Returns common skills for a specific industry"""
+    """Returns common skills for a specific industry with enhanced comprehensiveness"""
     industry_skills = {
-        'tech': ['programming', 'software development', 'agile', 'scrum', 'cloud', 'architecture'],
-        'finance': ['financial analysis', 'banking', 'investment', 'portfolio management', 'risk assessment'],
-        'healthcare': ['patient care', 'medical terminology', 'clinical', 'hipaa', 'electronic health records'],
-        'marketing': ['digital marketing', 'social media', 'content strategy', 'seo', 'analytics'],
-        'retail': ['merchandising', 'inventory management', 'pos', 'sales', 'customer service'],
-        'manufacturing': ['quality control', 'lean', 'six sigma', 'supply chain', 'production planning'],
-        'consulting': ['client management', 'business analysis', 'requirements gathering', 'stakeholder management']
+        'tech': [
+            # Software Development
+            'programming', 'software development', 'web development', 'mobile development',
+            'full stack', 'frontend', 'backend', 'microservices', 'api development',
+            'debugging', 'code review', 'version control', 'git', 'continuous integration',
+            
+            # Methodologies
+            'agile', 'scrum', 'kanban', 'waterfall', 'extreme programming', 'tdd',
+            'bdd', 'devops', 'cicd', 'continuous deployment', 'continuous delivery',
+            
+            # Infrastructure
+            'cloud', 'architecture', 'aws', 'azure', 'gcp', 'infrastructure as code',
+            'containerization', 'docker', 'kubernetes', 'virtualization', 'vmware',
+            
+            # Security
+            'cybersecurity', 'application security', 'penetration testing', 'vulnerability assessment',
+            'security architecture', 'security compliance', 'identity management',
+            
+            # Data
+            'data analysis', 'data science', 'machine learning', 'artificial intelligence',
+            'business intelligence', 'data visualization', 'data modeling', 'etl',
+            'data warehousing', 'big data', 'data engineering'
+        ],
+        
+        'finance': [
+            # Core Finance
+            'financial analysis', 'financial modeling', 'financial reporting', 'forecasting',
+            'budgeting', 'variance analysis', 'cash flow management', 'capital planning',
+            
+            # Banking/Investment
+            'banking', 'investment', 'portfolio management', 'asset management',
+            'wealth management', 'securities', 'trading', 'derivatives', 'fixed income',
+            'equity research', 'market analysis', 'fund management',
+            
+            # Risk/Compliance
+            'risk assessment', 'risk management', 'compliance', 'regulatory reporting',
+            'aml', 'kyc', 'fraud detection', 'internal controls', 'audit', 'sox compliance',
+            
+            # Accounting
+            'accounting', 'financial accounting', 'managerial accounting', 'tax',
+            'general ledger', 'accounts payable', 'accounts receivable', 'reconciliation',
+            'cost accounting', 'revenue recognition', 'gaap', 'ifrs',
+            
+            # Analysis Tools
+            'excel', 'vba', 'bloomberg', 'capital iq', 'factset', 'morningstar',
+            'tableau', 'power bi', 'hyperion', 'fico', 'sas', 'stata', 'eviews',
+            
+            # FinTech
+            'fintech', 'blockchain', 'cryptocurrency', 'digital payments', 'robotic process automation',
+            'algorithmic trading', 'payment processing', 'digital banking'
+        ],
+        
+        'healthcare': [
+            # Clinical
+            'patient care', 'medical terminology', 'clinical documentation', 'treatment planning',
+            'diagnosis', 'patient assessment', 'medical procedures', 'clinical workflow',
+            'care coordination', 'telehealth', 'clinical trials', 'medical protocols',
+            
+            # Administration
+            'healthcare administration', 'medical billing', 'coding', 'revenue cycle management',
+            'hipaa', 'healthcare compliance', 'utilization review', 'case management',
+            'quality improvement', 'patient safety', 'risk management', 'credentialing',
+            
+            # Technical
+            'electronic health records', 'emr systems', 'healthcare informatics', 'medical devices',
+            'health information exchange', 'clinical decision support', 'healthcare interoperability',
+            'medical imaging', 'telemedicine platforms', 'patient portals', 'healthcare analytics',
+            
+            # Specialized
+            'pharmacy operations', 'laboratory services', 'radiology', 'nursing informatics',
+            'population health management', 'value-based care', 'patient engagement',
+            'disease management', 'preventative care', 'health insurance'
+        ],
+        
+        'marketing': [
+            # Digital Marketing
+            'digital marketing', 'social media', 'content strategy', 'seo',
+            'sem', 'ppc', 'email marketing', 'marketing automation', 'inbound marketing',
+            'conversion optimization', 'landing page optimization', 'a/b testing',
+            
+            # Analytics
+            'marketing analytics', 'google analytics', 'customer segmentation', 'attribution modeling',
+            'campaign tracking', 'funnel analysis', 'cohort analysis', 'kpi reporting',
+            'engagement metrics', 'customer lifetime value', 'marketing roi',
+            
+            # Strategy
+            'brand development', 'positioning', 'market research', 'competitive analysis',
+            'customer journey mapping', 'target audience definition', 'value proposition',
+            'pricing strategy', 'go-to-market strategy', 'product marketing',
+            
+            # Technical
+            'crm systems', 'marketing platforms', 'content management systems', 'adobe creative suite',
+            'marketing technology stack', 'data visualization', 'web analytics', 'tag management',
+            
+            # Content
+            'content creation', 'copywriting', 'content marketing', 'storytelling',
+            'video production', 'social media content', 'blog management', 'editorial planning'
+        ],
+        
+        'retail': [
+            # Operations
+            'merchandising', 'inventory management', 'supply chain', 'pos systems', 'retail operations',
+            'loss prevention', 'store management', 'visual merchandising', 'category management',
+            'planogram development', 'stock replenishment', 'warehouse management',
+            
+            # Sales & Customer Experience
+            'sales techniques', 'customer service', 'clienteling', 'customer relationship management',
+            'upselling', 'cross-selling', 'customer loyalty programs', 'customer experience design',
+            'customer feedback systems', 'consumer behavior analysis', 'mystery shopping',
+            
+            # Digital Retail
+            'e-commerce', 'omnichannel retail', 'online merchandising', 'digital storefronts',
+            'online catalog management', 'mobile commerce', 'click and collect', 'dropshipping',
+            'marketplace management', 'digital payments', 'online customer experience',
+            
+            # Analytics
+            'retail analytics', 'sales forecasting', 'basket analysis', 'customer segmentation',
+            'price elasticity', 'inventory optimization', 'demand planning', 'markdown optimization',
+            'store traffic analysis', 'conversion rate optimization', 'retail kpis'
+        ],
+        
+        'manufacturing': [
+            # Operations
+            'production planning', 'quality control', 'quality assurance', 'process improvement',
+            'manufacturing operations', 'production scheduling', 'capacity planning', 'material requirements planning',
+            'inventory control', 'bill of materials', 'work order management', 'kitting',
+            
+            # Methodologies
+            'lean manufacturing', 'six sigma', 'kaizen', '5s', 'total productive maintenance',
+            'just-in-time', 'kanban', 'continuous improvement', 'value stream mapping',
+            'poka-yoke', 'statistical process control', 'design for manufacturability',
+            
+            # Technical
+            'cnc programming', 'plc programming', 'cad/cam', 'manufacturing automation',
+            'robotics', 'industrial controls', 'machine operation', 'tooling design',
+            'production line design', 'equipment maintenance', 'industrial engineering',
+            
+            # Supply Chain
+            'supply chain management', 'procurement', 'sourcing', 'vendor management',
+            'materials management', 'logistics coordination', 'distribution', 'warehousing',
+            'transportation management', 'demand planning', 'inventory optimization'
+        ],
+        
+        'consulting': [
+            # Project Management
+            'client management', 'project delivery', 'requirements gathering', 'scope management',
+            'project planning', 'resource allocation', 'timeline management', 'milestone tracking',
+            'risk management', 'issue resolution', 'project governance', 'agile methodologies',
+            
+            # Analysis
+            'business analysis', 'process analysis', 'financial modeling', 'market analysis',
+            'data analysis', 'competitive analysis', 'stakeholder analysis', 'gap analysis',
+            'cost-benefit analysis', 'root cause analysis', 'scenario planning', 'benchmarking',
+            
+            # Strategy
+            'strategic planning', 'change management', 'organizational design', 'business transformation',
+            'digital transformation', 'operational excellence', 'performance improvement',
+            'business process reengineering', 'growth strategy', 'mergers & acquisitions',
+            
+            # Communication
+            'stakeholder management', 'executive presentations', 'client communications',
+            'requirements documentation', 'workshop facilitation', 'executive reporting',
+            'proposal development', 'deliverable creation', 'status reporting'
+        ]
     }
     
     return industry_skills.get(industry.lower(), [])
 
 def get_industry_keywords(industry):
-    """Returns common keywords for a specific industry"""
+    """Returns common keywords for a specific industry with enhanced relevance"""
     industry_keywords = {
-        'tech': ['innovation', 'digital transformation', 'cutting-edge', 'technical', 'startup'],
-        'finance': ['revenue', 'profit', 'budget', 'forecasting', 'compliance'],
-        'healthcare': ['patient', 'care', 'medical', 'clinical', 'treatment'],
-        'marketing': ['campaign', 'audience', 'engagement', 'conversion', 'brand'],
-        'retail': ['customer', 'sales', 'merchandise', 'inventory', 'ecommerce'],
-        'manufacturing': ['production', 'efficiency', 'quality', 'process improvement', 'operations'],
-        'consulting': ['client', 'solution', 'strategy', 'deliverable', 'engagement']
+        'tech': [
+            # Core Concepts
+            'innovation', 'digital transformation', 'cutting-edge', 'technical excellence',
+            'startup', 'scale', 'disruptive', 'platform', 'saas', 'api-first',
+            'user experience', 'product-led growth', 'agile', 'continuous integration',
+            
+            # Technical
+            'architecture', 'scalability', 'reliability', 'performance', 'security',
+            'infrastructure', 'cloud native', 'containerization', 'microservices',
+            'full-stack', 'frontend', 'backend', 'mobile', 'responsive', 'reactive',
+            
+            # Business
+            'product-market fit', 'user acquisition', 'customer retention', 'monetization',
+            'business model', 'go-to-market', 'technology stack', 'technical debt',
+            'minimum viable product', 'feature development', 'product roadmap'
+        ],
+        
+        'finance': [
+            # Core Concepts
+            'revenue', 'profit', 'budget', 'forecasting', 'compliance', 'risk management',
+            'investment', 'assets', 'portfolio', 'regulatory', 'capital markets',
+            'financial performance', 'liquidity', 'solvency', 'profitability',
+            
+            # Analysis
+            'financial analysis', 'variance analysis', 'ratio analysis', 'trend analysis',
+            'cash flow analysis', 'balance sheet analysis', 'income statement',
+            'statement of cash flows', 'financial modeling', 'scenario planning',
+            
+            # Compliance & Governance
+            'audit', 'internal controls', 'sox compliance', 'regulatory reporting',
+            'governance', 'risk assessment', 'compliance framework', 'policy implementation',
+            'financial controls', 'disclosure requirements', 'financial integrity'
+        ],
+        
+        'healthcare': [
+            # Core Concepts
+            'patient', 'care', 'medical', 'clinical', 'treatment', 'diagnosis',
+            'health', 'wellness', 'outcomes', 'protocol', 'therapy', 'intervention',
+            'prevention', 'recovery', 'continuity of care', 'evidence-based practice',
+            
+            # Administration
+            'healthcare delivery', 'patient management', 'clinical workflow', 'care coordination',
+            'utilization', 'reimbursement', 'billing', 'coding', 'revenue cycle',
+            'quality measures', 'healthcare operations', 'regulatory compliance',
+            
+            # Technical
+            'electronic health record', 'health information exchange', 'interoperability',
+            'clinical decision support', 'telehealth', 'remote monitoring', 'digital health',
+            'health informatics', 'medical devices', 'health data', 'population health'
+        ],
+        
+        'marketing': [
+            # Core Concepts
+            'campaign', 'audience', 'engagement', 'conversion', 'brand', 'positioning',
+            'messaging', 'channel', 'segment', 'funnel', 'acquisition', 'retention',
+            'loyalty', 'awareness', 'consideration', 'purchase', 'advocacy',
+            
+            # Strategy
+            'marketing strategy', 'campaign planning', 'target market', 'value proposition',
+            'competitive advantage', 'market penetration', 'brand identity', 'differentiation',
+            'customer journey', 'touchpoints', 'customer experience', 'persona development',
+            
+            # Analytics
+            'marketing roi', 'attribution', 'engagement metrics', 'conversion rate',
+            'customer acquisition cost', 'lifetime value', 'bounce rate', 'click-through rate',
+            'impressions', 'reach', 'analytics', 'dashboard', 'performance indicators'
+        ],
+        
+        'retail': [
+            # Core Concepts
+            'customer', 'sales', 'merchandise', 'inventory', 'e-commerce', 'omnichannel',
+            'store', 'shopper', 'consumer', 'pricing', 'promotion', 'loyalty',
+            'assortment', 'fulfillment', 'pos', 'retail experience', 'storefront',
+            
+            # Operations
+            'retail operations', 'store management', 'inventory management', 'stock levels',
+            'replenishment', 'markdown', 'shrinkage', 'loss prevention', 'visual merchandising',
+            'planogram', 'category management', 'space planning', 'fixture design',
+            
+            # Customer Experience
+            'customer experience', 'shopping journey', 'in-store experience', 'digital experience',
+            'clienteling', 'personalization', 'customer service', 'satisfaction',
+            'loyalty program', 'customer feedback', 'voice of customer', 'nps'
+        ],
+        
+        'manufacturing': [
+            # Core Concepts
+            'production', 'efficiency', 'quality', 'process improvement', 'operations',
+            'lean', 'six sigma', 'supply chain', 'materials', 'assembly', 'inventory',
+            'throughput', 'productivity', 'automation', 'manufacturing excellence',
+            
+            # Operations
+            'production planning', 'scheduling', 'capacity utilization', 'work orders',
+            'bill of materials', 'routing', 'machine utilization', 'setup reduction',
+            'cycle time', 'lead time', 'takt time', 'bottleneck analysis', 'constraint management',
+            
+            # Quality & Improvement
+            'quality control', 'quality assurance', 'inspection', 'testing', 'root cause analysis',
+            'corrective action', 'preventive action', 'statistical process control',
+            'variance reduction', 'continuous improvement', 'kaizen', 'value stream mapping'
+        ],
+        
+        'consulting': [
+            # Core Concepts
+            'client', 'solution', 'strategy', 'deliverable', 'engagement', 'implementation',
+            'stakeholder', 'analysis', 'recommendation', 'transformation', 'framework',
+            'methodology', 'best practice', 'roadmap', 'assessment', 'advisory',
+            
+            # Project Management
+            'project management', 'scope', 'timeline', 'milestones', 'deliverables',
+            'requirements', 'constraints', 'dependencies', 'critical path',
+            'resource allocation', 'project governance', 'status reporting',
+            
+            # Client Management
+            'client relationship', 'expectation management', 'executive sponsorship',
+            'change management', 'stakeholder alignment', 'communication planning',
+            'resistance management', 'adoption strategy', 'training', 'knowledge transfer'
+        ]
     }
     
     return industry_keywords.get(industry.lower(), [])
 
 def calculate_industry_weights(industry, company_size, has_job_description):
-    """Calculates scoring weights based on industry and company size"""
+    """Calculates scoring weights based on industry and company size with enhanced precision"""
+    # Base weights applicable to all scenarios
     weights = {
         'format_score': 10,
         'content_score': 25,
@@ -2224,39 +2878,114 @@ def calculate_industry_weights(industry, company_size, has_job_description):
         'relevance_score': 20 if has_job_description else 0
     }
     
-    # Adjust weights based on industry
+    # Industry-specific weight adjustments
     if industry:
         industry = industry.lower()
+        
         if industry == 'tech':
-            weights['skills_score'] += 5
-            weights['projects_score'] += 5
-            weights['experience_score'] -= 5
-            weights['education_score'] -= 5
-        elif industry == 'finance':
-            weights['education_score'] += 5
-            weights['format_score'] += 5
-            weights['projects_score'] -= 5
-            weights['impact_score'] -= 5
-        elif industry == 'creative':
-            weights['projects_score'] += 10
-            weights['impact_score'] += 5
-            weights['format_score'] -= 5
-            weights['education_score'] -= 10
+            weights.update({
+                'skills_score': weights['skills_score'] + 5,  # Technical skills highly valued
+                'projects_score': weights['projects_score'] + 5,  # Project work demonstrates practical skills
+                'impact_score': weights['impact_score'] + 3,  # Results matter in tech
+                'experience_score': weights['experience_score'] - 3,  # Skills often valued over years
+                'education_score': weights['education_score'] - 5,  # Less emphasis on formal education
+                'format_score': weights['format_score'] - 5  # Less formality in tech resumes
+            })
             
-    # Adjust weights based on company size
+        elif industry == 'finance':
+            weights.update({
+                'education_score': weights['education_score'] + 5,  # Credentials matter more
+                'format_score': weights['format_score'] + 5,  # Formality and precision valued
+                'content_score': weights['content_score'] + 3,  # Detail and accuracy important
+                'readability_score': weights['readability_score'] + 2,  # Clear communication essential
+                'projects_score': weights['projects_score'] - 5,  # Less emphasis on project work
+                'impact_score': weights['impact_score'] - 5  # Individual contribution sometimes less visible
+            })
+            
+        elif industry == 'healthcare':
+            weights.update({
+                'education_score': weights['education_score'] + 10,  # Credentials critical
+                'skills_score': weights['skills_score'] + 5,  # Specific skills/certifications valued
+                'format_score': weights['format_score'] + 5,  # Professionalism important
+                'contact_score': weights['contact_score'] + 3,  # Complete contact info for credentialing
+                'projects_score': weights['projects_score'] - 10,  # Less emphasis on projects
+                'relevance_score': weights['relevance_score'] + 5 if has_job_description else 0  # Specific role fit important
+            })
+            
+        elif industry == 'marketing':
+            weights.update({
+                'impact_score': weights['impact_score'] + 10,  # Results and metrics crucial
+                'content_score': weights['content_score'] + 5,  # Communication quality matters
+                'readability_score': weights['readability_score'] + 5,  # Clear expression valued
+                'summary_score': weights['summary_score'] + 5,  # Personal branding important
+                'education_score': weights['education_score'] - 10,  # Less emphasis on formal education
+                'format_score': weights['format_score'] - 5  # Creativity sometimes valued over strict format
+            })
+            
+        elif industry == 'retail':
+            weights.update({
+                'experience_score': weights['experience_score'] + 5,  # Hands-on experience valued
+                'impact_score': weights['impact_score'] + 5,  # Results focus important
+                'skills_score': weights['skills_score'] + 3,  # Specific retail skills valued
+                'content_score': weights['content_score'] + 2,  # Clear communication of responsibilities
+                'education_score': weights['education_score'] - 10,  # Less emphasis on degrees
+                'projects_score': weights['projects_score'] - 5  # Fewer formal projects
+            })
+            
+        elif industry == 'manufacturing':
+            weights.update({
+                'skills_score': weights['skills_score'] + 5,  # Technical skills crucial
+                'experience_score': weights['experience_score'] + 5,  # Experience highly valued
+                'impact_score': weights['impact_score'] + 5,  # Efficiency and results focus
+                'projects_score': weights['projects_score'] + 3,  # Process improvement projects relevant
+                'summary_score': weights['summary_score'] - 3,  # Less emphasis on personal branding
+                'education_score': weights['education_score'] - 10  # Technical skills often valued over degrees
+            })
+            
+        elif industry == 'consulting':
+            weights.update({
+                'impact_score': weights['impact_score'] + 10,  # Results and client impact crucial
+                'content_score': weights['content_score'] + 5,  # Clear articulation of value
+                'education_score': weights['education_score'] + 5,  # Credentials often valued
+                'format_score': weights['format_score'] + 5,  # Professional presentation important
+                'experience_score': weights['experience_score'] + 5,  # Client experience valued
+                'projects_score': weights['projects_score'] - 5  # Client work often replaces separate projects
+            })
+    
+    # Company size adjustments        
     if company_size:
         company_size = company_size.lower()
+        
         if company_size == 'startup':
-            weights['skills_score'] += 5
-            weights['impact_score'] += 5
-            weights['format_score'] -= 5
-            weights['education_score'] -= 5
-        elif company_size == 'enterprise':
-            weights['format_score'] += 5
-            weights['education_score'] += 5
-            weights['skills_score'] -= 5
-            weights['projects_score'] -= 5
+            weights.update({
+                'skills_score': weights['skills_score'] + 5,  # Versatility valued
+                'impact_score': weights['impact_score'] + 5,  # Direct contribution to business
+                'projects_score': weights['projects_score'] + 3,  # Initiative and self-direction
+                'relevance_score': weights['relevance_score'] + 3 if has_job_description else 0,  # Role fit important
+                'format_score': weights['format_score'] - 5,  # Less formal expectations
+                'education_score': weights['education_score'] - 5  # Skills over credentials
+            })
             
+        elif company_size == 'mid-size':
+            weights.update({
+                'experience_score': weights['experience_score'] + 3,  # Relevant experience valued
+                'skills_score': weights['skills_score'] + 3,  # Specific skills important
+                'impact_score': weights['impact_score'] + 3,  # Results focus
+                'summary_score': weights['summary_score'] + 2,  # Clear articulation of fit
+                'format_score': weights['format_score'] - 1,  # Moderate formality
+                'education_score': weights['education_score'] - 5  # Balanced view of credentials
+            })
+            
+        elif company_size == 'enterprise':
+            weights.update({
+                'format_score': weights['format_score'] + 5,  # ATS compatibility crucial
+                'education_score': weights['education_score'] + 5,  # Credentials for screening
+                'keyword_score': weights['keyword_score'] + 5 if has_job_description else 0,  # ATS optimization
+                'relevance_score': weights['relevance_score'] + 5 if has_job_description else 0,  # Role alignment
+                'skills_score': weights['skills_score'] - 5,  # Broader skill categories
+                'projects_score': weights['projects_score'] - 5  # Formal work experience often favored
+            })
+    
     # Normalize weights to sum to 100
     total = sum(weights.values())
     weights = {k: (v / total) * 100 for k, v in weights.items()}
@@ -2264,73 +2993,147 @@ def calculate_industry_weights(industry, company_size, has_job_description):
     return weights
 
 def calculate_weighted_score(metrics, weights):
-    """Calculates overall score based on metrics and weights"""
+    """Calculates overall score based on metrics and weights with enhanced reliability"""
     score = 0
+    counted_metrics = 0
     
     for metric, weight in weights.items():
+        # Only consider metrics that exist and have valid values
         if metric in metrics and metrics[metric] is not None:
-            score += (metrics[metric] * weight / 100)
-            
+            if isinstance(metrics[metric], (int, float)) and not isinstance(metrics[metric], bool):
+                score += (metrics[metric] * weight / 100)
+                counted_metrics += 1
+    
+    # If we couldn't calculate based on enough metrics, use a more conservative score
+    if counted_metrics < len(weights) * 0.7:
+        # Apply a penalty for incomplete metrics
+        completion_factor = counted_metrics / len(weights)
+        score = score * completion_factor
+    
+    # Ensure score is within valid range
     return min(100, max(0, score))
 
 def generate_comprehensive_feedback(metrics, overall_score):
-    """Generates comprehensive feedback based on metrics and score"""
+    """Generates comprehensive feedback based on metrics and score with enhanced actionability"""
+    # Initialize feedback categories
     overall = []
     improvements = []
     ats_tips = []
     
-    # Overall assessment
+    # OVERALL ASSESSMENT - Tailored to score range
     if overall_score >= 90:
-        overall.append("Excellent resume that should perform very well with ATS systems and hiring managers.")
+        overall.append("Exceptional resume that should perform very well with ATS systems and hiring managers. You've effectively showcased your qualifications in a well-structured format.")
     elif overall_score >= 80:
-        overall.append("Strong resume that meets most ATS requirements and should pass automated screening.")
+        overall.append("Strong resume that meets most ATS requirements and presents your qualifications effectively. Minor optimizations could further enhance your application.")
     elif overall_score >= 70:
-        overall.append("Good resume with some areas for improvement to enhance ATS performance.")
+        overall.append("Good resume with specific areas for improvement to enhance ATS performance. You have solid content but need strategic adjustments to maximize impact.")
     elif overall_score >= 60:
-        overall.append("Average resume that may pass some ATS systems but needs improvements to be competitive.")
+        overall.append("Average resume that may pass some ATS systems but needs improvements to be competitive. Several key areas need attention to strengthen your application.")
     else:
-        overall.append("Below average resume that needs significant improvements to pass ATS screening.")
+        overall.append("Below average resume that needs significant improvements to pass ATS screening. A targeted revision focusing on structure, content, and keywords will substantially improve your results.")
     
-    # Add section-specific feedback
-    if metrics['format_score'] < 70:
-        improvements.append("Improve resume structure and formatting for better ATS compatibility.")
+    # FORMAT FEEDBACK - Focus on ATS compatibility
+    if 'format_score' in metrics and metrics['format_score'] < 70:
+        improvements.append("Improve your resume structure and formatting for better ATS compatibility.")
+        
+        if 'red_flags' in metrics and metrics['red_flags']:
+            for flag in metrics['red_flags'][:2]:  # Limit to top 2 flags
+                improvements.append(f"Address this format issue: {flag}")
+                
         ats_tips.append("Use standard section headings (Experience, Education, Skills) that ATS systems recognize.")
+        ats_tips.append("Maintain a clean, single-column layout with standard formatting to ensure proper parsing.")
     
-    if metrics['keyword_score'] < 70 and metrics['relevance_score'] is not None:
+    # KEYWORD OPTIMIZATION - Critical for ATS
+    if 'keyword_score' in metrics and metrics['keyword_score'] < 70 and 'relevance_score' in metrics and metrics['relevance_score'] is not None:
         improvements.append("Add more relevant keywords that match the job description requirements.")
+        
+        if 'missing_keywords' in metrics and metrics['missing_keywords'] and len(metrics['missing_keywords']) > 0:
+            keyword_list = ', '.join(metrics['missing_keywords'][:5])  # Limit to top 5
+            improvements.append(f"Include these key terms from the job description: {keyword_list}")
+            
         ats_tips.append("Most ATS systems rank resumes based on keyword matching. Include exact phrases from the job posting.")
+        ats_tips.append("Incorporate keywords naturally throughout your resume, especially in your Experience and Skills sections.")
     
-    if metrics['skills_score'] < 70:
-        improvements.append("Enhance your skills section with more industry-relevant skills.")
-        ats_tips.append("List both technical skills and soft skills, and organize them by category for better readability.")
+    # SKILLS SECTION - Showcase capabilities
+    if 'skills_score' in metrics and metrics['skills_score'] < 70:
+        improvements.append("Enhance your skills section with more relevant and organized skills.")
+        
+        if 'technical_match' in metrics and 'soft_skills_match' in metrics:
+            if metrics['technical_match'] < 60:
+                improvements.append("Add more technical or hard skills related to your field.")
+            if metrics['soft_skills_match'] < 40:
+                improvements.append("Include more soft skills to demonstrate workplace effectiveness.")
+                
+        ats_tips.append("Organize skills by category (Technical, Soft, Domain-Specific) for better readability and scanning.")
+        ats_tips.append("Prioritize skills mentioned in the job description near the top of each category.")
     
-    if metrics['experience_score'] < 70:
+    # EXPERIENCE SECTION - Demonstrate impact
+    if 'experience_score' in metrics and metrics['experience_score'] < 70:
         improvements.append("Strengthen your experience section with more accomplishments and results.")
-        ats_tips.append("Begin each bullet point with a strong action verb and include measurable achievements.")
+        
+        if 'action_verb_usage' in metrics and metrics['action_verb_usage'] < 60:
+            improvements.append("Start each bullet point with strong action verbs (Developed, Implemented, Managed).")
+            
+        if 'quantification_score' in metrics and metrics['quantification_score'] < 50:
+            improvements.append("Quantify your achievements with specific numbers, percentages, and metrics.")
+            
+        if 'achievement_focus' in metrics and metrics['achievement_focus'] < 40:
+            improvements.append("Focus more on achievements and results rather than just listing responsibilities.")
+            
+        ats_tips.append("Use industry-standard job titles that ATS systems will recognize.")
+        ats_tips.append("Include relevant keywords from the job description in your bullet points.")
     
-    if metrics['education_score'] < 70:
-        improvements.append("Provide more details in your education section, including relevant coursework.")
+    # EDUCATION SECTION - Credentials matter
+    if 'education_score' in metrics and metrics['education_score'] < 70:
+        improvements.append("Enhance your education section with more complete information.")
+        
+        # Check section feedback for specific education issues
+        if 'section_feedback' in metrics and 'education' in metrics['section_feedback']:
+            edu_feedback = metrics['section_feedback']['education']
+            if edu_feedback and len(edu_feedback) > 0:
+                # Get the most important education feedback
+                improvements.append(edu_feedback[0])
     
-    if metrics['impact_score'] < 60:
-        improvements.append("Add more measurable achievements to demonstrate your impact.")
-        ats_tips.append("Quantify your achievements with numbers, percentages, and metrics wherever possible.")
+    # SUMMARY/OBJECTIVE - Personal branding
+    if 'summary_score' in metrics and metrics['summary_score'] < 70 and metrics['summary_score'] > 0:
+        improvements.append("Improve your professional summary to create a stronger first impression.")
+        
+        # Check section feedback for specific summary issues
+        if 'section_feedback' in metrics and 'summary' in metrics['section_feedback']:
+            summary_feedback = metrics['section_feedback']['summary']
+            if summary_feedback and len(summary_feedback) > 0:
+                # Get the most important summary feedback
+                improvements.append(summary_feedback[0])
+                
+        ats_tips.append("Include relevant keywords in your summary that match the job title and key requirements.")
+    elif 'summary_score' in metrics and metrics['summary_score'] == 0:
+        improvements.append("Add a powerful professional summary that highlights your value proposition.")
+        ats_tips.append("A strong summary improves both ATS performance and human readability.")
     
-    if metrics['action_verb_usage'] < 60:
-        improvements.append("Use more action verbs at the beginning of your bullet points.")
+    # CONTENT QUALITY - Clarity and impact
+    if 'content_score' in metrics and metrics['content_score'] < 70:
+        improvements.append("Enhance overall content quality with clearer, more impactful descriptions.")
+        
+        if 'impact_score' in metrics and metrics['impact_score'] < 60:
+            improvements.append("Add more accomplishment-focused language that demonstrates your value.")
+            
+        if 'readability_score' in metrics and metrics['readability_score'] < 70:
+            improvements.append("Improve readability with concise, clear language and appropriate bullet length.")
+            
+        ats_tips.append("Use industry-standard terminology that both ATS systems and hiring managers will recognize.")
     
-    if metrics['quantification_score'] < 50:
-        improvements.append("Include more numbers and metrics to quantify your achievements.")
+    # PROJECTS - Practical application
+    if 'projects_score' in metrics and metrics['projects_score'] < 70 and metrics['projects_score'] > 0:
+        improvements.append("Strengthen your projects section to better showcase your practical skills.")
+        
+        # Check section feedback for specific project issues
+        if 'section_feedback' in metrics and 'projects' in metrics['section_feedback']:
+            project_feedback = metrics['section_feedback']['projects']
+            if project_feedback and len(project_feedback) > 0:
+                # Get the most important project feedback
+                improvements.append(project_feedback[0])
     
-    if metrics['readability_score'] < 70:
-        improvements.append("Improve the readability of your bullet points with clearer, more concise language.")
-        ats_tips.append("Use clean, simple formatting and avoid tables, headers, footers, and graphics that ATS may not process correctly.")
-    
-    # Add missing keywords suggestion if applicable
-    if metrics['missing_keywords'] and len(metrics['missing_keywords']) > 0:
-        keyword_list = ', '.join(metrics['missing_keywords'][:5])
-        improvements.append(f"Add these missing keywords from the job description: {keyword_list}.")
-    
-    # General ATS tips
+    # General ATS optimization tips
     ats_tips.extend([
         "Save your resume as a standard PDF or .docx file to ensure proper parsing by ATS systems.",
         "Avoid using text boxes, images, icons, or multiple columns that can confuse ATS software.",

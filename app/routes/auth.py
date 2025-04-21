@@ -38,19 +38,20 @@ class ProfileForm(FlaskForm):
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('dashboard.dashboard'))
-    
+        return redirect(url_for('social.feed'))  # ✅ Redirect to social feed if already logged in
+
     form = LoginForm()
     if form.validate_on_submit():
         user = authenticate_user(form.email.data, form.password.data)
         if user:
             login_user(user)
             next_page = request.args.get('next')
-            return redirect(next_page if next_page else url_for('dashboard.dashboard'))
+            return redirect(next_page if next_page else url_for('social.feed'))  # ✅ Redirect to social.feed
         else:
             flash('Login failed. Please check your email and password.', 'danger')
-    
+
     return render_template('auth/login.html', form=form, title='Login')
+
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():

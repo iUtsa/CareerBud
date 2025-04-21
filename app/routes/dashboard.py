@@ -8,8 +8,8 @@ dashboard_bp = Blueprint('dashboard', __name__)
 @dashboard_bp.route('/')
 def index():
     if current_user.is_authenticated:
-        return redirect(url_for('dashboard.dashboard'))
-    return render_template('index.html', title='Welcome to StudentHub')
+        return redirect(url_for('social.feed'))
+    return render_template('index.html', title='Welcome to CareersBud')
 
 @dashboard_bp.route('/dashboard')
 @login_required

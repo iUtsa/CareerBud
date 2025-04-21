@@ -358,11 +358,14 @@ def analyze(resume_id):
                 skills_score=skills_score,
                 extracted_keywords=extracted_keywords,
                 found_keywords=found_keywords,
-                is_advanced=False
+                is_advanced=False,
+                # Add option to run advanced analysis even if score is 100%
+                can_run_advanced=True
             )
         else:
             flash('Error analyzing resume. Please try again.', 'danger')
             return redirect(url_for('resume.edit', resume_id=resume_id))
+
         
 
 
@@ -389,7 +392,7 @@ def analyze_resume_ats(resume_id, user_id, job_description=None):
         
         # Calculate basic ATS score - this would be more sophisticated in reality
         base_score = 0
-        if has_contact: base_score += 20
+        if has_contact: base_score += 5
         if has_experience: base_score += 25
         if has_education: base_score += 20
         if has_skills: base_score += 15
@@ -453,6 +456,8 @@ def analyze_resume_ats(resume_id, user_id, job_description=None):
         print(f"Error analyzing resume: {type(e).__name__} - {str(e)}")
         db.session.rollback()
         return None
+    
+
 @resume_bp.route('/<int:resume_id>/advanced-analyze', methods=['GET', 'POST'])
 @login_required
 def advanced_analyze(resume_id):
