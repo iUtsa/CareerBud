@@ -71,7 +71,7 @@
                         <li class="nav-item">
                             <a class="nav-link {% if request.endpoint == 'courses.courses' %}active{% endif %}"
                                 href="{{ url_for('courses.courses') }}">
-                                <i class="fas fa-book"></i> Courses
+                                <i class="fas fa-book"></i> Course Bud
                             </a>
                         </li>
                         <li class="nav-item">
@@ -90,7 +90,7 @@
                         <li class="nav-item">
                             <a class="nav-link {% if request.endpoint and request.endpoint.startswith('resume.') %}active{% endif %}"
                                 href="{{ url_for('resume.resume_dashboard') }}">
-                                <i class="fas fa-file-alt"></i> Resume Builder
+                                <i class="fas fa-file-alt"></i> Resume Bud
                             </a>
                         </li>
                         {% endif %}
