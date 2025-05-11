@@ -163,7 +163,7 @@
             <div
                 class="{% if current_user.is_authenticated %}col-md-9 col-lg-10 main-content{% else %}col-12 main-content-full{% endif %}">
                 {% if current_user.is_authenticated %}
-                <header class="main-header">
+                <header class="main-header fixed-top bg-white shadow-sm p-3">
                     <div class="welcome-text">
                         <h1>Welcome, {{ current_user.first_name }} {{ current_user.last_name }}</h1>
                         <p>{{ current_user.major }} | {{ current_user.university }}</p>

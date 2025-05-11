@@ -41,7 +41,10 @@ class MessageForm(FlaskForm):
     content = StringField('Message', validators=[DataRequired()])
     submit = SubmitField('Send')
 
-
+class ConnectionForm(FlaskForm):
+    accept = SubmitField('Accept')
+    reject = SubmitField('Reject')
+    
 class ResumeForm(FlaskForm):
     title = StringField('Resume Title', validators=[DataRequired(), Length(max=100)])
     template = RadioField('Template', choices=[

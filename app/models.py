@@ -1062,10 +1062,9 @@ def get_feed(user_id):
         # Return posts from connections and the user's own posts
         # Filter by visibility (public or connections)
         return Post.query.filter(
-            (Post.user_id.in_(friend_ids)) & 
-            ((Post.visibility == 'public') | 
-             (Post.visibility == 'connections') |
-             ((Post.visibility == 'private') & (Post.user_id == user_id)))
+        ((Post.user_id.in_(friend_ids)) & (Post.visibility == 'connections'))
+        | (Post.visibility == 'public')
+        | ((Post.visibility == 'private') & (Post.user_id == user_id))
         ).order_by(Post.created_at.desc())
     except Exception as e:
         print(f"Error retrieving feed: {type(e).__name__} - {str(e)}")

@@ -1,4 +1,4 @@
-from flask import Blueprint, request, render_template, flash, redirect, url_for,current_app
+from flask import Blueprint, jsonify, request, render_template, flash, redirect, url_for,current_app
 from flask_login import login_required, current_user
 from app.models import (
     search_users, User, add_connection, accept_connection, get_connection,
@@ -12,7 +12,7 @@ from app.models import Connection  # Adjust the import path as needed
 from app.models import Notification
 from app.models import get_connections
 from app.models import get_connection_status
-from app.forms import ProfileForm 
+from app.forms import ProfileForm , ConnectionForm  
 from flask_wtf import FlaskForm
 from app.models import Conversation
 from app.forms import MessageForm
@@ -498,10 +498,12 @@ def connections():
         else:
             connected_users.append(User.query.get(conn.requester_id))
     
+    form = ConnectionForm()
     return render_template(
         'social/connection.html',
         pending_requests=pending_requests,
-        connections=connected_users
+        connections=connected_users,
+        form=form
     )
 
 

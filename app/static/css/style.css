@@ -267,18 +267,19 @@ body[data-theme="light"] {
     transition: background var(--transition-speed);
   }
   
-  .main-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1.5rem 2rem;
-    background: var(--bg-secondary);
-    border-bottom: 1px solid var(--border-color);
-    transition: background var(--transition-speed), 
-                border-color var(--transition-speed);
-    position: relative;
-    overflow: hidden;
-  }
+.main-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  transition: background var(--transition-speed), 
+              border-color var(--transition-speed);
+  position: relative;
+  overflow: visible;
+  z-index: 1000;
+}
   
   .main-header::before {
     content: '';
