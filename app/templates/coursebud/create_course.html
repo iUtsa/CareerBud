@@ -1,0 +1,998 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('coursebud.index') }}">CourseBud</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('coursebud.teach') }}">Instructor Dashboard</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ 'Edit Course' if course else 'Create Course' }}</li>
+                </ol>
+            </nav>
+            <h1 class="mt-2 mb-3">{{ 'Edit Course Details' if course else 'Create New Course' }}</h1>
+            <p class="text-muted">Fill in the details below to {{ 'update your' if course else 'create a new' }} course.</p>
+        </div>
+    </div>
+
+    <!-- Tabbed Navigation -->
+    <ul class="nav nav-tabs mb-4" id="courseCreationTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="basic-info-tab" data-bs-toggle="tab" data-bs-target="#basic-info" type="button" role="tab" aria-controls="basic-info" aria-selected="true">Course Information</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="modules-tab" data-bs-toggle="tab" data-bs-target="#modules" type="button" role="tab" aria-controls="modules" aria-selected="false" {% if not course %}disabled{% endif %}>Modules & Content</button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="courseCreationTabContent">
+        <!-- Basic Course Information Tab -->
+        <div class="tab-pane fade show active" id="basic-info" role="tabpanel" aria-labelledby="basic-info-tab">
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-body p-4">
+                            <form method="post" enctype="multipart/form-data" id="courseBasicForm">
+                                {{ form.hidden_tag() }}
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.title.id }}" class="form-label">{{ form.title.label }} <span class="text-danger">*</span></label>
+                                    {{ form.title(class="form-control" + (" is-invalid" if form.title.errors else "")) }}
+                                    {% if form.title.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.title.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">Choose a clear and concise title that describes what students will learn.</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.description.id }}" class="form-label">{{ form.description.label }} <span class="text-danger">*</span></label>
+                                    {{ form.description(class="form-control rich-text-editor" + (" is-invalid" if form.description.errors else ""), rows=8) }}
+                                    {% if form.description.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.description.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">Provide a detailed description of your course. You can use formatting to make it more engaging.</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="learning_objectives" class="form-label">Learning Objectives</label>
+                                    <textarea class="form-control" id="learning_objectives" name="learning_objectives" rows="4" placeholder="What will students learn? Enter one objective per line."></textarea>
+                                    <div class="form-text">List what students will learn, one objective per line. These appear on your course landing page.</div>
+                                </div>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="{{ form.category_id.id }}" class="form-label">{{ form.category_id.label }} <span class="text-danger">*</span></label>
+                                        {{ form.category_id(class="form-select" + (" is-invalid" if form.category_id.errors else "")) }}
+                                        {% if form.category_id.errors %}
+                                            <div class="invalid-feedback">
+                                                {% for error in form.category_id.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="{{ form.level.id }}" class="form-label">{{ form.level.label }} <span class="text-danger">*</span></label>
+                                        {{ form.level(class="form-select" + (" is-invalid" if form.level.errors else "")) }}
+                                        {% if form.level.errors %}
+                                            <div class="invalid-feedback">
+                                                {% for error in form.level.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="{{ form.duration.id }}" class="form-label">{{ form.duration.label }}</label>
+                                        {{ form.duration(class="form-control" + (" is-invalid" if form.duration.errors else ""), placeholder="e.g. 4 hours 30 minutes") }}
+                                        {% if form.duration.errors %}
+                                            <div class="invalid-feedback">
+                                                {% for error in form.duration.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                        <div class="form-text">Estimated time to complete the course (e.g. "2 hours 30 minutes")</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="{{ form.price.id }}" class="form-label">{{ form.price.label }}</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">$</span>
+                                            {{ form.price(class="form-control" + (" is-invalid" if form.price.errors else "")) }}
+                                            {% if form.price.errors %}
+                                                <div class="invalid-feedback">
+                                                    {% for error in form.price.errors %}
+                                                        {{ error }}
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="form-text">Set to 0 for free courses</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.thumbnail.id }}" class="form-label">{{ form.thumbnail.label }} <span class="text-danger">*</span></label>
+                                    {{ form.thumbnail(class="form-control" + (" is-invalid" if form.thumbnail.errors else "")) }}
+                                    {% if form.thumbnail.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.thumbnail.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">Recommended size: 1280x720 pixels (16:9 ratio)</div>
+                                    
+                                    {% if course and course.thumbnail %}
+                                        <div class="mt-2">
+                                            <img src="{{ url_for('static', filename='uploads/' + course.thumbnail) }}" class="img-thumbnail" style="max-height: 150px;" alt="Current thumbnail">
+                                            <div class="form-text">Current thumbnail. Upload a new one to replace it.</div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="promo_video" class="form-label">Promotional Video (optional)</label>
+                                    <input type="file" class="form-control" id="promo_video" name="promo_video" accept="video/*">
+                                    <div class="form-text">Upload a short promotional video to showcase your course (max 100MB, MP4 format recommended)</div>
+                                </div>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            {{ form.is_free(class="form-check-input", onchange="togglePriceField()") }}
+                                            <label class="form-check-label" for="{{ form.is_free.id }}">
+                                                {{ form.is_free.label }}
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            {{ form.is_premium(class="form-check-input", onchange="togglePriceField()") }}
+                                            <label class="form-check-label" for="{{ form.is_premium.id }}">
+                                                {{ form.is_premium.label }}
+                                            </label>
+                                        </div>
+                                        <div class="form-text">Premium courses are only available to subscribers</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                                    <a href="{{ url_for('coursebud.teach') }}" class="btn btn-outline-secondary">Cancel</a>
+                                    <button type="submit" class="btn btn-primary" id="saveBasicInfo">
+                                        {% if course %}
+                                            Update Course Information
+                                        {% else %}
+                                            Save & Continue to Modules
+                                        {% endif %}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Course Creation Process</h5>
+                        </div>
+                        <div class="card-body">
+                            <ol class="mb-0">
+                                <li class="mb-3 fw-bold">
+                                    <span>Enter basic course information</span>
+                                    <p class="text-muted small mb-0 fw-normal">Define the title, description, category, and other basic details.</p>
+                                </li>
+                                <li class="mb-3 {% if course %}fw-bold{% else %}text-muted{% endif %}">
+                                    <span>Add course content</span>
+                                    <p class="text-muted small mb-0 fw-normal">Create modules and upload videos, files, quizzes, and other content.</p>
+                                </li>
+                                <li class="mb-3">
+                                    <span>Review and submit</span>
+                                    <p class="text-muted small mb-0">Preview your course and submit it for admin review.</p>
+                                </li>
+                                <li>
+                                    <span>Publish and promote</span>
+                                    <p class="text-muted small mb-0">Once approved, your course will be available to students.</p>
+                                </li>
+                            </ol>
+                        </div>
+                    </div>
+                    
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Tips for a Great Course</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="mb-0">
+                                <li class="mb-2">Use a clear, specific title that shows the value to students</li>
+                                <li class="mb-2">Write a comprehensive description of what students will learn</li>
+                                <li class="mb-2">Choose an eye-catching thumbnail that represents your course</li>
+                                <li class="mb-2">Select the appropriate category and difficulty level</li>
+                                <li class="mb-2">Set clear learning objectives that are specific and measurable</li>
+                                <li class="mb-2">Include a mix of videos, text, and downloadable resources</li>
+                                <li class="mb-2">Set a competitive price based on course depth and content</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modules & Content Tab -->
+        <div class="tab-pane fade" id="modules" role="tabpanel" aria-labelledby="modules-tab">
+            {% if course %}
+            <div class="row">
+                <div class="col-12 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h4 class="mb-0">Course Modules</h4>
+                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModuleModal">
+                                    <i class="bi bi-plus-circle me-1"></i> Add New Module
+                                </button>
+                            </div>
+                            
+                            <p class="text-muted">Organize your course content into modules and lessons. Drag and drop to change the order.</p>
+                            
+                            <div id="modulesList" class="mt-4">
+                                {% if course.modules|length > 0 %}
+                                    {% for module in course.modules|sort(attribute='order') %}
+                                        <div class="card mb-3 module-card" data-module-id="{{ module.id }}">
+                                            <div class="card-header bg-light">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bi bi-grip-vertical me-2 text-muted"></i>
+                                                        <h5 class="mb-0">{{ module.title }}</h5>
+                                                    </div>
+                                                    <div>
+                                                        <button class="btn btn-sm btn-outline-primary me-1" onclick="editModule({{ module.id }})">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </button>
+                                                        <button class="btn btn-sm btn-outline-danger" onclick="deleteModule({{ module.id }})">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="card-body">
+                                                <p>{{ module.description }}</p>
+                                                
+                                                <div class="d-flex justify-content-between align-items-center mb-3 mt-4">
+                                                    <h6 class="mb-0">Lessons & Content</h6>
+                                                    <button class="btn btn-sm btn-success" onclick="addContent({{ module.id }})">
+                                                        <i class="bi bi-plus-circle me-1"></i> Add Content
+                                                    </button>
+                                                </div>
+                                                
+                                                <div class="content-list" id="contentList-{{ module.id }}">
+                                                    {% if module.contents|length > 0 %}
+                                                        {% for content in module.contents|sort(attribute='order') %}
+                                                            <div class="card mb-2 content-card" data-content-id="{{ content.id }}">
+                                                                <div class="card-body py-2">
+                                                                    <div class="d-flex justify-content-between align-items-center">
+                                                                        <div class="d-flex align-items-center">
+                                                                            <i class="bi bi-grip-vertical me-2 text-muted"></i>
+                                                                            <div>
+                                                                                <span class="content-type-badge 
+                                                                                    {% if content.type == 'video' %}badge bg-danger{% endif %}
+                                                                                    {% if content.type == 'document' %}badge bg-primary{% endif %}
+                                                                                    {% if content.type == 'quiz' %}badge bg-warning{% endif %}
+                                                                                    {% if content.type == 'assignment' %}badge bg-success{% endif %}
+                                                                                    {% if content.type == 'text' %}badge bg-info{% endif %}
+                                                                                    "
+                                                                                >
+                                                                                    {{ content.type|capitalize }}
+                                                                                </span>
+                                                                                <span class="ms-2">{{ content.title }}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div>
+                                                                            <button class="btn btn-sm btn-outline-primary me-1" onclick="editContent({{ content.id }})">
+                                                                                <i class="bi bi-pencil"></i>
+                                                                            </button>
+                                                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteContent({{ content.id }})">
+                                                                                <i class="bi bi-trash"></i>
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        {% endfor %}
+                                                    {% else %}
+                                                        <div class="text-center text-muted py-3 border rounded">
+                                                            <p class="mb-0">No content added yet. Click "Add Content" to get started.</p>
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="text-center text-muted py-5 border rounded">
+                                        <i class="bi bi-journal-text display-4"></i>
+                                        <h5 class="mt-3">No modules added yet</h5>
+                                        <p>Click "Add New Module" to get started with your course content.</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i> Please save basic course information first to enable module creation.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Add Module Modal -->
+<div class="modal fade" id="addModuleModal" tabindex="-1" aria-labelledby="addModuleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addModuleModalLabel">Add New Module</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="moduleForm">
+                    <input type="hidden" id="module_id" name="module_id" value="">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="mb-3">
+                        <label for="module_title" class="form-label">Module Title <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="module_title" name="title" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="module_description" class="form-label">Description</label>
+                        <textarea class="form-control" id="module_description" name="description" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="is_free_preview" name="is_free_preview">
+                        <label class="form-check-label" for="is_free_preview">
+                            Make this module available as a free preview
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveModuleBtn">Save Module</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Content Modal -->
+<div class="modal fade" id="addContentModal" tabindex="-1" aria-labelledby="addContentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addContentModalLabel">Add Content</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="contentForm">
+                    <input type="hidden" id="content_id" name="content_id" value="">
+                    <input type="hidden" id="module_id_for_content" name="module_id" value="">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="mb-3">
+                        <label for="content_title" class="form-label">Title <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="content_title" name="title" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="content_type" class="form-label">Content Type <span class="text-danger">*</span></label>
+                        <select class="form-select" id="content_type" name="type" required>
+                            <option value="">Select content type</option>
+                            <option value="video">Video</option>
+                            <option value="document">Document/PDF</option>
+                            <option value="text">Text/HTML</option>
+                            <option value="quiz">Quiz</option>
+                            <option value="assignment">Assignment</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Video Content Form -->
+                    <div id="video_content" class="content-type-form" style="display: none;">
+                        <div class="mb-3">
+                            <label for="video_file" class="form-label">Upload Video</label>
+                            <input type="file" class="form-control" id="video_file" name="video_file" accept="video/*">
+                            <div class="form-text">Max file size: 500MB. Supported formats: MP4, MOV, AVI, WMV</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="video_url" class="form-label">Or Embed External Video URL</label>
+                            <input type="url" class="form-control" id="video_url" name="video_url" placeholder="YouTube or Vimeo URL">
+                            <div class="form-text">Enter a YouTube or Vimeo URL instead of uploading</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="video_description" class="form-label">Description</label>
+                            <textarea class="form-control" id="video_description" name="description" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="allow_download_video" name="allow_download">
+                            <label class="form-check-label" for="allow_download_video">
+                                Allow students to download this video
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Document Content Form -->
+                    <div id="document_content" class="content-type-form" style="display: none;">
+                        <div class="mb-3">
+                            <label for="document_file" class="form-label">Upload Document</label>
+                            <input type="file" class="form-control" id="document_file" name="document_file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx">
+                            <div class="form-text">Max file size: 100MB. Supported formats: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="document_description" class="form-label">Document Description</label>
+                            <textarea class="form-control" id="document_description" name="description" rows="3"></textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- Text Content Form -->
+                    <div id="text_content" class="content-type-form" style="display: none;">
+                        <div class="mb-3">
+                            <label for="text_content_editor" class="form-label">Text Content</label>
+                            <textarea class="form-control" id="text_content_editor" name="text_content" rows="10"></textarea>
+                            <div class="form-text">You can use HTML formatting for rich text</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quiz Content Form -->
+                    <div id="quiz_content" class="content-type-form" style="display: none;">
+                        <div class="mb-3">
+                            <label for="quiz_description" class="form-label">Quiz Description</label>
+                            <textarea class="form-control" id="quiz_description" name="quiz_description" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="passing_score" class="form-label">Passing Score (%)</label>
+                            <input type="number" class="form-control" id="passing_score" name="passing_score" min="1" max="100" value="70">
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i> You'll be able to add questions after creating the quiz.
+                        </div>
+                    </div>
+                    
+                    <!-- Assignment Content Form -->
+                    <div id="assignment_content" class="content-type-form" style="display: none;">
+                        <div class="mb-3">
+                            <label for="assignment_description" class="form-label">Assignment Instructions</label>
+                            <textarea class="form-control" id="assignment_description" name="assignment_description" rows="6"></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="submission_type" class="form-label">Submission Type</label>
+                            <select class="form-select" id="submission_type" name="submission_type">
+                                <option value="file">File Upload</option>
+                                <option value="text">Text Submission</option>
+                                <option value="link">External Link</option>
+                                <option value="all">All Types Allowed</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3 mt-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="is_required" name="is_required" checked>
+                            <label class="form-check-label" for="is_required">
+                                Required for course completion
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveContentBtn">Save Content</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Price field toggle
+function togglePriceField() {
+    var isFree = document.getElementById('{{ form.is_free.id }}').checked;
+    var isPremium = document.getElementById('{{ form.is_premium.id }}').checked;
+    var priceField = document.getElementById('{{ form.price.id }}');
+    
+    // Disable price field if the course is free or premium
+    priceField.disabled = isFree || isPremium;
+    
+    // Set price to 0 if free
+    if (isFree) {
+        priceField.value = '0';
+    }
+    
+    // If both are selected, uncheck one
+    if (isFree && isPremium) {
+        // Keep the latest selection
+        if (event && event.target.id === '{{ form.is_free.id }}') {
+            document.getElementById('{{ form.is_premium.id }}').checked = false;
+        } else {
+            document.getElementById('{{ form.is_free.id }}').checked = false;
+        }
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    togglePriceField();
+    
+    // Enable Bootstrap tabs
+    var tabElms = document.querySelectorAll('button[data-bs-toggle="tab"]');
+    if (tabElms.length > 0) {
+        tabElms.forEach(function(tabElm) {
+            new bootstrap.Tab(tabElm);
+        });
+    }
+    
+    // Content type selection
+    document.getElementById('content_type')?.addEventListener('change', function() {
+        // Hide all content type forms
+        document.querySelectorAll('.content-type-form').forEach(form => {
+            form.style.display = 'none';
+        });
+        
+        // Show the selected content type form
+        const selectedType = this.value;
+        if (selectedType) {
+            document.getElementById(selectedType + '_content').style.display = 'block';
+        }
+    });
+    
+    // Module form submission
+    document.getElementById('saveModuleBtn')?.addEventListener('click', function() {
+        const moduleForm = document.getElementById('moduleForm');
+        const formData = new FormData(moduleForm);
+        const courseId = '{{ course.id if course else "" }}';
+        
+        if (!moduleForm.checkValidity()) {
+            moduleForm.reportValidity();
+            return;
+        }
+        
+        // Add course ID to form data
+        formData.append('course_id', courseId);
+        
+        // AJAX request to save module
+        fetch('/coursebud/module/save', {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Close modal and reload page to show new module
+                $('#addModuleModal').modal('hide');
+                window.location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('There was an error saving the module. Please try again.');
+        });
+    });
+    
+    // Content form submission
+    document.getElementById('saveContentBtn')?.addEventListener('click', function() {
+        const contentForm = document.getElementById('contentForm');
+        const contentType = document.getElementById('content_type').value;
+        
+        if (!contentForm.checkValidity()) {
+            contentForm.reportValidity();
+            return;
+        }
+        
+        if (!contentType) {
+            alert('Please select a content type');
+            return;
+        }
+        
+        const formData = new FormData(contentForm);
+        
+        // Add type-specific data to form
+        switch (contentType) {
+            case 'video':
+                const videoFile = document.getElementById('video_file').files[0];
+                const videoUrl = document.getElementById('video_url').value;
+                
+                if (!videoFile && !videoUrl) {
+                    alert('Please upload a video file or provide a video URL');
+                    return;
+                }
+                break;
+                
+            case 'document':
+                const documentFile = document.getElementById('document_file').files[0];
+                
+                if (!documentFile) {
+                    alert('Please upload a document file');
+                    return;
+                }
+                break;
+                
+            case 'text':
+                const textContent = document.getElementById('text_content_editor').value;
+                
+                if (!textContent) {
+                    alert('Please enter some text content');
+                    return;
+                }
+                break;
+        }
+        
+        // AJAX request to save content
+        fetch('/coursebud/content/save', {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Close modal and reload page to show new content
+                $('#addContentModal').modal('hide');
+                window.location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('There was an error saving the content. Please try again.');
+        });
+    });
+    
+    // Make modules sortable using HTML5 Drag and Drop API (if Sortable.js is not available)
+    const modulesList = document.getElementById('modulesList');
+    if (modulesList) {
+        enableDragSort(modulesList);
+        
+        // Enable drag sort for content items
+        document.querySelectorAll('.content-list').forEach(function(list) {
+            enableDragSort(list);
+        });
+    }
+});
+
+// Module functions
+function addModule() {
+    // Reset form
+    document.getElementById('moduleForm').reset();
+    document.getElementById('module_id').value = '';
+    document.getElementById('addModuleModalLabel').innerText = 'Add New Module';
+    
+    // Open modal
+    const modal = new bootstrap.Modal(document.getElementById('addModuleModal'));
+    modal.show();
+}
+
+function editModule(moduleId) {
+    // Reset form
+    document.getElementById('moduleForm').reset();
+    
+    // Set form for edit mode
+    document.getElementById('module_id').value = moduleId;
+    document.getElementById('addModuleModalLabel').innerText = 'Edit Module';
+    
+    // Fetch module data
+    fetch(`/coursebud/module/${moduleId}`, {
+        method: 'GET',
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Populate form with module data
+            document.getElementById('module_title').value = data.module.title;
+            document.getElementById('module_description').value = data.module.description;
+            document.getElementById('is_free_preview').checked = data.module.is_free_preview;
+            
+            // Open modal
+            const modal = new bootstrap.Modal(document.getElementById('addModuleModal'));
+            modal.show();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('There was an error loading the module. Please try again.');
+    });
+}
+
+function deleteModule(moduleId) {
+    if (confirm('Are you sure you want to delete this module? This will also delete all content within it. This action cannot be undone.')) {
+        // AJAX request to delete module
+        fetch(`/coursebud/module/${moduleId}/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Remove module from DOM
+                const moduleElement = document.querySelector(`.module-card[data-module-id="${moduleId}"]`);
+                if (moduleElement) {
+                    moduleElement.remove();
+                }
+                
+                // If no modules left, show empty state
+                if (document.querySelectorAll('.module-card').length === 0) {
+                    document.getElementById('modulesList').innerHTML = `
+                        <div class="text-center text-muted py-5 border rounded">
+                            <i class="bi bi-journal-text display-4"></i>
+                            <h5 class="mt-3">No modules added yet</h5>
+                            <p>Click "Add New Module" to get started with your course content.</p>
+                        </div>
+                    `;
+                }
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('There was an error deleting the module. Please try again.');
+        });
+    }
+}
+
+// Content functions
+function addContent(moduleId) {
+    // Reset form
+    document.getElementById('contentForm').reset();
+    document.getElementById('content_id').value = '';
+    document.getElementById('module_id_for_content').value = moduleId;
+    document.getElementById('addContentModalLabel').innerText = 'Add Content to Module';
+    
+    // Hide all content type forms
+    document.querySelectorAll('.content-type-form').forEach(form => {
+        form.style.display = 'none';
+    });
+    
+    // Reset content type dropdown
+    document.getElementById('content_type').value = '';
+    
+    // Open modal
+    const modal = new bootstrap.Modal(document.getElementById('addContentModal'));
+    modal.show();
+}
+
+function editContent(contentId) {
+    // Reset form
+    document.getElementById('contentForm').reset();
+    
+    // Set form for edit mode
+    document.getElementById('content_id').value = contentId;
+    document.getElementById('addContentModalLabel').innerText = 'Edit Content';
+    
+    // Hide all content type forms
+    document.querySelectorAll('.content-type-form').forEach(form => {
+        form.style.display = 'none';
+    });
+    
+    // Fetch content data
+    fetch(`/coursebud/content/${contentId}`, {
+        method: 'GET',
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const content = data.content;
+            
+            // Populate form with content data
+            document.getElementById('content_title').value = content.title;
+            document.getElementById('content_type').value = content.type;
+            document.getElementById('module_id_for_content').value = content.module_id;
+            document.getElementById('is_required').checked = content.is_required;
+            
+            // Show the corresponding content type form
+            document.getElementById(content.type + '_content').style.display = 'block';
+            
+            // Populate type-specific fields
+            switch (content.type) {
+                case 'video':
+                    document.getElementById('video_description').value = content.description || '';
+                    document.getElementById('video_url').value = content.video_url || '';
+                    document.getElementById('allow_download_video').checked = content.allow_download || false;
+                    break;
+                    
+                case 'document':
+                    document.getElementById('document_description').value = content.description || '';
+                    break;
+                    
+                case 'text':
+                    document.getElementById('text_content_editor').value = content.text_content || '';
+                    break;
+                    
+                case 'quiz':
+                    document.getElementById('quiz_description').value = content.quiz_description || '';
+                    document.getElementById('passing_score').value = content.passing_score || 70;
+                    break;
+                    
+                case 'assignment':
+                    document.getElementById('assignment_description').value = content.assignment_description || '';
+                    document.getElementById('submission_type').value = content.submission_type || 'file';
+                    break;
+            }
+            
+            // Open modal
+            const modal = new bootstrap.Modal(document.getElementById('addContentModal'));
+            modal.show();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('There was an error loading the content. Please try again.');
+    });
+}
+
+function deleteContent(contentId) {
+    if (confirm('Are you sure you want to delete this content? This action cannot be undone.')) {
+        // AJAX request to delete content
+        fetch(`/coursebud/content/${contentId}/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Remove content from DOM
+                const contentElement = document.querySelector(`.content-card[data-content-id="${contentId}"]`);
+                if (contentElement) {
+                    const contentList = contentElement.closest('.content-list');
+                    contentElement.remove();
+                    
+                    // If no content left in this module, show empty state
+                    if (contentList.querySelectorAll('.content-card').length === 0) {
+                        contentList.innerHTML = `
+                            <div class="text-center text-muted py-3 border rounded">
+                                <p class="mb-0">No content added yet. Click "Add Content" to get started.</p>
+                            </div>
+                        `;
+                    }
+                }
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('There was an error deleting the content. Please try again.');
+        });
+    }
+}
+
+// HTML5 Drag and Drop API for sorting (as a fallback if Sortable.js is not available)
+function enableDragSort(listElement) {
+    let draggingElement = null;
+    
+    // Add event listeners to all children
+    Array.from(listElement.children).forEach(item => {
+        // Make item draggable
+        item.setAttribute('draggable', true);
+        
+        // Add drag event listeners
+        item.addEventListener('dragstart', function(e) {
+            draggingElement = this;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', this.innerHTML);
+        });
+        
+        item.addEventListener('dragend', function() {
+            this.classList.remove('dragging');
+            draggingElement = null;
+            
+            // Update order in database
+            updateItemsOrder(listElement);
+        });
+        
+        // Add drop event listeners
+        item.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            
+            const rect = this.getBoundingClientRect();
+            const y = e.clientY - rect.top;
+            const height = rect.height;
+            
+            if (this !== draggingElement) {
+                if (y < height / 2) {
+                    this.parentNode.insertBefore(draggingElement, this);
+                } else {
+                    this.parentNode.insertBefore(draggingElement, this.nextSibling);
+                }
+            }
+        });
+    });
+}
+
+// Update order of items in database
+function updateItemsOrder(listElement) {
+    const items = Array.from(listElement.children);
+    const isModulesList = listElement.id === 'modulesList';
+    const path = isModulesList ? '/coursebud/modules/reorder' : '/coursebud/contents/reorder';
+    
+    // Prepare order data
+    const orderData = items.map((item, index) => {
+        return {
+            id: item.dataset.moduleId || item.dataset.contentId,
+            order: index + 1
+        };
+    });
+    
+    // AJAX request to update order
+    fetch(path, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+        },
+        body: JSON.stringify({ items: orderData }),
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            console.error('Error updating order:', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+</script>
+{% endblock %}

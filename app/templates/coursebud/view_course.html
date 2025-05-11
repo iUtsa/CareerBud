@@ -1,0 +1,259 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Course Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('coursebud.index') }}">CourseBud</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('coursebud.category_courses', category_id=course.category_id) }}">{{ course.category.name }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ course.title }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Course Details -->
+    <div class="row mb-5">
+        <div class="col-lg-8">
+            <!-- Course Title and Description -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body p-4">
+                    <h1 class="card-title mb-3">{{ course.title }}</h1>
+                    
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="text-warning me-2">
+                            {% set rating = course.average_rating()|round(1, 'floor') %}
+                            {% for i in range(5) %}
+                                {% if i < rating|int %}
+                                    <i class="fas fa-star"></i>
+                                {% elif (i + 0.5)|round == rating|round %}
+                                    <i class="fas fa-star-half-alt"></i>
+                                {% else %}
+                                    <i class="far fa-star"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <span class="me-2">{{ rating }} ({{ reviews|length }} reviews)</span>
+                        <span class="mx-2">•</span>
+                        <span class="me-2">{{ stats.total_students }} students</span>
+                        <span class="mx-2">•</span>
+                        <span>Created by <a href="#">{{ course.creator.full_name() }}</a></span>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <span class="badge bg-primary me-1">{{ course.category.name }}</span>
+                        <span class="badge bg-secondary me-1">{{ course.level|title }}</span>
+                        {% if course.is_free %}
+                            <span class="badge bg-success">Free</span>
+                        {% elif course.is_premium %}
+                            <span class="badge bg-warning text-dark">Premium</span>
+                        {% endif %}
+                    </div>
+                    
+                    {% if course.thumbnail %}
+                        <img src="{{ url_for('static', filename='uploads/' + course.thumbnail) }}" alt="{{ course.title }}" class="img-fluid rounded mb-4">
+                    {% endif %}
+                    
+                    <div class="course-description mb-3">
+                        {{ course.description|safe }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Course Content -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-light">
+                    <h3 class="mb-0">Course Content</h3>
+                    <p class="text-muted mb-0">{{ stats.total_lessons }} lessons • {{ course.duration }}</p>
+                </div>
+                <div class="card-body p-0">
+                    <div class="accordion" id="courseContentAccordion">
+                        {% for section in course.sections %}
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="section{{ section.id }}Header">
+                                    <button class="accordion-button {% if not loop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#section{{ section.id }}Content" aria-expanded="{{ 'true' if loop.first else 'false' }}" aria-controls="section{{ section.id }}Content">
+                                        {{ section.title }}
+                                        <span class="ms-auto badge bg-secondary">{{ section.lessons|length }} lessons</span>
+                                    </button>
+                                </h2>
+                                <div id="section{{ section.id }}Content" class="accordion-collapse collapse {% if loop.first %}show{% endif %}" aria-labelledby="section{{ section.id }}Header">
+                                    <div class="accordion-body p-0">
+                                        <ul class="list-group list-group-flush">
+                                            {% for lesson in section.lessons %}
+                                                <li class="list-group-item d-flex align-items-center py-3">
+                                                    <i class="fas {% if lesson.content_type == 'video' %}fa-play-circle{% elif lesson.content_type == 'quiz' %}fa-question-circle{% else %}fa-file-alt{% endif %} me-2 text-muted"></i>
+                                                    <div>
+                                                        <div>{{ lesson.title }}</div>
+                                                        <small class="text-muted">{{ lesson.duration }} min</small>
+                                                    </div>
+                                                    <div class="ms-auto">
+                                                        {% if lesson.is_free_preview %}
+                                                            <span class="badge bg-success">Free Preview</span>
+                                                        {% elif not is_enrolled %}
+                                                            <i class="fas fa-lock text-muted"></i>
+                                                        {% endif %}
+                                                    </div>
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Reviews -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">Student Reviews</h3>
+                    <span class="text-warning fs-4">{{ rating }} <i class="fas fa-star"></i></span>
+                </div>
+                <div class="card-body">
+                    {% if reviews %}
+                        {% if review_form %}
+                            <div class="mb-4">
+                                <h5>Write a Review</h5>
+                                <form action="{{ url_for('coursebud.add_review', course_id=course.id) }}" method="post">
+                                    {{ review_form.hidden_tag() }}
+                                    <div class="mb-3">
+                                        <label class="form-label">{{ review_form.rating.label }}</label>
+                                        <div>{{ review_form.rating(class="form-select") }}</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">{{ review_form.review_text.label }}</label>
+                                        <div>{{ review_form.review_text(class="form-control", rows=3) }}</div>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Submit Review</button>
+                                </form>
+                            </div>
+                            <hr>
+                        {% endif %}
+                        
+                        <!-- Reviews List -->
+                        <div class="reviews-list">
+                            {% for review in reviews %}
+                                <div class="review-item mb-3">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="review-avatar me-2">
+                                            <i class="fas fa-user-circle fa-2x text-muted"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold">{{ review.user.full_name() }}</div>
+                                            <div class="text-muted small">{{ review.created_at.strftime('%B %d, %Y') }}</div>
+                                        </div>
+                                        <div class="ms-auto text-warning">
+                                            {% for i in range(5) %}
+                                                <i class="fas fa-star{% if i >= review.rating %}-o{% endif %}"></i>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <div class="review-content">
+                                        {{ review.review_text or 'No written review provided.' }}
+                                    </div>
+                                </div>
+                                {% if not loop.last %}<hr>{% endif %}
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <p class="mb-0">No reviews yet. Be the first to review this course!</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Enrollment Card -->
+            <div class="card shadow-sm mb-4 sticky-top sticky-offset">
+                <div class="card-body p-4">
+                    {% if is_enrolled %}
+                        <div class="text-center mb-3">
+                            <span class="badge bg-success p-2 mb-2">You are enrolled in this course</span>
+                            
+                            <div class="progress mb-2">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: {{ user_progress }}%" aria-valuenow="{{ user_progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <p class="text-muted mb-3">{{ user_progress }}% complete</p>
+                            
+                            <a href="{{ url_for('coursebud.learn', course_id=course.id) }}" class="btn btn-primary btn-lg w-100">Continue Learning</a>
+                        </div>
+                        
+                        {% if enrollment.is_completed %}
+                            <a href="{{ url_for('coursebud.view_certificate', course_id=course.id) }}" class="btn btn-outline-success w-100">View Certificate</a>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center mb-4">
+                            {% if course.is_free %}
+                                <div class="price-tag mb-3">
+                                    <span class="h3 text-success fw-bold">Free</span>
+                                </div>
+                            {% elif course.is_premium %}
+                                <div class="price-tag mb-3">
+                                    <span class="badge bg-warning text-dark p-2 fs-5">Premium</span>
+                                    <div class="text-muted small">Included in subscription</div>
+                                </div>
+                            {% else %}
+                                <div class="price-tag mb-3">
+                                    <span class="h3 fw-bold">${{ course.price }}</span>
+                                </div>
+                            {% endif %}
+                            
+                            {% if current_user.is_authenticated %}
+                                <form action="{{ url_for('coursebud.course_enroll', course_id=course.id) }}" method="post">
+                                    <button type="submit" class="btn btn-primary btn-lg w-100 mb-3">
+                                        {% if course.is_free %}
+                                            Enroll Now - Free
+                                        {% elif course.is_premium %}
+                                            Enroll with Premium
+                                        {% else %}
+                                            Buy Now
+                                        {% endif %}
+                                    </button>
+                                </form>
+                            {% else %}
+                                <a href="{{ url_for('auth.login', next=url_for('coursebud.view_course', course_id=course.id)) }}" class="btn btn-primary btn-lg w-100 mb-3">Log in to Enroll</a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Course Details -->
+                    <div class="course-features">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item px-0">
+                                <i class="fas fa-calendar-alt me-2"></i> Last updated: {{ course.updated_at.strftime('%B %d, %Y') }}
+                            </li>
+                            <li class="list-group-item px-0">
+                                <i class="fas fa-signal me-2"></i> Level: {{ course.level|title }}
+                            </li>
+                            <li class="list-group-item px-0">
+                                <i class="fas fa-film me-2"></i> {{ stats.total_lessons }} lessons
+                            </li>
+                            <li class="list-group-item px-0">
+                                <i class="fas fa-clock me-2"></i> {{ course.duration }}
+                            </li>
+                            <li class="list-group-item px-0">
+                                <i class="fas fa-language me-2"></i> Language: English
+                            </li>
+                            <li class="list-group-item px-0">
+                                <i class="fas fa-certificate me-2"></i> Certificate of completion
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.sticky-offset {
+    top: 20px;
+}
+</style>
+{% endblock %}

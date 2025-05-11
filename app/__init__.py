@@ -6,9 +6,7 @@ import humanize
 import os
 from datetime import datetime
 from app.routes.resume_bp import resume_bp
-
-
-
+from app.routes.coursebud_bp import coursebud_bp
 
 def timeago(dt):
     return humanize.naturaltime(datetime.utcnow() - dt)
@@ -16,12 +14,9 @@ def timeago(dt):
 def create_app(config_class=None):
     app = Flask(__name__)
 
-
-
     app.jinja_env.filters['timeago'] = timeago
     app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'static', 'uploads')
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB limit
-
 
     # Basic config
     app.config['SECRET_KEY'] = SECRET_KEY
@@ -49,7 +44,8 @@ def create_app(config_class=None):
     from app.routes.auth import auth_bp
     from app.routes.dashboard import dashboard_bp
     from app.routes.jobs import jobs_bp
-    from app.routes.courses import courses_bp
+    # Commenting out the old courses_bp
+    # from app.routes.courses import courses_bp
     from app.routes.progress import progress_bp
     from app.routes.social_bp import social_bp
     from app.routes.subscription import subscription_bp
@@ -57,11 +53,14 @@ def create_app(config_class=None):
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(jobs_bp)
-    app.register_blueprint(courses_bp)
+    # Commenting out registration of the old courses_bp
+    # app.register_blueprint(courses_bp)
     app.register_blueprint(progress_bp)
     app.register_blueprint(social_bp)
     app.register_blueprint(subscription_bp)
     app.register_blueprint(resume_bp)
+    # Register the new coursebud_bp
+    app.register_blueprint(coursebud_bp)
 
     # Import models here to avoid circular imports
     from app import models
@@ -128,3 +127,16 @@ def create_app(config_class=None):
         from app.sockets import chat_events
 
     return app
+
+
+def reset_course_sequence():
+    """Reset the course ID sequence to the next available ID."""
+    from sqlalchemy import text
+    
+    # Get the maximum ID currently in the courses table
+    max_id_result = db.session.execute(text("SELECT MAX(id) FROM courses")).fetchone()
+    max_id = max_id_result[0] or 0
+    
+    # Set the sequence to start from max_id + 1
+    db.session.execute(text(f"ALTER SEQUENCE courses_id_seq RESTART WITH {max_id + 1}"))
+    db.session.commit()

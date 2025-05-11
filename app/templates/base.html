@@ -17,24 +17,26 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Alata&family=Josefin+Sans:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Alata&family=Josefin+Sans:ital,wght@0,100..700;1,100..700&display=swap"
+        rel="stylesheet">
 
     <script>
         // Theme initialization - runs before page loads
-        (function() {
-          // Get theme from localStorage or default to dark
-          var storedTheme = localStorage.getItem('theme') || 'dark';
-          
-          // Apply theme to document element immediately, before any content loads
-          document.documentElement.setAttribute('data-theme', storedTheme);
-          
-          // Add to body too for backwards compatibility with existing styles
-          document.addEventListener('DOMContentLoaded', function() {
-            document.body.setAttribute('data-theme', storedTheme);
-          });
+        (function () {
+            // Get theme from localStorage or default to dark
+            var storedTheme = localStorage.getItem('theme') || 'dark';
+
+            // Apply theme to document element immediately, before any content loads
+            document.documentElement.setAttribute('data-theme', storedTheme);
+
+            // Add to body too for backwards compatibility with existing styles
+            document.addEventListener('DOMContentLoaded', function () {
+                document.body.setAttribute('data-theme', storedTheme);
+            });
         })();
-      </script>
+    </script>
 
     {% block extra_head %}{% endblock %}
 </head>
@@ -69,8 +71,8 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if request.endpoint == 'courses.courses' %}active{% endif %}"
-                                href="{{ url_for('courses.courses') }}">
+                            <a class="nav-link {% if request.endpoint and request.endpoint.startswith('coursebud.') %}active{% endif %}"
+                                href="{{ url_for('coursebud.index') }}">
                                 <i class="fas fa-book"></i> Course Bud
                             </a>
                         </li>
@@ -179,7 +181,7 @@
                                 <input class="form-check-input" type="checkbox" id="theme-toggle">
                             </div>
                         </span>
-                        
+
                         <!-- Notification Bell with Dropdown -->
                         <div class="dropdown">
                             <span class="notification-icon dropdown-toggle" id="notificationDropdown"
@@ -224,7 +226,7 @@
                                 {% endif %}
                             </ul>
                         </div>
-                        
+
 
 
 
@@ -266,33 +268,33 @@
     <!-- Theme Toggle Script -->
     <script>
         // Theme initialization - runs before page loads
-        (function() {
+        (function () {
             // Get theme from localStorage or default to dark
             var storedTheme = localStorage.getItem('theme') || 'dark';
-            
+
             // Apply theme to document element immediately, before any content loads
             document.documentElement.setAttribute('data-theme', storedTheme);
-            
+
             // Add to body too for backwards compatibility with existing styles
-            document.addEventListener('DOMContentLoaded', function() {
+            document.addEventListener('DOMContentLoaded', function () {
                 document.body.setAttribute('data-theme', storedTheme);
             });
         })();
     </script>
-    
+
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const sidebar = document.getElementById('mainSidebar');
             const sidebarToggle = document.getElementById('sidebarToggle');
             const themeToggle = document.getElementById('theme-toggle');
-    
+
             // Theme Toggle - Enhanced implementation
             // Add anti-flicker class during theme changes
             if (themeToggle) {
-                themeToggle.addEventListener('change', function() {
+                themeToggle.addEventListener('change', function () {
                     // Prevent transition flicker
                     document.documentElement.classList.add('theme-transition');
-                    
+
                     if (this.checked) {
                         // Apply theme to both document element and body
                         document.documentElement.setAttribute('data-theme', 'light');
@@ -304,51 +306,51 @@
                         document.body.setAttribute('data-theme', 'dark');
                         localStorage.setItem('theme', 'dark');
                     }
-                    
+
                     // Remove transition prevention class after a delay
-                    setTimeout(function() {
+                    setTimeout(function () {
                         document.documentElement.classList.remove('theme-transition');
                     }, 300);
                 });
             }
-    
+
             // Sidebar Toggle
-            sidebarToggle?.addEventListener('click', function(e) {
+            sidebarToggle?.addEventListener('click', function (e) {
                 e.stopPropagation(); // Prevent immediate close
                 sidebar.classList.toggle('show');
             });
-    
+
             // Click outside to close sidebar (on small screens)
-            document.addEventListener('click', function(e) {
+            document.addEventListener('click', function (e) {
                 if (window.innerWidth < 992) {
                     const isClickInsideSidebar = sidebar?.contains(e.target);
                     const isClickToggleBtn = sidebarToggle?.contains(e.target);
-    
+
                     if (sidebar && !isClickInsideSidebar && !isClickToggleBtn) {
                         sidebar.classList.remove('show');
                     }
                 }
             });
         });
-    
+
         // Enhanced Notification Dropdown Handling
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const notificationDropdown = document.getElementById('notificationDropdown');
             const notificationMenu = document.querySelector('.notification-dropdown');
-    
+
             // Prevent dropdown from closing when clicking inside
             if (notificationMenu) {
-                notificationMenu.addEventListener('click', function(e) {
+                notificationMenu.addEventListener('click', function (e) {
                     e.stopPropagation();
                 });
             }
-    
+
             // Close dropdown when clicking outside
-            document.addEventListener('click', function(e) {
+            document.addEventListener('click', function (e) {
                 if (notificationDropdown && notificationMenu) {
-                    const isClickInside = notificationDropdown.contains(e.target) || 
-                                          notificationMenu.contains(e.target);
-                    
+                    const isClickInside = notificationDropdown.contains(e.target) ||
+                        notificationMenu.contains(e.target);
+
                     if (!isClickInside) {
                         // Use Bootstrap's dropdown method to close
                         const dropdownInstance = bootstrap.Dropdown.getInstance(notificationDropdown);
@@ -358,17 +360,17 @@
                     }
                 }
             });
-    
+
             // Optional: Mark notification as read when clicked
             if (notificationMenu) {
-                notificationMenu.addEventListener('click', function(e) {
+                notificationMenu.addEventListener('click', function (e) {
                     const notificationItem = e.target.closest('.dropdown-item');
                     if (notificationItem && !notificationItem.classList.contains('text-center')) {
                         const notificationId = notificationItem.dataset.notificationId;
-                        
+
                         // Remove unread styling
                         notificationItem.classList.remove('unread');
-    
+
                         // Update badge count
                         const badge = document.querySelector('.notification-icon .badge');
                         if (badge) {
@@ -379,7 +381,7 @@
                                 badge.remove();
                             }
                         }
-    
+
                         // Optional: Send AJAX request to mark notification as read
                         fetch(`/notifications/mark_read/${notificationId}`, {
                             method: 'POST',

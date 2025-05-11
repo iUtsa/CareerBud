@@ -19,16 +19,18 @@ import re
 
 
 # Association table for many-to-many relationship between users and courses
+'''
 user_courses = db.Table('user_courses',
     db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
     db.Column('course_id', db.Integer, db.ForeignKey('courses.id'), primary_key=True)
 )
+'''
 
 # User model with existing attributes and relationship to courses
 # User model with existing attributes and relationship to courses
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
-
+    
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(128), nullable=False)
@@ -42,23 +44,42 @@ class User(UserMixin, db.Model):
     gpa = db.Column(db.Float, default=0.0)
     credits = db.Column(db.Integer, default=0)
     total_credits = db.Column(db.Integer, default=128)
-
+    
+    # Relationships - non-course related
     job_applications = db.relationship('JobApplication', backref='user', lazy=True)
     todos = db.relationship('Todo', backref='user', lazy=True)
     skills = db.relationship('Skill', backref='user', lazy=True)
-    achievements = db.relationship('Achievement', back_populates='user', lazy=True)  # Change to back_populates
-    current_courses = db.relationship('Course', secondary='user_courses', backref='users')
+    achievements = db.relationship('Achievement', back_populates='user', lazy=True)
     internships = db.relationship('Internship', back_populates='user', lazy=True)
-
+    
+    # Note: No course-related relationships defined here
+    # They are all defined in the respective course models with backref
+    
     def full_name(self):
         return f"{self.first_name} {self.last_name}"
-
+    
     def is_premium(self):
         if not self.subscription_end_date:
             return False
         return self.subscription_tier == 'premium' and datetime.utcnow() < self.subscription_end_date
-
-
+    
+    # Course-related helper methods
+    def get_enrolled_courses(self):
+        """Get all courses the user is enrolled in"""
+        return [enrollment.course for enrollment in self.enrollments]
+    
+    def get_completed_courses(self):
+        """Get all courses the user has completed"""
+        return [enrollment.course for enrollment in self.enrollments if enrollment.is_completed]
+    
+    def is_enrolled_in(self, course_id):
+        """Check if user is enrolled in a specific course"""
+        return any(enrollment.course_id == course_id for enrollment in self.enrollments)
+    
+    def get_course_progress(self, course_id):
+        """Get user's progress in a specific course"""
+        enrollment = next((e for e in self.enrollments if e.course_id == course_id), None)
+        return enrollment.progress if enrollment else 0
 
 
 class Notification(db.Model):
@@ -198,16 +219,7 @@ class Post(db.Model):
 
     user = db.relationship('User', backref='posts')
 
-class Course(db.Model):
-    __tablename__ = 'courses'
 
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(255), nullable=False)
-    description = db.Column(db.Text)
-    category = db.Column(db.String(100))
-    level = db.Column(db.String(50))
-    duration = db.Column(db.String(50))
-    premium_only = db.Column(db.Boolean, default=False)
 
 
 class Comment(db.Model):
@@ -3145,3 +3157,471 @@ def generate_comprehensive_feedback(metrics, overall_score):
         'improvements': improvements,
         'ats_tips': ats_tips
     }
+
+
+
+
+
+
+#coursebud
+# Course Models and Functions
+
+class Course(db.Model):
+   __tablename__ = 'courses'
+   __table_args__ = {'extend_existing': True}
+   
+   id = db.Column(db.Integer, primary_key=True)
+   title = db.Column(db.String(255), nullable=False)
+   description = db.Column(db.Text)
+   creator_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+   category_id = db.Column(db.Integer, db.ForeignKey('course_categories.id'))
+   level = db.Column(db.String(50))  # beginner, intermediate, advanced
+   price = db.Column(db.Float, default=0.0)
+   is_free = db.Column(db.Boolean, default=True)
+   is_premium = db.Column(db.Boolean, default=False)  # For subscription-based access
+   thumbnail = db.Column(db.String(255))  # Path to course thumbnail image
+   duration = db.Column(db.String(50))  # Estimated duration
+   status = db.Column(db.String(20), default='draft')  # draft, pending, approved, rejected
+   approval_notes = db.Column(db.Text)  # Admin notes for approval/rejection
+   created_at = db.Column(db.DateTime, default=datetime.utcnow)
+   updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+   
+   # Relationships
+   creator = db.relationship('User', backref='created_courses', foreign_keys=[creator_id])
+   category = db.relationship('CourseCategory', backref='courses')
+   sections = db.relationship('CourseSection', back_populates='course', cascade='all, delete-orphan')
+   enrollments = db.relationship('CourseEnrollment', back_populates='course', cascade='all, delete-orphan')
+   reviews = db.relationship('CourseReview', back_populates='course', cascade='all, delete-orphan')
+   
+   def average_rating(self):
+       if not self.reviews:
+           return 0
+       return sum(review.rating for review in self.reviews) / len(self.reviews)
+   
+   def total_students(self):
+       return len(self.enrollments)
+   
+   def total_lessons(self):
+       count = 0
+       for section in self.sections:
+           count += len(section.lessons)
+       return count
+   
+   def __repr__(self):
+       return f'<Course {self.title}>'
+
+
+class CourseCategory(db.Model):
+   __tablename__ = 'course_categories'
+   __table_args__ = {'extend_existing': True}
+   
+   id = db.Column(db.Integer, primary_key=True)
+   name = db.Column(db.String(100), nullable=False)
+   description = db.Column(db.Text)
+   parent_id = db.Column(db.Integer, db.ForeignKey('course_categories.id'), nullable=True)
+   
+   # Relationship for hierarchical categories
+   parent = db.relationship('CourseCategory', remote_side=[id], backref='subcategories')
+   
+   def __repr__(self):
+       return f'<CourseCategory {self.name}>'
+
+
+class CourseSection(db.Model):
+   __tablename__ = 'course_sections'
+   __table_args__ = {'extend_existing': True}
+   
+   id = db.Column(db.Integer, primary_key=True)
+   course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), nullable=False)
+   title = db.Column(db.String(255), nullable=False)
+   description = db.Column(db.Text)
+   order = db.Column(db.Integer, default=0)
+   
+   # Relationships
+   course = db.relationship('Course', back_populates='sections')
+   lessons = db.relationship('CourseLesson', back_populates='section', cascade='all, delete-orphan', order_by='CourseLesson.order')
+   
+   def __repr__(self):
+       return f'<CourseSection {self.title}>'
+
+
+class CourseLesson(db.Model):
+   __tablename__ = 'course_lessons'
+   __table_args__ = {'extend_existing': True}
+   
+   id = db.Column(db.Integer, primary_key=True)
+   section_id = db.Column(db.Integer, db.ForeignKey('course_sections.id'), nullable=False)
+   title = db.Column(db.String(255), nullable=False)
+   content_type = db.Column(db.String(50))  # video, text, quiz, etc.
+   content = db.Column(db.Text)  # Text content or URL to video/resource
+   duration = db.Column(db.Integer, default=0)  # Duration in minutes
+   order = db.Column(db.Integer, default=0)
+   is_free_preview = db.Column(db.Boolean, default=False)  # If this lesson is available as a free preview
+   
+   # Relationships
+   section = db.relationship('CourseSection', back_populates='lessons')
+   completions = db.relationship('LessonCompletion', back_populates='lesson', cascade='all, delete-orphan')
+   
+   def __repr__(self):
+       return f'<CourseLesson {self.title}>'
+
+
+class CourseEnrollment(db.Model):
+   __tablename__ = 'course_enrollments'
+   __table_args__ = (
+       db.UniqueConstraint('user_id', 'course_id', name='unique_enrollment'),
+       {'extend_existing': True}
+   )
+   
+   id = db.Column(db.Integer, primary_key=True)
+   user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+   course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), nullable=False)
+   enrolled_at = db.Column(db.DateTime, default=datetime.utcnow)
+   progress = db.Column(db.Float, default=0.0)  # Progress percentage
+   is_completed = db.Column(db.Boolean, default=False)
+   completion_date = db.Column(db.DateTime)
+   paid_amount = db.Column(db.Float, default=0.0)
+   payment_status = db.Column(db.String(20), default='free')  # free, paid, subscription
+   
+   # Relationships
+   user = db.relationship('User', backref='enrollments', foreign_keys=[user_id])
+   course = db.relationship('Course', back_populates='enrollments')
+   lesson_completions = db.relationship('LessonCompletion', back_populates='enrollment', cascade='all, delete-orphan')
+   certificate = db.relationship('CourseCertificate', backref='enrollment', uselist=False, cascade='all, delete-orphan')
+   
+   def calculate_progress(self):
+       if not self.course.total_lessons():
+           return 0
+       
+       completed_lessons = len(self.lesson_completions)
+       total_lessons = self.course.total_lessons()
+       
+       progress = (completed_lessons / total_lessons) * 100 if total_lessons > 0 else 0
+       self.progress = progress
+       
+       # Check if course is completed
+       if progress >= 100 and not self.is_completed:
+           self.is_completed = True
+           self.completion_date = datetime.utcnow()
+       
+       return progress
+   
+   def __repr__(self):
+       return f'<CourseEnrollment {self.user_id}-{self.course_id}>'
+
+
+class LessonCompletion(db.Model):
+   __tablename__ = 'lesson_completions'
+   __table_args__ = (
+       db.UniqueConstraint('enrollment_id', 'lesson_id', name='unique_lesson_completion'),
+       {'extend_existing': True}
+   )
+   
+   id = db.Column(db.Integer, primary_key=True)
+   enrollment_id = db.Column(db.Integer, db.ForeignKey('course_enrollments.id'), nullable=False)
+   lesson_id = db.Column(db.Integer, db.ForeignKey('course_lessons.id'), nullable=False)
+   completed_at = db.Column(db.DateTime, default=datetime.utcnow)
+   
+   # Relationships
+   enrollment = db.relationship('CourseEnrollment', back_populates='lesson_completions')
+   lesson = db.relationship('CourseLesson', back_populates='completions')
+   
+   def __repr__(self):
+       return f'<LessonCompletion {self.enrollment_id}-{self.lesson_id}>'
+
+
+class CourseCertificate(db.Model):
+   __tablename__ = 'course_certificates'
+   __table_args__ = {'extend_existing': True}
+   
+   id = db.Column(db.Integer, primary_key=True)
+   enrollment_id = db.Column(db.Integer, db.ForeignKey('course_enrollments.id'), nullable=False, unique=True)
+   certificate_number = db.Column(db.String(100), unique=True)
+   issued_at = db.Column(db.DateTime, default=datetime.utcnow)
+   
+   def __repr__(self):
+       return f'<CourseCertificate {self.certificate_number}>'
+
+
+class CourseReview(db.Model):
+   __tablename__ = 'course_reviews'
+   __table_args__ = (
+       db.UniqueConstraint('user_id', 'course_id', name='unique_review'),
+       {'extend_existing': True}
+   )
+   
+   id = db.Column(db.Integer, primary_key=True)
+   user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+   course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), nullable=False)
+   rating = db.Column(db.Integer, nullable=False)  # 1-5 scale
+   review_text = db.Column(db.Text)
+   created_at = db.Column(db.DateTime, default=datetime.utcnow)
+   
+   # Relationships
+   user = db.relationship('User', backref='course_reviews', foreign_keys=[user_id])
+   course = db.relationship('Course', back_populates='reviews')
+   
+   def __repr__(self):
+       return f'<CourseReview {self.user_id}-{self.course_id}>'
+
+
+# Helper functions for courses
+def get_course_categories():
+   """Get all course categories"""
+   return CourseCategory.query.order_by(CourseCategory.name).all()
+
+def get_courses_by_category(category_id, include_pending=False, limit=None):
+   """Get courses by category"""
+   query = Course.query.filter_by(category_id=category_id)
+   
+   if not include_pending:
+       query = query.filter_by(status='approved')
+   
+   query = query.order_by(Course.created_at.desc())
+   
+   if limit:
+       query = query.limit(limit)
+   
+   return query.all()
+
+def search_courses(query_text, filters=None, limit=None):
+   """Search for courses by text and filters"""
+   search_query = Course.query.filter(
+       (Course.title.ilike(f"%{query_text}%")) | 
+       (Course.description.ilike(f"%{query_text}%"))
+   )
+   
+   if filters:
+       if 'category' in filters:
+           search_query = search_query.filter_by(category_id=filters['category'])
+       
+       if 'level' in filters:
+           search_query = search_query.filter_by(level=filters['level'])
+       
+       if 'price' in filters:
+           if filters['price'] == 'free':
+               search_query = search_query.filter_by(is_free=True)
+           elif filters['price'] == 'paid':
+               search_query = search_query.filter_by(is_free=False)
+   
+   # Only show approved courses in search
+   search_query = search_query.filter_by(status='approved')
+   
+   search_query = search_query.order_by(Course.created_at.desc())
+   
+   if limit:
+       search_query = search_query.limit(limit)
+   
+   return search_query.all()
+
+def get_pending_courses():
+   """Get courses pending approval"""
+   return Course.query.filter_by(status='pending').order_by(Course.created_at).all()
+
+def approve_course(course_id, admin_notes=None):
+   """Approve a course"""
+   course = Course.query.get(course_id)
+   if course:
+       course.status = 'approved'
+       if admin_notes:
+           course.approval_notes = admin_notes
+       db.session.commit()
+       
+       # Create notification for course creator
+       notification = Notification(
+           user_id=course.creator_id,
+           message=f"Your course '{course.title}' has been approved!",
+           is_read=False
+       )
+       db.session.add(notification)
+       db.session.commit()
+       return True
+   return False
+
+def reject_course(course_id, admin_notes):
+   """Reject a course"""
+   course = Course.query.get(course_id)
+   if course:
+       course.status = 'rejected'
+       course.approval_notes = admin_notes
+       db.session.commit()
+       
+       # Create notification for course creator
+       notification = Notification(
+           user_id=course.creator_id,
+           message=f"Your course '{course.title}' was not approved. Please check the feedback.",
+           is_read=False
+       )
+       db.session.add(notification)
+       db.session.commit()
+       return True
+   return False
+
+def create_course(user_id, course_data):
+   """Create a new course"""
+   try:
+       course = Course(
+           title=course_data.get('title'),
+           description=course_data.get('description'),
+           creator_id=user_id,
+           category_id=course_data.get('category_id'),
+           level=course_data.get('level'),
+           price=course_data.get('price', 0.0),
+           is_free=course_data.get('is_free', True),
+           is_premium=course_data.get('is_premium', False),
+           thumbnail=course_data.get('thumbnail'),
+           duration=course_data.get('duration'),
+           status='draft'  # Always start as draft
+       )
+       db.session.add(course)
+       db.session.commit()
+       return course.id
+   except Exception as e:
+       print(f"Error creating course: {str(e)}")
+       db.session.rollback()
+       return None
+
+def submit_course_for_review(course_id):
+   """Submit a course for admin review"""
+   course = Course.query.get(course_id)
+   if course and course.status == 'draft':
+       course.status = 'pending'
+       db.session.commit()
+       
+       # Notify admins (you might want to implement this differently)
+       # This is just a placeholder for the concept
+       admins = User.query.filter_by(is_admin=True).all()
+       for admin in admins:
+           notification = Notification(
+               user_id=admin.id,
+               message=f"New course '{course.title}' is pending review",
+               is_read=False
+           )
+           db.session.add(notification)
+       
+       db.session.commit()
+       return True
+   return False
+
+def enroll_in_course(user_id, course_id):
+   """Enroll a user in a course"""
+   # Check if already enrolled
+   existing = CourseEnrollment.query.filter_by(user_id=user_id, course_id=course_id).first()
+   if existing:
+       return existing.id
+   
+   course = Course.query.get(course_id)
+   if not course or course.status != 'approved':
+       return None
+   
+   # Check if it's a premium course and user has premium
+   user = User.query.get(user_id)
+   if course.is_premium and not user.is_premium():
+       return None
+   
+   # Check if it's a paid course (handle payment separately)
+   payment_status = 'free' if course.is_free else 'paid'
+   
+   enrollment = CourseEnrollment(
+       user_id=user_id,
+       course_id=course_id,
+       payment_status=payment_status
+   )
+   
+   db.session.add(enrollment)
+   db.session.commit()
+   return enrollment.id
+
+def mark_lesson_complete(user_id, lesson_id):
+   """Mark a lesson as complete for a user"""
+   import time
+   
+   lesson = CourseLesson.query.get(lesson_id)
+   if not lesson:
+       return False
+   
+   # Find the enrollment
+   enrollment = CourseEnrollment.query.filter_by(
+       user_id=user_id, 
+       course_id=lesson.section.course_id
+   ).first()
+   
+   if not enrollment:
+       return False
+   
+   # Check if already completed
+   existing = LessonCompletion.query.filter_by(
+       enrollment_id=enrollment.id,
+       lesson_id=lesson_id
+   ).first()
+   
+   if not existing:
+       # Create new completion
+       completion = LessonCompletion(
+           enrollment_id=enrollment.id,
+           lesson_id=lesson_id
+       )
+       db.session.add(completion)
+       db.session.commit()
+       
+       # Update progress
+       enrollment.calculate_progress()
+       db.session.commit()
+       
+       # If course is now completed, generate certificate
+       if enrollment.is_completed and not enrollment.certificate:
+           # Generate unique certificate number
+           certificate_number = f"CERT-{user_id}-{lesson.section.course_id}-{int(time.time())}"
+           
+           certificate = CourseCertificate(
+               enrollment_id=enrollment.id,
+               certificate_number=certificate_number
+           )
+           db.session.add(certificate)
+           db.session.commit()
+       
+       return True
+   
+   return False
+
+def get_user_courses(user_id):
+   """Get courses created by a user"""
+   return Course.query.filter_by(creator_id=user_id).order_by(Course.created_at.desc()).all()
+
+def get_user_enrollments(user_id):
+   """Get courses a user is enrolled in"""
+   return CourseEnrollment.query.filter_by(user_id=user_id).join(Course).filter(
+       Course.status == 'approved'
+   ).order_by(CourseEnrollment.enrolled_at.desc()).all()
+
+def get_user_completed_courses(user_id):
+   """Get courses a user has completed"""
+   return CourseEnrollment.query.filter_by(
+       user_id=user_id,
+       is_completed=True
+   ).join(Course).order_by(CourseEnrollment.completion_date.desc()).all()
+
+def get_course_statistics(course_id):
+   """Get statistics for a course"""
+   course = Course.query.get(course_id)
+   if not course:
+       return None
+   
+   stats = {
+       'total_students': course.total_students(),
+       'total_lessons': course.total_lessons(),
+       'average_rating': course.average_rating(),
+       'review_count': len(course.reviews),
+       'completion_rate': 0
+   }
+   
+   # Calculate completion rate
+   completed_count = CourseEnrollment.query.filter_by(
+       course_id=course_id,
+       is_completed=True
+   ).count()
+   
+   if stats['total_students'] > 0:
+       stats['completion_rate'] = (completed_count / stats['total_students']) * 100
+   
+   return stats

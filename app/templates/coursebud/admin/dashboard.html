@@ -1,0 +1,459 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Admin Navigation -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body p-3">
+                    <ul class="nav nav-pills nav-fill">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="{{ url_for('coursebud.admin_dashboard') }}">
+                                <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('coursebud.admin_courses') }}">
+                                <i class="fas fa-book me-2"></i> Courses
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('coursebud.admin_users') }}">
+                                <i class="fas fa-users me-2"></i> Users
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('coursebud.admin_pending_courses') }}">
+                                <i class="fas fa-tasks me-2"></i> Approvals
+                                {% if pending_courses > 0 %}
+                                    <span class="badge bg-danger ms-1">{{ pending_courses }}</span>
+                                {% endif %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('coursebud.admin_revenue_report') }}">
+                                <i class="fas fa-chart-line me-2"></i> Reports
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('coursebud.admin_categories') }}">
+                                <i class="fas fa-tags me-2"></i> Categories
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('coursebud.admin_settings') }}">
+                                <i class="fas fa-cog me-2"></i> Settings
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Dashboard Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="mb-0">Admin Dashboard</h1>
+            <p class="text-muted">Welcome to the CourseBud administration panel.</p>
+        </div>
+    </div>
+    
+    <!-- Key Metrics -->
+    <div class="row mb-4">
+        <!-- Total Users -->
+        <div class="col-md-3 mb-4 mb-md-0">
+            <div class="card shadow-sm bg-primary text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title text-white-50">TOTAL USERS</h6>
+                            <h3 class="card-text">{{ total_users }}</h3>
+                            <span class="badge bg-white text-primary">+{{ new_users }} in 30 days</span>
+                        </div>
+                        <div>
+                            <i class="fas fa-users fa-3x opacity-25"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Total Courses -->
+        <div class="col-md-3 mb-4 mb-md-0">
+            <div class="card shadow-sm bg-success text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title text-white-50">TOTAL COURSES</h6>
+                            <h3 class="card-text">{{ total_courses }}</h3>
+                            <span class="badge bg-white text-success">+{{ new_courses }} in 30 days</span>
+                        </div>
+                        <div>
+                            <i class="fas fa-book fa-3x opacity-25"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Enrollments -->
+        <div class="col-md-3 mb-4 mb-md-0">
+            <div class="card shadow-sm bg-info text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title text-white-50">ENROLLMENTS</h6>
+                            <h3 class="card-text">{{ total_enrollments }}</h3>
+                            <span class="badge bg-white text-info">+{{ new_enrollments }} in 30 days</span>
+                        </div>
+                        <div>
+                            <i class="fas fa-user-graduate fa-3x opacity-25"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Monthly Revenue -->
+        <div class="col-md-3 mb-4 mb-md-0">
+            <div class="card shadow-sm bg-warning h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title text-muted">MONTHLY REVENUE</h6>
+                            <h3 class="card-text">${{ revenue_stats.month_revenue|round(2) }}</h3>
+                            <span class="badge bg-dark">{{ revenue_stats.subscriber_count }} subscribers</span>
+                        </div>
+                        <div>
+                            <i class="fas fa-dollar-sign fa-3x opacity-25"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Revenue Charts -->
+    <div class="row mb-4">
+        <div class="col-lg-8 mb-4 mb-lg-0">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Revenue Overview</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="revenueChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Revenue Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="revenueDistributionChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Top Performing Courses and Instructors -->
+    <div class="row mb-4">
+        <!-- Top Courses -->
+        <div class="col-lg-6 mb-4 mb-lg-0">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Top Courses by Enrollment</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Course</th>
+                                    <th>Instructor</th>
+                                    <th class="text-center">Students</th>
+                                    <th class="text-center">Rating</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for course in top_courses %}
+                                    <tr>
+                                        <td>
+                                            <a href="{{ url_for('coursebud.view_course', course_id=course.id) }}" class="text-decoration-none">
+                                                {{ course.title }}
+                                            </a>
+                                        </td>
+                                        <td>{{ course.creator.full_name() }}</td>
+                                        <td class="text-center">{{ course.total_students() }}</td>
+                                        <td class="text-center">
+                                            <div class="text-warning">
+                                                {{ course.average_rating()|round(1) }}
+                                                <i class="fas fa-star"></i>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% else %}
+                                    <tr>
+                                        <td colspan="4" class="text-center py-3">No courses found</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer bg-white text-center">
+                    <a href="{{ url_for('coursebud.admin_courses') }}" class="btn btn-sm btn-outline-primary">View All Courses</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Top Instructors -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Top Instructors</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Instructor</th>
+                                    <th class="text-center">Courses</th>
+                                    <th class="text-center">Students</th>
+                                    <th class="text-center">Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for instructor in top_instructors %}
+                                    <tr>
+                                        <td>
+                                            <a href="{{ url_for('coursebud.admin_view_user', user_id=instructor.id) }}" class="text-decoration-none">
+                                                {{ instructor.full_name() }}
+                                            </a>
+                                        </td>
+                                        <td class="text-center">{{ instructor.created_courses|length }}</td>
+                                        <td class="text-center">
+                                            {% set student_count = 0 %}
+                                            {% for course in instructor.created_courses %}
+                                                {% set student_count = student_count + course.total_students() %}
+                                            {% endfor %}
+                                            {{ student_count }}
+                                        </td>
+                                        <td class="text-center">
+                                            ${{ instructor.instructor_earnings|default(0)|round(2) }}
+                                        </td>
+                                    </tr>
+                                {% else %}
+                                    <tr>
+                                        <td colspan="4" class="text-center py-3">No instructors found</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer bg-white text-center">
+                    <a href="{{ url_for('coursebud.admin_users') }}?role=instructors" class="btn btn-sm btn-outline-primary">View All Instructors</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Activity and Pending Approvals -->
+    <div class="row">
+        <!-- Pending Approvals -->
+        <div class="col-lg-4 mb-4 mb-lg-0">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Pending Approvals</h5>
+                    <span class="badge bg-primary">{{ pending_courses }}</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for course in pending_courses[:5] if pending_courses %}
+                            <a href="{{ url_for('coursebud.admin_review_course', course_id=course.id) }}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ course.title }}</h6>
+                                    <small>{{ course.created_at|timeago }}</small>
+                                </div>
+                                <p class="mb-1 text-muted small">By {{ course.creator.full_name() }}</p>
+                            </a>
+                        {% else %}
+                            <div class="p-4 text-center">
+                                <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                                <p class="mb-0">No pending courses to review!</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="card-footer bg-white text-center">
+                    <a href="{{ url_for('coursebud.admin_pending_courses') }}" class="btn btn-sm btn-primary">Review All</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Enrollments -->
+        <div class="col-lg-4 mb-4 mb-lg-0">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Recent Enrollments</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for enrollment in recent_enrollments[:5] if recent_enrollments %}
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ enrollment.course.title }}</h6>
+                                    <small>{{ enrollment.enrolled_at|timeago }}</small>
+                                </div>
+                                <p class="mb-1 text-muted small">
+                                    {{ enrollment.user.full_name() }}
+                                    {% if enrollment.payment_status == 'paid' %}
+                                        <span class="badge bg-success">Paid</span>
+                                    {% elif enrollment.payment_status == 'subscription' %}
+                                        <span class="badge bg-info">Premium</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Free</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        {% else %}
+                            <div class="p-4 text-center">
+                                <i class="fas fa-graduation-cap fa-3x text-muted mb-3"></i>
+                                <p class="mb-0">No recent enrollments</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Sales -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Recent Sales</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for payment in recent_sales[:5] if recent_sales %}
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">
+                                        {% if payment.payment_type == 'subscription' %}
+                                            Premium Subscription
+                                        {% else %}
+                                            {{ payment.course.title }}
+                                        {% endif %}
+                                    </h6>
+                                    <div>
+                                        <span class="fw-bold">${{ payment.amount }}</span>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <p class="mb-1 text-muted small">{{ payment.user.full_name() }}</p>
+                                    <small>{{ payment.created_at|timeago }}</small>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="p-4 text-center">
+                                <i class="fas fa-dollar-sign fa-3x text-muted mb-3"></i>
+                                <p class="mb-0">No recent sales</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Revenue chart
+    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    const revenueChart = new Chart(revenueCtx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            datasets: [{
+                label: 'Monthly Revenue',
+                data: [5000, 7500, 10000, 8500, 12000, 15000, 13000, 17500, 20000, 18500, 22000, 25000],
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 2,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return ' + value;
+                        }
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return ' + context.parsed.y;
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Revenue distribution chart
+    const distributionCtx = document.getElementById('revenueDistributionChart').getContext('2d');
+    const distributionChart = new Chart(distributionCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Course Sales', 'Subscriptions'],
+            datasets: [{
+                data: [{{ revenue_stats.course_revenue|round(2) }}, {{ revenue_stats.subscription_revenue|round(2) }}],
+                backgroundColor: [
+                    'rgba(54, 162, 235, 0.7)',
+                    'rgba(255, 193, 7, 0.7)'
+                ],
+                borderColor: [
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 193, 7, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.parsed;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = Math.round((value / total) * 100);
+                            return `${value} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}

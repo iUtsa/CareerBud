@@ -1,0 +1,343 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- Hero Section with Simpler Design -->
+<div class="hero-section">
+  <div class="container-fluid py-4">
+    <div class="row align-items-center">
+      <div class="col-lg-7">
+        <h1 class="mb-3 fw-bold">Welcome to CourseBud</h1>
+        <p class="lead mb-4">Learn from industry experts or share your knowledge with the world. Access thousands of courses across multiple categories.</p>
+        <div class="d-flex gap-3">
+          <a href="{{ url_for('coursebud.explore') }}" class="btn btn-primary px-4">
+            <i class="fas fa-compass me-2"></i>Explore Courses
+          </a>
+          <a href="{{ url_for('coursebud.teach') }}" class="btn btn-success px-4">
+            <i class="fas fa-chalkboard-teacher me-2"></i>Become an Instructor
+          </a>
+        </div>
+      </div>
+      <div class="col-lg-5 d-none d-lg-block text-center">
+        <img src="{{ url_for('static', filename='img/course-hero.svg') }}" alt="Learning illustration" class="img-fluid hero-image">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Search Box -->
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm mb-5">
+        <div class="card-body p-4">
+          <form action="{{ url_for('coursebud.explore') }}" method="get" class="row g-3">
+            <div class="col-lg-5">
+              <div class="input-group">
+                <span class="input-group-text bg-white">
+                  <i class="fas fa-search text-primary"></i>
+                </span>
+                {{ search_form.query(class="form-control", placeholder="What do you want to learn today?") }}
+              </div>
+            </div>
+            <div class="col-lg-3">
+              <div class="input-group">
+                <span class="input-group-text bg-white">
+                  <i class="fas fa-folder text-primary"></i>
+                </span>
+                {{ search_form.category(class="form-select") }}
+              </div>
+            </div>
+            <div class="col-lg-2">
+              <div class="input-group">
+                <span class="input-group-text bg-white">
+                  <i class="fas fa-signal text-primary"></i>
+                </span>
+                {{ search_form.level(class="form-select") }}
+              </div>
+            </div>
+            <div class="col-lg-2">
+              <button type="submit" class="btn btn-primary w-100">
+                Find Courses
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Categories Section with Clean Design -->
+  <div class="row mb-5">
+    <div class="col-12">
+      <h2 class="mb-4">Browse Categories</h2>
+    </div>
+    
+    <div class="col-12">
+      <div class="row g-4">
+        {% if categories %}
+          {% for category in categories %}
+            <div class="col-6 col-md-4 col-lg-3">
+              <a href="{{ url_for('coursebud.category_courses', category_id=category.id) }}" class="text-decoration-none">
+                <div class="card category-card h-100 border hover-card">
+                  <div class="card-body py-3 text-center">
+                    {% set icons = ['book', 'code', 'paint-brush', 'calculator', 'music', 'heart', 'flask', 'language', 'chart-line', 'camera', 'cog', 'globe'] %}
+                    {% set colors = ['primary', 'success', 'danger', 'warning', 'info', 'secondary'] %}
+                    {% set icon_index = loop.index0 % icons|length %}
+                    {% set color_index = loop.index0 % colors|length %}
+                    
+                    <i class="fas fa-{{ icons[icon_index] }} fa-2x text-{{ colors[color_index] }} mb-3"></i>
+                    <h5 class="card-title">{{ category.name }}</h5>
+                    <p class="text-muted small mb-0">
+                      {{ category.courses|length }} course{% if category.courses|length != 1 %}s{% endif %}
+                    </p>
+                  </div>
+                </div>
+              </a>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="col-12">
+            <div class="alert alert-info">No categories available.</div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Featured Courses Section with Clean Cards -->
+  <div class="row mb-5">
+    <div class="col-12 mb-4">
+      <div class="d-flex justify-content-between align-items-center">
+        <h2 class="mb-0">Featured Courses</h2>
+        <a href="{{ url_for('coursebud.explore') }}" class="btn btn-outline-primary">
+          View All <i class="fas fa-arrow-right ms-2"></i>
+        </a>
+      </div>
+    </div>
+    
+    <div class="col-12">
+      <div class="row g-4">
+        {% if featured_courses %}
+          {% for course in featured_courses %}
+            <div class="col-md-6 col-lg-4">
+              <div class="card course-card h-100">
+                {% if course.thumbnail %}
+                  <img src="{{ url_for('static', filename='uploads/' + course.thumbnail) }}" class="card-img-top" alt="{{ course.title }}">
+                {% else %}
+                  <div class="bg-light text-center py-5">
+                    <i class="fas fa-book fa-3x text-muted"></i>
+                  </div>
+                {% endif %}
+                
+                <div class="card-body">
+                  <div class="d-flex justify-content-between mb-2">
+                    <span class="badge bg-primary">{{ course.category.name }}</span>
+                    <span class="badge bg-secondary">{{ course.level|title }}</span>
+                  </div>
+                  
+                  <h5 class="card-title">{{ course.title }}</h5>
+                  <p class="card-text text-muted">{{ course.description|truncate(100) }}</p>
+                  
+                  <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div class="text-warning">
+                      {% set rating = course.average_rating()|round(1, 'floor') %}
+                      {% for i in range(5) %}
+                        {% if i < rating|int %}
+                          <i class="fas fa-star"></i>
+                        {% elif (i + 0.5)|round == rating|round %}
+                          <i class="fas fa-star-half-alt"></i>
+                        {% else %}
+                          <i class="far fa-star"></i>
+                        {% endif %}
+                      {% endfor %}
+                      <small class="text-muted ms-1">({{ course.reviews|length }})</small>
+                    </div>
+                    <div>
+                      {% if course.is_free %}
+                        <span class="badge bg-success">Free</span>
+                      {% elif course.is_premium %}
+                        <span class="badge bg-warning text-dark">Premium</span>
+                      {% else %}
+                        <span class="fw-bold">${{ course.price }}</span>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+                <div class="card-footer bg-white">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                      <i class="fas fa-users me-1"></i> {{ course.total_students() }} students
+                    </small>
+                    <a href="{{ url_for('coursebud.view_course', course_id=course.id) }}" class="btn btn-sm btn-primary">View Course</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="col-12">
+            <div class="alert alert-info">
+              No featured courses available at the moment.
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Trending Courses Section with Simple Design -->
+  {% if trending_courses %}
+  <div class="row mb-5">
+    <div class="col-12 mb-4">
+      <h2>Trending Courses</h2>
+    </div>
+    
+    <div class="col-12">
+      <div class="row g-4">
+        {% for course in trending_courses %}
+          <div class="col-md-6 col-xl-3">
+            <div class="card h-100">
+              {% if course.thumbnail %}
+                <img src="{{ url_for('static', filename='uploads/' + course.thumbnail) }}" class="card-img-top" alt="{{ course.title }}">
+              {% else %}
+                <div class="bg-light text-center py-4">
+                  <i class="fas fa-book fa-2x text-muted"></i>
+                </div>
+              {% endif %}
+              <div class="card-body">
+                <h5 class="card-title">{{ course.title }}</h5>
+                
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="badge bg-primary">{{ course.category.name }}</span>
+                  <small class="text-muted">
+                    <i class="fas fa-users"></i> {{ course.total_students() }}
+                  </small>
+                </div>
+                
+                <div class="text-warning small">
+                  {% set rating = course.average_rating()|round(1, 'floor') %}
+                  {% for i in range(5) %}
+                    {% if i < rating|int %}
+                      <i class="fas fa-star"></i>
+                    {% elif (i + 0.5)|round == rating|round %}
+                      <i class="fas fa-star-half-alt"></i>
+                    {% else %}
+                      <i class="far fa-star"></i>
+                    {% endif %}
+                  {% endfor %}
+                  <span class="text-muted">({{ course.reviews|length }})</span>
+                </div>
+              </div>
+              <div class="card-footer bg-white">
+                <a href="{{ url_for('coursebud.view_course', course_id=course.id) }}" class="btn btn-sm btn-outline-primary w-100">View Course</a>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Become an Instructor - Simple CTA -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card bg-light">
+        <div class="card-body p-4">
+          <div class="row align-items-center">
+            <div class="col-lg-9">
+              <h2 class="mb-3">Share Your Knowledge</h2>
+              <p class="lead mb-3">Become an instructor and share your expertise with students around the world.</p>
+              <a href="{{ url_for('coursebud.teach') }}" class="btn btn-success">
+                <i class="fas fa-chalkboard-teacher me-2"></i>Start Teaching Today
+              </a>
+            </div>
+            <div class="col-lg-3 d-none d-lg-block text-center">
+              <i class="fas fa-chalkboard-teacher fa-5x text-success"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CSS for simple design -->
+<style>
+/* General Styles */
+body {
+  background-color: #f8f9fa;
+}
+
+.container-fluid {
+  max-width: 1400px;
+}
+
+h1 {
+  font-size: 2.5rem;
+  color: #212529;
+}
+
+h2 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #212529;
+}
+
+/* Hero Section */
+.hero-section {
+  background-color: #f8f9fa;
+  padding: 2rem 0;
+}
+
+.hero-image {
+  max-height: 300px;
+}
+
+/* Search Box */
+.input-group-text {
+  background-color: #ffffff;
+}
+
+/* Category Cards */
+.category-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 5px;
+}
+
+.category-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+/* Course Cards */
+.course-card {
+  border-radius: 5px;
+}
+
+.card-img-top {
+  height: 180px;
+  object-fit: cover;
+}
+
+.card-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 767.98px) {
+  h1 {
+    font-size: 2rem;
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+  }
+  
+  .lead {
+    font-size: 1rem;
+  }
+}
+</style>
+{% endblock %}
