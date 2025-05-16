@@ -12,6 +12,29 @@ html.theme-transition *:after {
     animation: none !important;
 }
 
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+
+@media (max-width: 992px) {
+  .sidebar.show {
+    z-index: 1100 !important; /* above header, modal, dropdown */
+  }
+
+  .toggle-sidebar.active {
+    z-index: 1101 !important; /* above the sidebar itself */
+  }
+}
+
+
 /* Ensure consistent theme application */
 :root[data-theme="dark"] {
   /* Dark Theme Variables - GitHub-inspired */
