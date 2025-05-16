@@ -815,6 +815,7 @@
                 {% if not current_user.is_authenticated %}
                 <a href="{{ url_for('auth.login') }}" class="btn btn-outline">Login</a>
                 <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Get Started</a>
+                <a href="{{ url_for('admin.admin_login') }}" class="btn btn-primary btn-lg"></a>
                 {% else %}
                 <a href="{{ url_for('dashboard.index')|default('#') }}" class="btn btn-primary">Dashboard</a>
                 {% endif %}
@@ -834,6 +835,7 @@
             {% if not current_user.is_authenticated %}
             <a href="{{ url_for('auth.login')|default('#') }}" class="btn btn-outline">Login</a>
             <a href="{{ url_for('auth.register')|default('#') }}" class="btn btn-primary">Get Started</a>
+            <a href="{{ url_for('admin.admin_login')|default('#') }}" class="btn btn-primary btn-lg"></a>
             {% else %}
             <a href="{{ url_for('dashboard')|default('#') }}" class="btn btn-primary">Dashboard</a>
             {% endif %}
@@ -870,6 +872,7 @@
                         cta_primary_text|default('Get Started') }}</a>
                     <a href="{{ url_for('auth.login')|default('#') }}" class="btn btn-outline btn-lg">{{
                         cta_secondary_text|default('Login') }}</a>
+                    <a href="{{ url_for('admin.admin_login')|default('#') }}" class="btn btn-primary btn-lg">{{ cta_thirdary_text|default('Employee login') }}</a>
                 </div>
             </div>
 

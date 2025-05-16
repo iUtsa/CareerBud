@@ -14,7 +14,7 @@ from app.models import (
 from werkzeug.utils import secure_filename
 import os
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, FloatField, SelectField, BooleanField, FileField, IntegerField
+from wtforms import HiddenField, StringField, SubmitField, TextAreaField, FloatField, SelectField, BooleanField, FileField, IntegerField
 from wtforms.validators import DataRequired, Length, Optional, NumberRange
 from datetime import datetime
 import uuid
@@ -47,6 +47,7 @@ class CourseSectionForm(FlaskForm):
     title = StringField('Section Title', validators=[DataRequired(), Length(min=3, max=255)])
     description = TextAreaField('Description', validators=[Optional()])
     order = IntegerField('Order', validators=[Optional(), NumberRange(min=0)])
+    submit = SubmitField('Save Changes')
 
 class CourseLessonForm(FlaskForm):
     title = StringField('Lesson Title', validators=[DataRequired(), Length(min=3, max=255)])
@@ -91,6 +92,20 @@ class CourseSearchForm(FlaskForm):
         super(CourseSearchForm, self).__init__(*args, **kwargs)
         categories = get_course_categories()
         self.category.choices = [('', 'All Categories')] + [(str(c.id), c.name) for c in categories]
+
+
+class EditLessonForm(FlaskForm):
+    lesson_id = HiddenField()
+    title = StringField('Lesson Title', validators=[DataRequired()])
+    content_type = SelectField('Content Type', choices=[
+        ('video', 'Video'),
+        ('text', 'Text'),
+        ('quiz', 'Quiz'),
+        ('resource', 'Resource')
+    ])
+    content = TextAreaField('Content', validators=[DataRequired()])
+    duration = IntegerField('Duration (minutes)')
+    is_free_preview = BooleanField('Free Preview')
 
 # Routes
 @coursebud_bp.route('/')
@@ -625,7 +640,78 @@ def edit_course(course_id):
         course=course
     )
 
-@coursebud_bp.route('/teach/course/<int:course_id>/content', methods=['GET'])
+@coursebud_bp.route('/teach/course/<int:course_id>/lesson/<int:lesson_id>/edit', methods=['POST'])
+@login_required
+def edit_lesson(course_id, lesson_id):
+    lesson = CourseLesson.query.get_or_404(lesson_id)
+
+    # Authorization: make sure the current user owns the course
+    if lesson.section.course.creator_id != current_user.id:
+        flash('You are not authorized to edit this lesson.', 'danger')
+        return redirect(url_for('coursebud.manage_course_content', course_id=course_id))
+
+    # Update lesson fields from form data
+    lesson.title = request.form.get('title')
+    lesson.content_type = request.form.get('content_type')
+    lesson.content = request.form.get('content')
+    lesson.duration = int(request.form.get('duration') or 0)
+    lesson.is_free_preview = 'is_free_preview' in request.form
+
+    db.session.commit()
+    form = EditLessonForm()
+    flash('Lesson updated successfully.', 'success')
+    return redirect(url_for('coursebud.manage_course_content', course_id=course_id))
+
+@coursebud_bp.route('/teach/course/<int:course_id>/edit/section/<int:section_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_section(course_id, section_id):
+    """Edit course section details"""
+    course = Course.query.get_or_404(course_id)
+    section = CourseSection.query.get_or_404(section_id)  # Fix to refer to CourseSection model
+
+    # Check if user is the creator of the course
+    if course.creator_id != current_user.id:
+        flash('You can only edit your own courses.', 'warning')
+        return redirect(url_for('coursebud.manage_course_content'))
+    
+    # Check if course is in editable state
+    if course.status not in ['draft', 'rejected']:
+        flash('This course cannot be edited in its current state.', 'warning')
+        return redirect(url_for('coursebud.manage_course_content'))
+
+    # Ensure you're modifying the correct section
+    if section.course_id != course_id:
+        flash('This section does not belong to the specified course.', 'warning')
+        return redirect(url_for('coursebud.manage_course_content'))
+
+    # Create form for section edit (assuming you have a form for section)
+    sections = CourseSection.query.filter_by(course_id=course_id).order_by(CourseSection.order).all()
+    
+    # Forms for adding new section/lesson
+    section_form = CourseSectionForm()
+    lesson_form = CourseLessonForm()
+
+    if section_form.validate_on_submit():
+        # Update section details
+        section.title = section_form.title.data
+        section.description = section_form.description.data
+
+        db.session.commit()
+        flash('Section details updated successfully!', 'success')
+        
+        # Redirect to the manage course content page after saving the changes
+        return redirect(url_for('coursebud.manage_course_content', course_id=course.id))
+
+    return render_template(
+        'coursebud/manage_content.html',
+        title='Manage Course Content',
+        course=course,
+        sections=sections,
+        section_form=section_form,
+        lesson_form=lesson_form
+    )
+
+@coursebud_bp.route('/teach/course/<int:course_id>/content', methods=['GET', 'POST'])
 @login_required
 def manage_course_content(course_id):
     """Manage course sections and lessons"""
@@ -641,13 +727,51 @@ def manage_course_content(course_id):
         flash('This course content cannot be edited in its current state.', 'warning')
         return redirect(url_for('coursebud.teach'))
     
+    if request.method == 'POST':
+        if 'edit_section_id' in request.form:
+            # ----- Edit Section -----
+            section_id = request.form.get('edit_section_id')    
+            section = CourseSection.query.get_or_404(section_id)
+
+            if section.course_id != course_id:
+                flash('This section does not belong to the specified course.', 'warning')
+                return redirect(url_for('coursebud.manage_course_content', course_id=course_id))
+
+            form = CourseSectionForm()
+            if form.validate():
+                section.title = form.title.data
+                section.description = form.description.data
+                db.session.commit()
+                flash('Section updated successfully!', 'success')
+            else:
+                flash('Failed to update section. Please check the form.', 'danger')
+
+        elif 'edit_lesson_id' in request.form:
+            # ----- Edit Lesson -----
+            lesson_id = request.form.get('edit_lesson_id')
+            lesson = CourseLesson.query.get_or_404(lesson_id)
+
+            if lesson.section.course_id != course_id:
+                flash('This lesson does not belong to the specified course.', 'warning')
+                return redirect(url_for('coursebud.manage_course_content', course_id=course_id))
+
+            lesson.title = request.form.get('title')
+            lesson.content_type = request.form.get('content_type')
+            lesson.content = request.form.get('content')
+            lesson.duration = int(request.form.get('duration') or 0)
+            lesson.is_free_preview = 'is_free_preview' in request.form
+            db.session.commit()
+            flash('Lesson updated successfully!', 'success')
+
+        else:
+            flash('No valid edit target specified.', 'danger')
     # Get sections and lessons
     sections = CourseSection.query.filter_by(course_id=course_id).order_by(CourseSection.order).all()
     
     # Forms for adding new section/lesson
     section_form = CourseSectionForm()
     lesson_form = CourseLessonForm()
-    
+
     return render_template(
         'coursebud/manage_content.html',
         title='Manage Course Content',
@@ -656,6 +780,40 @@ def manage_course_content(course_id):
         section_form=section_form,
         lesson_form=lesson_form
     )
+
+@coursebud_bp.route('/teach/course/<int:course_id>/lesson/<int:lesson_id>/delete', methods=['POST'])
+@login_required
+def delete_lesson(course_id, lesson_id):
+    lesson = CourseLesson.query.get_or_404(lesson_id)
+
+    # Authorization: Only course creator can delete
+    if lesson.section.course.creator_id != current_user.id:
+        flash('You are not authorized to delete this lesson.', 'danger')
+        return redirect(url_for('coursebud.manage_course_content', course_id=course_id))
+
+    db.session.delete(lesson)
+    db.session.commit()
+    flash('Lesson deleted successfully.', 'success')
+    return redirect(url_for('coursebud.manage_course_content', course_id=course_id))
+
+
+@coursebud_bp.route('/teach/course/<int:course_id>/section/<int:section_id>/delete', methods=['POST'])
+@login_required
+def delete_section(course_id, section_id):
+    section = CourseSection.query.get_or_404(section_id)
+
+    if section.course.creator_id != current_user.id:
+        flash('You are not authorized to delete this section.', 'danger')
+        return redirect(url_for('coursebud.manage_course_content', course_id=course_id))
+
+    # Delete lessons first
+    for lesson in section.lessons:
+        db.session.delete(lesson)
+
+    db.session.delete(section)
+    db.session.commit()
+    flash('Section and all its lessons were deleted.', 'success')
+    return redirect(url_for('coursebud.manage_course_content', course_id=course_id))
 
 @coursebud_bp.route('/teach/course/<int:course_id>/section/add', methods=['POST'])
 @login_required

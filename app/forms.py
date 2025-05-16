@@ -1,7 +1,7 @@
 # app/forms.py
 # app/forms.py
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, FloatField, IntegerField, SelectField, SelectMultipleField, DateField, SubmitField, BooleanField
+from wtforms import PasswordField, StringField, TextAreaField, FloatField, IntegerField, SelectField, SelectMultipleField, DateField, SubmitField, BooleanField
 from wtforms.validators import DataRequired, Optional, Length, NumberRange
 from flask_wtf.file import FileField
 from wtforms import RadioField  # Add this import
@@ -132,3 +132,14 @@ class AdvancedResumeAnalysisForm(FlaskForm):
         ('enterprise', 'Enterprise/Large Corp')
     ], validators=[Optional()])
     submit = SubmitField('Analyze Resume')
+
+
+# Admin forms
+
+
+
+class AdminLoginForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired()])
+    password = StringField('Password', validators=[DataRequired()])
+    code = StringField('Admin Code', validators=[DataRequired()])
+    submit = SubmitField('Login')

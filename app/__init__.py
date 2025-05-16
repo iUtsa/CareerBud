@@ -49,6 +49,7 @@ def create_app(config_class=None):
     from app.routes.progress import progress_bp
     from app.routes.social_bp import social_bp
     from app.routes.subscription import subscription_bp
+    from app.routes.admin_bp import admin_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -61,6 +62,7 @@ def create_app(config_class=None):
     app.register_blueprint(resume_bp)
     # Register the new coursebud_bp
     app.register_blueprint(coursebud_bp)
+    app.register_blueprint(admin_bp)
 
     # Import models here to avoid circular imports
     from app import models

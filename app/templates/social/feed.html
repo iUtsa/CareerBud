@@ -457,7 +457,11 @@
                     <div class="card-body p-2">
                         <div class="post-creator-compact" data-bs-toggle="modal" data-bs-target="#createPostModal">
                             <div class="avatar">
-                                {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
+                                {% if current_user.profile_picture %}
+                                    <img src="data:image/{{ mime }};base64,{{ current_user.profile_picture|safe }}" alt="Profile Picture" class="rounded-circle" width="40" height="40">
+                                {% else %}
+                                    {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
+                                {% endif %}
                             </div>
                             <div class="post-input-placeholder">
                                 What's on your mind?
@@ -589,8 +593,18 @@
                             <div class="list-group list-group-flush">
                                 {% for user in connection_suggestions %}
                                     <div class="list-group-item bg-transparent d-flex align-items-center">
-                                        <div class="avatar bg-primary me-3">
-                                            {{ user.first_name[0] }}{{ user.last_name[0] }}
+                                        <div class="avatar me-3" style="width: 40px; height: 40px;">
+                                            {% if user.profile_picture %}
+                                                <img src="data:image/{{ mime }};base64,{{ user.profile_picture.replace('\n', '').replace('\r', '').replace(' ', '') | safe }}"
+                                                    alt="Profile Picture"
+                                                    class="rounded-circle"
+                                                    style="width: 40px; height: 40px; object-fit: cover;">
+                                            {% else %}
+                                                <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center"
+                                                    style="width: 40px; height: 40px;">
+                                                    {{ user.first_name[0] }}{{ user.last_name[0] }}
+                                                </div>
+                                            {% endif %}
                                         </div>
                                         <div class="flex-grow-1">
                                             <h6 class="mb-0">{{ user.first_name }} {{ user.last_name }}</h6>

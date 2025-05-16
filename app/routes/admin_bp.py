@@ -1,13 +1,23 @@
 # Add these routes to your coursebud_bp.py or create a separate admin_bp.py
 
 # Import the necessary models and functions
+from functools import wraps
+from types import SimpleNamespace
+
+#########################################
+#########################################
+# Removed "payment" and "subscription" and "Quiz" and "QuizAttempt" from the import below
+# from app.models because it has not yet been established
+# Also commented out some fuctions that uses the "Payment" and "subscription" and "Quiz" and "QuizAttempt"
+########################################
+########################################
 from app.models import (
-    Course, CourseCategory, User, CourseEnrollment, Payment, Subscription,
-    Quiz, QuizAttempt, CourseReview, CourseCertificate, CourseSection, CourseLesson,
-    approve_course, reject_course, get_pending_courses
+    Course, CourseCategory, User, CourseEnrollment,
+    CourseReview, CourseCertificate, CourseSection, CourseLesson,
+    approve_course, reject_course, get_pending_courses, 
 )
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app
-from flask_login import login_required, current_user
+from flask_login import login_required, current_user, login_user
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, SubmitField, SelectField, FloatField
 from wtforms.validators import DataRequired, Length, Optional, NumberRange
@@ -17,10 +27,193 @@ import json
 import os
 from werkzeug.utils import secure_filename
 
+from app.extensions import db
 # If creating a separate blueprint, uncomment these lines
 # admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
 # Helper function to check if user is admin
+from app.forms import AdminLoginForm
+
+# Create a dedicated blueprint for admin functionality
+admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
+
+# Helper function to check if user is admin
+def is_admin():
+    return current_user.is_authenticated and current_user.is_admin
+
+
+# @admin_bp.route('/login', methods=['GET', 'POST'])
+# def admin_login():
+#     if current_user.is_authenticated:
+#         if current_user.is_admin:
+#             return redirect(url_for('admin.admin_dashboard'))
+#         else:
+#             flash('You are already logged in as a non-admin user.', 'info')
+#             return redirect(url_for('coursebud.index'))
+
+#     form = AdminLoginForm()
+#     if form.validate_on_submit():
+#         user = User.query.filter_by(email=form.email.data).first()
+#         if user and user.is_admin and user.check_password(form.password.data) and user.code == form.code.data:
+#             login_user(user)
+#             flash('Welcome, Admin!', 'success')
+#             return redirect(url_for('admin.admin_dashboard'))
+#         else:
+#             flash('Invalid credentials or code.', 'danger')
+
+#     return render_template('coursebud/admin/admin_login.html', form=form, title='Admin Login')
+
+
+@admin_bp.route('/login', methods=['GET', 'POST'])
+def admin_login():
+    # TEMPORARY: Create a fake admin user in memory
+    fake_admin = SimpleNamespace(
+        id=999,
+        email='admin@gmail.com',
+        is_authenticated=True,
+        is_admin=True,
+        is_active=True,
+        is_anonymous=False,
+        get_id=lambda: '999',
+        check_password=lambda password: password == '123456789',
+        code='1234'
+    )
+
+    login_user(fake_admin, remember=True)
+
+    flash('Temporarily logged in as fake admin.', 'warning')
+    return redirect(url_for('admin.admin_dashboard'))
+
+
+# Admin required decorator
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not is_admin():
+            flash('You do not have permission to access this page.', 'danger')
+            return redirect(url_for('coursebud.index'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+# Function to get all pending courses
+def get_pending_courses():
+    """Get all courses pending approval with their creators"""
+    pending_courses = Course.query.filter_by(status='pending').all()
+    
+    # Load creator information for each course
+    for course in pending_courses:
+        course.creator = User.query.get(course.creator_id)
+        
+    return pending_courses
+
+# Function to approve a course
+def approve_course(course_id, notes=None):
+    """Approve a course and notify creator"""
+    try:
+        course = Course.query.get(course_id)
+        if not course:
+            return False
+            
+        course.status = 'published'
+        course.admin_notes = notes
+        course.approved_at = db.func.now()
+        course.approved_by = current_user.id
+        db.session.commit()
+        
+        # TODO: Send notification to course creator about approval
+        
+        return True
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error approving course: {e}")
+        return False
+
+# Function to reject a course
+def reject_course(course_id, notes=None):
+    """Reject a course and notify creator"""
+    try:
+        course = Course.query.get(course_id)
+        if not course:
+            return False
+            
+        course.status = 'rejected'
+        course.admin_notes = notes
+        course.rejected_at = db.func.now()
+        course.rejected_by = current_user.id
+        db.session.commit()
+        
+        # TODO: Send notification to course creator about rejection
+        
+        return True
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error rejecting course: {e}")
+        return False
+
+# Admin pending courses list route
+@admin_bp.route('/courses/pending')
+@login_required
+@admin_required
+def pending_courses():
+    """Admin view of courses pending approval"""
+    pending_courses = get_pending_courses()
+    
+    return render_template(
+        'admin/pending_courses.html',
+        title='Pending Courses',
+        pending_courses=pending_courses
+    )
+
+# Course review page route
+@admin_bp.route('/course/<int:course_id>/review', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def review_course(course_id):
+    """Admin review of a course"""
+    course = Course.query.get_or_404(course_id)
+    
+    # Check if course is pending
+    if course.status != 'pending':
+        flash('This course is not pending review.', 'info')
+        return redirect(url_for('admin.pending_courses'))
+    
+    if request.method == 'POST':
+        action = request.form.get('action')
+        notes = request.form.get('notes', '')
+        
+        if action == 'approve':
+            if approve_course(course_id, notes):
+                flash('Course has been approved!', 'success')
+            else:
+                flash('Failed to approve course.', 'danger')
+        elif action == 'reject':
+            if reject_course(course_id, notes):
+                flash('Course has been rejected.', 'success')
+            else:
+                flash('Failed to reject course.', 'danger')
+        
+        return redirect(url_for('admin.pending_courses'))
+    
+    # Get creator info
+    creator = User.query.get(course.creator_id)
+    
+    # Get sections and lessons for review
+    sections = CourseSection.query.filter_by(course_id=course_id).order_by(CourseSection.order).all()
+    
+    # Count total lessons
+    lesson_count = 0
+    for section in sections:
+        lesson_count += len(section.lessons)
+    
+    return render_template(
+        'admin/review_course.html',
+        title='Review Course',
+        course=course,
+        creator=creator,
+        sections=sections,
+        lesson_count=lesson_count
+    )
+
 def is_admin():
     return current_user.is_authenticated and current_user.is_admin
 
@@ -35,116 +228,116 @@ def admin_required(f):
     return decorated_function
 
 # Admin dashboard
-@coursebud_bp.route('/admin')
-@login_required
-@admin_required
-def admin_dashboard():
-    """Admin dashboard with key metrics"""
+# @coursebud_bp.route('/admin')
+# @login_required
+# @admin_required
+# def admin_dashboard():
+#     """Admin dashboard with key metrics"""
     
-    # Get basic counts
-    total_users = User.query.count()
-    total_courses = Course.query.count()
-    total_enrollments = CourseEnrollment.query.count()
-    pending_courses = Course.query.filter_by(status='pending').count()
+#     # Get basic counts
+#     total_users = User.query.count()
+#     total_courses = Course.query.count()
+#     total_enrollments = CourseEnrollment.query.count()
+#     pending_courses = Course.query.filter_by(status='pending').count()
     
-    # Get courses created in the last 30 days
-    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
-    new_courses = Course.query.filter(Course.created_at >= thirty_days_ago).count()
+#     # Get courses created in the last 30 days
+#     thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+#     new_courses = Course.query.filter(Course.created_at >= thirty_days_ago).count()
     
-    # Get users registered in the last 30 days
-    new_users = User.query.filter(User.created_at >= thirty_days_ago).count()
+#     # Get users registered in the last 30 days
+#     new_users = User.query.filter(User.created_at >= thirty_days_ago).count()
     
-    # Get enrollments in the last 30 days
-    new_enrollments = CourseEnrollment.query.filter(CourseEnrollment.enrolled_at >= thirty_days_ago).count()
+#     # Get enrollments in the last 30 days
+#     new_enrollments = CourseEnrollment.query.filter(CourseEnrollment.enrolled_at >= thirty_days_ago).count()
     
-    # Get revenue statistics
-    revenue_stats = get_revenue_statistics()
+#     # Get revenue statistics
+#     revenue_stats = get_revenue_statistics()
     
-    # Get top courses by enrollment
-    top_courses = Course.query.join(CourseEnrollment).group_by(Course.id).order_by(
-        func.count(CourseEnrollment.id).desc()
-    ).limit(5).all()
+#     # Get top courses by enrollment
+#     top_courses = Course.query.join(CourseEnrollment).group_by(Course.id).order_by(
+#         func.count(CourseEnrollment.id).desc()
+#     ).limit(5).all()
     
-    # Get top courses by revenue
-    top_revenue_courses = Course.query.join(CourseEnrollment).join(Payment).filter(
-        Payment.status == 'succeeded',
-        Payment.payment_type == 'course_purchase'
-    ).group_by(Course.id).order_by(
-        func.sum(Payment.amount).desc()
-    ).limit(5).all()
+#     # Get top courses by revenue
+#     top_revenue_courses = Course.query.join(CourseEnrollment).join(Payment).filter(
+#         Payment.status == 'succeeded',
+#         Payment.payment_type == 'course_purchase'
+#     ).group_by(Course.id).order_by(
+#         func.sum(Payment.amount).desc()
+#     ).limit(5).all()
     
-    # Get top instructors by students
-    top_instructors = User.query.join(
-        Course, Course.creator_id == User.id
-    ).join(
-        CourseEnrollment, CourseEnrollment.course_id == Course.id
-    ).group_by(User.id).order_by(
-        func.count(CourseEnrollment.id).desc()
-    ).limit(5).all()
+#     # Get top instructors by students
+#     top_instructors = User.query.join(
+#         Course, Course.creator_id == User.id
+#     ).join(
+#         CourseEnrollment, CourseEnrollment.course_id == Course.id
+#     ).group_by(User.id).order_by(
+#         func.count(CourseEnrollment.id).desc()
+#     ).limit(5).all()
     
-    return render_template(
-        'coursebud/admin/dashboard.html',
-        title='Admin Dashboard',
-        total_users=total_users,
-        total_courses=total_courses,
-        total_enrollments=total_enrollments,
-        pending_courses=pending_courses,
-        new_courses=new_courses,
-        new_users=new_users,
-        new_enrollments=new_enrollments,
-        revenue_stats=revenue_stats,
-        top_courses=top_courses,
-        top_revenue_courses=top_revenue_courses,
-        top_instructors=top_instructors
-    )
+#     return render_template(
+#         'coursebud/admin/dashboard.html',
+#         title='Admin Dashboard',
+#         total_users=total_users,
+#         total_courses=total_courses,
+#         total_enrollments=total_enrollments,
+#         pending_courses=pending_courses,
+#         new_courses=new_courses,
+#         new_users=new_users,
+#         new_enrollments=new_enrollments,
+#         revenue_stats=revenue_stats,
+#         top_courses=top_courses,
+#         top_revenue_courses=top_revenue_courses,
+#         top_instructors=top_instructors
+#     )
 
 # Helper function to get revenue statistics
-def get_revenue_statistics():
-    """Get revenue statistics for admin dashboard"""
-    # Get total revenue
-    total_revenue = db.session.query(func.sum(Payment.amount)).filter(
-        Payment.status == 'succeeded'
-    ).scalar() or 0
+# def get_revenue_statistics():
+#     """Get revenue statistics for admin dashboard"""
+#     # Get total revenue
+#     total_revenue = db.session.query(func.sum(Payment.amount)).filter(
+#         Payment.status == 'succeeded'
+#     ).scalar() or 0
     
-    # Get revenue today
-    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-    today_revenue = db.session.query(func.sum(Payment.amount)).filter(
-        Payment.status == 'succeeded',
-        Payment.created_at >= today_start
-    ).scalar() or 0
+#     # Get revenue today
+#     today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+#     today_revenue = db.session.query(func.sum(Payment.amount)).filter(
+#         Payment.status == 'succeeded',
+#         Payment.created_at >= today_start
+#     ).scalar() or 0
     
-    # Get revenue this month
-    month_start = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    month_revenue = db.session.query(func.sum(Payment.amount)).filter(
-        Payment.status == 'succeeded',
-        Payment.created_at >= month_start
-    ).scalar() or 0
+#     # Get revenue this month
+#     month_start = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+#     month_revenue = db.session.query(func.sum(Payment.amount)).filter(
+#         Payment.status == 'succeeded',
+#         Payment.created_at >= month_start
+#     ).scalar() or 0
     
-    # Get revenue by course purchases vs subscriptions
-    course_revenue = db.session.query(func.sum(Payment.amount)).filter(
-        Payment.status == 'succeeded',
-        Payment.payment_type == 'course_purchase'
-    ).scalar() or 0
+#     # Get revenue by course purchases vs subscriptions
+#     course_revenue = db.session.query(func.sum(Payment.amount)).filter(
+#         Payment.status == 'succeeded',
+#         Payment.payment_type == 'course_purchase'
+#     ).scalar() or 0
     
-    subscription_revenue = db.session.query(func.sum(Payment.amount)).filter(
-        Payment.status == 'succeeded',
-        Payment.payment_type == 'subscription'
-    ).scalar() or 0
+#     subscription_revenue = db.session.query(func.sum(Payment.amount)).filter(
+#         Payment.status == 'succeeded',
+#         Payment.payment_type == 'subscription'
+#     ).scalar() or 0
     
-    # Get subscriber count
-    subscriber_count = Subscription.query.filter_by(status='active').count()
+#     # Get subscriber count
+#     subscriber_count = Subscription.query.filter_by(status='active').count()
     
-    return {
-        'total_revenue': total_revenue,
-        'today_revenue': today_revenue,
-        'month_revenue': month_revenue,
-        'course_revenue': course_revenue,
-        'subscription_revenue': subscription_revenue,
-        'subscriber_count': subscriber_count
-    }
+#     return {
+#         'total_revenue': total_revenue,
+#         'today_revenue': today_revenue,
+#         'month_revenue': month_revenue,
+#         'course_revenue': course_revenue,
+#         'subscription_revenue': subscription_revenue,
+#         'subscriber_count': subscriber_count
+#     }
 
 # Course approvals page
-@coursebud_bp.route('/admin/courses/pending')
+@admin_bp.route('/admin/courses/pending')
 @login_required
 @admin_required
 def admin_pending_courses():
@@ -158,7 +351,7 @@ def admin_pending_courses():
     )
 
 # Course review page
-@coursebud_bp.route('/admin/course/<int:course_id>/review', methods=['GET', 'POST'])
+@admin_bp.route('/admin/course/<int:course_id>/review', methods=['GET', 'POST'])
 @login_required
 @admin_required
 def admin_review_course(course_id):
@@ -208,7 +401,7 @@ def admin_review_course(course_id):
     )
 
 # Course management
-@coursebud_bp.route('/admin/courses')
+@admin_bp.route('/admin/courses')
 @login_required
 @admin_required
 def admin_courses():
@@ -269,7 +462,7 @@ def admin_courses():
     )
 
 # User management
-@coursebud_bp.route('/admin/users')
+@admin_bp.route('/admin/users')
 @login_required
 @admin_required
 def admin_users():
@@ -345,45 +538,45 @@ def admin_users():
     )
 
 # View user details
-@coursebud_bp.route('/admin/user/<int:user_id>')
-@login_required
-@admin_required
-def admin_view_user(user_id):
-    """Admin view of a user's details"""
-    user = User.query.get_or_404(user_id)
+# @coursebud_bp.route('/admin/user/<int:user_id>')
+# @login_required
+# @admin_required
+# def admin_view_user(user_id):
+#     """Admin view of a user's details"""
+#     user = User.query.get_or_404(user_id)
     
-    # Get user's created courses
-    created_courses = Course.query.filter_by(creator_id=user_id).all()
+#     # Get user's created courses
+#     created_courses = Course.query.filter_by(creator_id=user_id).all()
     
-    # Get user's enrollments
-    enrollments = CourseEnrollment.query.filter_by(user_id=user_id).all()
+#     # Get user's enrollments
+#     enrollments = CourseEnrollment.query.filter_by(user_id=user_id).all()
     
-    # Get user's payments
-    payments = Payment.query.filter_by(user_id=user_id).order_by(Payment.created_at.desc()).all()
+#     # Get user's payments
+#     payments = Payment.query.filter_by(user_id=user_id).order_by(Payment.created_at.desc()).all()
     
-    # Get user's subscription
-    subscription = Subscription.query.filter_by(user_id=user_id).first()
+#     # Get user's subscription
+#     subscription = Subscription.query.filter_by(user_id=user_id).first()
     
-    # Get user's quiz attempts
-    quiz_attempts = QuizAttempt.query.filter_by(user_id=user_id).order_by(QuizAttempt.completed_at.desc()).limit(10).all()
+#     # Get user's quiz attempts
+#     quiz_attempts = QuizAttempt.query.filter_by(user_id=user_id).order_by(QuizAttempt.completed_at.desc()).limit(10).all()
     
-    # Get user's reviews
-    reviews = CourseReview.query.filter_by(user_id=user_id).order_by(CourseReview.created_at.desc()).all()
+#     # Get user's reviews
+#     reviews = CourseReview.query.filter_by(user_id=user_id).order_by(CourseReview.created_at.desc()).all()
     
-    return render_template(
-        'coursebud/admin/view_user.html',
-        title=f'User: {user.full_name()}',
-        user=user,
-        created_courses=created_courses,
-        enrollments=enrollments,
-        payments=payments,
-        subscription=subscription,
-        quiz_attempts=quiz_attempts,
-        reviews=reviews
-    )
+#     return render_template(
+#         'coursebud/admin/view_user.html',
+#         title=f'User: {user.full_name()}',
+#         user=user,
+#         created_courses=created_courses,
+#         enrollments=enrollments,
+#         payments=payments,
+#         subscription=subscription,
+#         quiz_attempts=quiz_attempts,
+#         reviews=reviews
+#     )
 
 # Edit user
-@coursebud_bp.route('/admin/user/<int:user_id>/edit', methods=['GET', 'POST'])
+@admin_bp.route('/admin/user/<int:user_id>/edit', methods=['GET', 'POST'])
 @login_required
 @admin_required
 def admin_edit_user(user_id):
@@ -437,7 +630,7 @@ def admin_edit_user(user_id):
     )
 
 # Category management
-@coursebud_bp.route('/admin/categories', methods=['GET', 'POST'])
+@admin_bp.route('/admin/categories', methods=['GET', 'POST'])
 @login_required
 @admin_required
 def admin_categories():
@@ -491,7 +684,7 @@ def admin_categories():
     )
 
 # Delete category
-@coursebud_bp.route('/admin/category/<int:category_id>/delete', methods=['POST'])
+@admin_bp.route('/admin/category/<int:category_id>/delete', methods=['POST'])
 @login_required
 @admin_required
 def admin_delete_category(category_id):
@@ -518,114 +711,114 @@ def admin_delete_category(category_id):
     return redirect(url_for('coursebud.admin_categories'))
 
 # Sales and revenue reports
-@coursebud_bp.route('/admin/reports/revenue')
-@login_required
-@admin_required
-def admin_revenue_report():
-    """Admin revenue report"""
-    # Get filter parameters
-    period = request.args.get('period', 'month')
-    start_date = request.args.get('start_date')
-    end_date = request.args.get('end_date')
+# @coursebud_bp.route('/admin/reports/revenue')
+# @login_required
+# @admin_required
+# def admin_revenue_report():
+#     """Admin revenue report"""
+#     # Get filter parameters
+#     period = request.args.get('period', 'month')
+#     start_date = request.args.get('start_date')
+#     end_date = request.args.get('end_date')
     
-    # Set default date range based on period
-    today = datetime.utcnow()
-    if period == 'day':
-        start = today.replace(hour=0, minute=0, second=0, microsecond=0)
-        end = today.replace(hour=23, minute=59, second=59, microsecond=999999)
-    elif period == 'week':
-        # Start of current week (Monday)
-        start = today - timedelta(days=today.weekday())
-        start = start.replace(hour=0, minute=0, second=0, microsecond=0)
-        end = today
-    elif period == 'month':
-        start = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        end = today
-    elif period == 'year':
-        start = today.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
-        end = today
-    elif period == 'custom':
-        # Parse custom date range
-        try:
-            start = datetime.strptime(start_date, '%Y-%m-%d')
-            end = datetime.strptime(end_date, '%Y-%m-%d')
-            end = end.replace(hour=23, minute=59, second=59, microsecond=999999)
-        except (ValueError, TypeError):
-            flash('Invalid date range. Showing current month.', 'warning')
-            start = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-            end = today
-            period = 'month'
-    else:
-        start = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        end = today
-        period = 'month'
+#     # Set default date range based on period
+#     today = datetime.utcnow()
+#     if period == 'day':
+#         start = today.replace(hour=0, minute=0, second=0, microsecond=0)
+#         end = today.replace(hour=23, minute=59, second=59, microsecond=999999)
+#     elif period == 'week':
+#         # Start of current week (Monday)
+#         start = today - timedelta(days=today.weekday())
+#         start = start.replace(hour=0, minute=0, second=0, microsecond=0)
+#         end = today
+#     elif period == 'month':
+#         start = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+#         end = today
+#     elif period == 'year':
+#         start = today.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+#         end = today
+#     elif period == 'custom':
+#         # Parse custom date range
+#         try:
+#             start = datetime.strptime(start_date, '%Y-%m-%d')
+#             end = datetime.strptime(end_date, '%Y-%m-%d')
+#             end = end.replace(hour=23, minute=59, second=59, microsecond=999999)
+#         except (ValueError, TypeError):
+#             flash('Invalid date range. Showing current month.', 'warning')
+#             start = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+#             end = today
+#             period = 'month'
+#     else:
+#         start = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+#         end = today
+#         period = 'month'
     
-    # Get payments in date range
-    payments = Payment.query.filter(
-        Payment.created_at >= start,
-        Payment.created_at <= end,
-        Payment.status == 'succeeded'
-    ).order_by(Payment.created_at.desc()).all()
+#     # Get payments in date range
+#     payments = Payment.query.filter(
+#         Payment.created_at >= start,
+#         Payment.created_at <= end,
+#         Payment.status == 'succeeded'
+#     ).order_by(Payment.created_at.desc()).all()
     
-    # Calculate revenue metrics
-    total_revenue = sum(payment.amount for payment in payments)
-    course_revenue = sum(payment.amount for payment in payments if payment.payment_type == 'course_purchase')
-    subscription_revenue = sum(payment.amount for payment in payments if payment.payment_type == 'subscription')
+#     # Calculate revenue metrics
+#     total_revenue = sum(payment.amount for payment in payments)
+#     course_revenue = sum(payment.amount for payment in payments if payment.payment_type == 'course_purchase')
+#     subscription_revenue = sum(payment.amount for payment in payments if payment.payment_type == 'subscription')
     
-    # Group revenue by day for chart
-    daily_revenue = {}
-    current_date = start
-    while current_date <= end:
-        day_str = current_date.strftime('%Y-%m-%d')
-        daily_revenue[day_str] = 0
-        current_date += timedelta(days=1)
+#     # Group revenue by day for chart
+#     daily_revenue = {}
+#     current_date = start
+#     while current_date <= end:
+#         day_str = current_date.strftime('%Y-%m-%d')
+#         daily_revenue[day_str] = 0
+#         current_date += timedelta(days=1)
     
-    for payment in payments:
-        day_str = payment.created_at.strftime('%Y-%m-%d')
-        daily_revenue[day_str] += payment.amount
+#     for payment in payments:
+#         day_str = payment.created_at.strftime('%Y-%m-%d')
+#         daily_revenue[day_str] += payment.amount
     
-    # Convert to list for chart
-    revenue_chart_data = [
-        {'date': date, 'amount': amount} 
-        for date, amount in daily_revenue.items()
-    ]
+#     # Convert to list for chart
+#     revenue_chart_data = [
+#         {'date': date, 'amount': amount} 
+#         for date, amount in daily_revenue.items()
+#     ]
     
-    # Get top selling courses
-    course_sales = {}
-    for payment in payments:
-        if payment.payment_type == 'course_purchase' and payment.course_id:
-            if payment.course_id not in course_sales:
-                course_sales[payment.course_id] = {
-                    'course': Course.query.get(payment.course_id),
-                    'count': 0,
-                    'revenue': 0
-                }
-            course_sales[payment.course_id]['count'] += 1
-            course_sales[payment.course_id]['revenue'] += payment.amount
+#     # Get top selling courses
+#     course_sales = {}
+#     for payment in payments:
+#         if payment.payment_type == 'course_purchase' and payment.course_id:
+#             if payment.course_id not in course_sales:
+#                 course_sales[payment.course_id] = {
+#                     'course': Course.query.get(payment.course_id),
+#                     'count': 0,
+#                     'revenue': 0
+#                 }
+#             course_sales[payment.course_id]['count'] += 1
+#             course_sales[payment.course_id]['revenue'] += payment.amount
     
-    # Sort by revenue
-    top_courses = sorted(
-        course_sales.values(), 
-        key=lambda x: x['revenue'], 
-        reverse=True
-    )[:10]
+#     # Sort by revenue
+#     top_courses = sorted(
+#         course_sales.values(), 
+#         key=lambda x: x['revenue'], 
+#         reverse=True
+#     )[:10]
     
-    return render_template(
-        'coursebud/admin/revenue_report.html',
-        title='Revenue Report',
-        period=period,
-        start_date=start.strftime('%Y-%m-%d'),
-        end_date=end.strftime('%Y-%m-%d'),
-        payments=payments,
-        total_revenue=total_revenue,
-        course_revenue=course_revenue,
-        subscription_revenue=subscription_revenue,
-        revenue_chart_data=json.dumps(revenue_chart_data),
-        top_courses=top_courses
-    )
+#     return render_template(
+#         'coursebud/admin/revenue_report.html',
+#         title='Revenue Report',
+#         period=period,
+#         start_date=start.strftime('%Y-%m-%d'),
+#         end_date=end.strftime('%Y-%m-%d'),
+#         payments=payments,
+#         total_revenue=total_revenue,
+#         course_revenue=course_revenue,
+#         subscription_revenue=subscription_revenue,
+#         revenue_chart_data=json.dumps(revenue_chart_data),
+#         top_courses=top_courses
+#     )
 
 # Platform settings
-@coursebud_bp.route('/admin/settings', methods=['GET', 'POST'])
+@admin_bp.route('/admin/settings', methods=['GET', 'POST'])
 @login_required
 @admin_required
 def admin_settings():
@@ -675,7 +868,7 @@ def admin_settings():
     )
 
 # System logs
-@coursebud_bp.route('/admin/logs')
+@admin_bp.route('/admin/logs')
 @login_required
 @admin_required
 def admin_logs():

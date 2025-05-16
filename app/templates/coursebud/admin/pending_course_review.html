@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pending Courses | CourseBud Admin</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <nav class="bg-blue-800 text-white p-4 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <a href="/admin" class="font-bold text-xl">CourseBud Admin</a>
+                <div class="hidden md:flex space-x-4">
+                    <a href="/admin" class="hover:text-blue-200">Dashboard</a>
+                    <a href="/admin/courses" class="hover:text-blue-200">Courses</a>
+                    <a href="/admin/users" class="hover:text-blue-200">Users</a>
+                    <a href="/admin/courses/pending" class="hover:text-blue-200 border-b-2 border-white">Pending Courses</a>
+                    <a href="/admin/reports/revenue" class="hover:text-blue-200">Reports</a>
+                    <a href="/admin/settings" class="hover:text-blue-200">Settings</a>
+                </div>
+            </div>
+            <div>
+                <a href="/" class="text-sm hover:text-blue-200">
+                    <i class="fas fa-home mr-1"></i> Back to Site
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-6">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">Pending Courses</h1>
+            <div class="text-sm bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full">
+                <span id="pending-count">{{ pending_courses|length }}</span> courses pending review
+            </div>
+        </div>
+
+        {% if pending_courses %}
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Creator</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for course in pending_courses %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                {% if course.thumbnail_url %}
+                                <div class="flex-shrink-0 h-10 w-10">
+                                    <img class="h-10 w-10 rounded-md object-cover" src="{{ course.thumbnail_url }}" alt="{{ course.title }}">
+                                </div>
+                                {% else %}
+                                <div class="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-md flex items-center justify-center">
+                                    <i class="fas fa-book text-blue-500"></i>
+                                </div>
+                                {% endif %}
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">{{ course.title }}</div>
+                                    <div class="text-sm text-gray-500 truncate max-w-xs">{{ course.description }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{ course.creator.full_name() }}</div>
+                            <div class="text-sm text-gray-500">{{ course.creator.email }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{ course.category.name }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{ course.created_at.strftime('%b %d, %Y') }}</div>
+                            <div class="text-sm text-gray-500">{{ course.created_at.strftime('%H:%M') }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if course.price == 0 %}
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                Free
+                            </span>
+                            {% else %}
+                            <div class="text-sm text-gray-900">${{ "%.2f"|format(course.price) }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <a href="{{ url_for('coursebud.admin_review_course', course_id=course.id) }}" class="text-blue-600 hover:text-blue-900 mr-3">Review</a>
+                            
+                            <div class="inline-block relative group">
+                                <button class="text-gray-500 hover:text-gray-700">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 hidden group-hover:block">
+                                    <form action="{{ url_for('coursebud.admin_review_course', course_id=course.id) }}" method="post" class="block">
+                                        <input type="hidden" name="action" value="approve">
+                                        <button type="submit" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left">
+                                            <i class="fas fa-check text-green-500 mr-2"></i> Quick Approve
+                                        </button>
+                                    </form>
+                                    <form action="{{ url_for('coursebud.admin_review_course', course_id=course.id) }}" method="post" class="block">
+                                        <input type="hidden" name="action" value="reject">
+                                        <button type="submit" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left">
+                                            <i class="fas fa-times text-red-500 mr-2"></i> Quick Reject
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="bg-white rounded-lg shadow-md p-6 text-center">
+            <div class="text-gray-500 mb-4">
+                <i class="fas fa-check-circle text-green-500 text-4xl mb-3"></i>
+                <h3 class="text-xl font-medium text-gray-800">All caught up!</h3>
+                <p>There are no pending courses to review at this time.</p>
+            </div>
+            <a href="/admin/courses" class="inline-block bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                View All Courses
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <footer class="bg-gray-800 text-white text-sm py-4 mt-auto">
+        <div class="container mx-auto px-4">
+            <p>© 2025 CourseBud Admin Panel. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>

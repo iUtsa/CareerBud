@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, current_user, login_required
-from app.models import authenticate_user, create_user, update_user_profile
+from app.forms import AchievementForm
+from app.models import Achievement, authenticate_user, create_user, update_user_profile
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, SelectField
 from wtforms.validators import DataRequired, Email, EqualTo, Length

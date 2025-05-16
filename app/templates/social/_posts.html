@@ -3,8 +3,28 @@
     <!-- Post Header -->
     <div class="card-header d-flex justify-content-between align-items-center">
         <div class="d-flex align-items-center">
-            <div class="avatar bg-primary me-3">
-                {{ post.user.first_name[0] }}{{ post.user.last_name[0] }}
+            <div class="avatar me-3" style="object-fit: cover; width: 40px; height: 40px;">
+                {% if post.user.profile_picture %}
+                    {% set raw_pic = post.user.profile_picture.replace('\n', '').replace('\r', '').replace(' ', '') %}
+                    {% if raw_pic.startswith('/9j/') %}
+                        {% set mime = 'jpeg' %}
+                    {% elif raw_pic.startswith('iVBOR') %}
+                        {% set mime = 'png' %}
+                    {% elif raw_pic.startswith('UklGR') %}
+                        {% set mime = 'webp' %}
+                    {% else %}
+                        {% set mime = 'jpeg' %}
+                    {% endif %}
+                        <img src="data:image/{{ mime }};base64,{{ raw_pic | safe }}"
+                            alt="Profile Picture"
+                            class="rounded-circle"
+                            style="object-fit: cover; width: 40px; height: 40px;">
+                {% else %}
+                    <h4 class="bg-primary avatar me-3 rounded-circle d-flex align-items-center justify-content-center" 
+                        style="width: 40px; height: 40px; margin: 0;">
+                    {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
+                    </h4>
+                {% endif %}
             </div>
             <div>
                 <h5 class="mb-0">

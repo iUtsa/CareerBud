@@ -21,7 +21,14 @@ from app.models import get_post
 
 
 
-
+def guess_mime_type(base64_data):
+    if base64_data.startswith('/9j/'):
+        return 'jpeg'
+    elif base64_data.startswith('iVBOR'):
+        return 'png'
+    elif base64_data.startswith('UklGR'):
+        return 'webp'
+    return 'jpeg'
 
 
 social_bp = Blueprint('social', __name__, url_prefix='/social')
@@ -32,7 +39,8 @@ def view_profile(user_id):
     try:
         # Retrieve user data
         user_data = User.query.get_or_404(user_id)
-
+        picture = user_data.profile_picture or ''
+        mime_type = guess_mime_type(picture)
         # Determine the connection status
         connection_status = get_connection_status(current_user.id, user_id)
 
@@ -47,6 +55,7 @@ def view_profile(user_id):
             user=user_data,
             connection_status=connection_status,
             connection=connection,
+            mime=mime_type,
             form=form  # Pass this form to the template
         )
     except Exception as e:
@@ -229,7 +238,8 @@ def feed():
         recipient_id=current_user.id,
         status='pending'
     ).count()
-
+    pic = current_user.profile_picture or '' 
+    mime = guess_mime_type(pic)
     # Handle AJAX request for infinite scroll
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return render_template('social/_posts.html', posts=posts)
@@ -241,6 +251,7 @@ def feed():
         notifications_count=notifications_count,
         connection_suggestions=connection_suggestions,
         unread_messages_count=unread_messages_count,
+        mime=mime,
         pending_connections_count=pending_connections_count
     )
 

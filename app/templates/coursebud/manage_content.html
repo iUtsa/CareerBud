@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container py-4">
+<div class="container py-4" data-course-id="{{ course.id }}">
     <!-- Header -->
     <div class="row mb-4">
         <div class="col-12">
@@ -63,6 +63,12 @@
                                             <button class="btn btn-sm btn-outline-danger section-delete" data-section-id="{{ section.id }}">
                                                 <i class="fas fa-trash"></i>
                                             </button>
+                                            <form method="POST"
+                                                action="{{ url_for('coursebud.delete_section', course_id=course.id, section_id=section.id) }}"
+                                                id="delete-section-form-{{ section.id }}"
+                                                style="display: none;">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            </form>
                                         </div>
                                     </div>
                                     
@@ -89,18 +95,24 @@
                                                                 </div>
                                                             </div>
                                                             <div class="col-auto">
-                                                                <button class="btn btn-sm btn-outline-secondary me-1" data-bs-toggle="modal" data-bs-target="#editLessonModal" 
+                                                                {{ section_form.hidden_tag() }}
+                                                                <button class="btn btn-sm btn-outline-secondary me-1" data-bs-toggle="modal" data-bs-target="#editLessonModal"
                                                                     data-lesson-id="{{ lesson.id }}"
                                                                     data-lesson-title="{{ lesson.title }}"
                                                                     data-lesson-content-type="{{ lesson.content_type }}"
                                                                     data-lesson-content="{{ lesson.content }}"
                                                                     data-lesson-duration="{{ lesson.duration }}"
-                                                                    data-lesson-is-free-preview="{{ lesson.is_free_preview }}">
+                                                                    data-lesson-is-free-preview="{{ lesson.is_free_preview }}"
+                                                                    data-course-id="{{ course.id }}">
                                                                     <i class="fas fa-edit"></i>
                                                                 </button>
                                                                 <button class="btn btn-sm btn-outline-danger lesson-delete" data-lesson-id="{{ lesson.id }}">
                                                                     <i class="fas fa-trash"></i>
                                                                 </button>
+                                                                <form method="POST" action="{{ url_for('coursebud.delete_lesson', course_id=course.id, lesson_id=lesson.id) }}"
+                                                                    id="delete-form-{{ lesson.id }}" style="display: none;">
+                                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                                </form>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -249,7 +261,9 @@
                 <h5 class="modal-title" id="editSectionModalLabel">Edit Section</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="editSectionForm" method="post">
+            <form id="editSectionForm" method="POST" action="{{ url_for('coursebud.manage_course_content', course_id=course.id) }}">
+                <input type="hidden" name="edit_section_id" id="editSectionId">
+                {{ section_form.csrf_token }}
                 <div class="modal-body">
                     {{ section_form.hidden_tag() }}
                     <div class="mb-3">
@@ -333,8 +347,10 @@
                 <h5 class="modal-title" id="editLessonModalLabel">Edit Lesson</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="editLessonForm" method="post">
+            <form id="editLessonForm" method="POST" action="{{ url_for('coursebud.manage_course_content', course_id=course.id) }}">
                 <div class="modal-body">
+                    <input type="hidden" name="edit_lesson_id" id="editLessonId">
+                    {{ section_form.csrf_token }}
                     <div class="mb-3">
                         <label for="edit-lesson-title" class="form-label">Lesson Title</label>
                         <input type="text" class="form-control" id="edit-lesson-title" name="title" required>
@@ -384,60 +400,60 @@ document.addEventListener('DOMContentLoaded', function() {
         button.addEventListener('click', function() {
             const sectionId = this.getAttribute('data-section-id');
             document.getElementById('lessonSectionId').value = sectionId;
-            document.getElementById('addLessonForm').action = "{{ url_for('coursebud.add_lesson', section_id='') }}" + sectionId;
+            document.getElementById('addLessonForm').action = "/coursebud/teach/section/" + sectionId + "/lesson/add";
         });
     });
     
     // Open Edit Section Modal with Section Data
     document.querySelectorAll('[data-bs-target="#editSectionModal"]').forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', function () {
             const sectionId = this.getAttribute('data-section-id');
             const sectionTitle = this.getAttribute('data-section-title');
             const sectionDescription = this.getAttribute('data-section-description');
-            
+
             document.getElementById('edit-section-title').value = sectionTitle;
             document.getElementById('edit-section-description').value = sectionDescription;
             document.getElementById('editSectionId').value = sectionId;
-            document.getElementById('editSectionForm').action = "{{ url_for('coursebud.edit_course', course_id=course.id) }}/section/" + sectionId + "/edit";
         });
     });
     
     // Open Edit Lesson Modal with Lesson Data
     document.querySelectorAll('[data-bs-target="#editLessonModal"]').forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', function () {
             const lessonId = this.getAttribute('data-lesson-id');
             const lessonTitle = this.getAttribute('data-lesson-title');
             const lessonContentType = this.getAttribute('data-lesson-content-type');
             const lessonContent = this.getAttribute('data-lesson-content');
             const lessonDuration = this.getAttribute('data-lesson-duration');
             const lessonIsFreePreview = this.getAttribute('data-lesson-is-free-preview') === 'True';
-            
+
             document.getElementById('edit-lesson-title').value = lessonTitle;
             document.getElementById('edit-lesson-content-type').value = lessonContentType;
             document.getElementById('edit-lesson-content').value = lessonContent;
             document.getElementById('edit-lesson-duration').value = lessonDuration;
             document.getElementById('edit-lesson-is-free-preview').checked = lessonIsFreePreview;
             document.getElementById('editLessonId').value = lessonId;
-            document.getElementById('editLessonForm').action = "{{ url_for('coursebud.edit_course', course_id=course.id) }}/lesson/" + lessonId + "/edit";
         });
     });
     
     // Delete Section
     document.querySelectorAll('.section-delete').forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', function () {
             if (confirm('Are you sure you want to delete this section? This will also delete all lessons in this section.')) {
                 const sectionId = this.getAttribute('data-section-id');
-                window.location.href = "{{ url_for('coursebud.edit_course', course_id=course.id) }}/section/" + sectionId + "/delete";
+                const form = document.getElementById('delete-section-form-' + sectionId);
+                if (form) form.submit();
             }
         });
     });
     
     // Delete Lesson
     document.querySelectorAll('.lesson-delete').forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', function () {
             if (confirm('Are you sure you want to delete this lesson?')) {
                 const lessonId = this.getAttribute('data-lesson-id');
-                window.location.href = "{{ url_for('coursebud.edit_course', course_id=course.id) }}/lesson/" + lessonId + "/delete";
+                const form = document.getElementById('delete-form-' + lessonId);
+                if (form) form.submit();
             }
         });
     });
