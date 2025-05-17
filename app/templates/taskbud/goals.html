@@ -1,66 +1,209 @@
 {% extends "base.html" %}
-
 {% block title %}TaskBud Goals{% endblock %}
-
-{% block additional_styles %}
+{% block extra_head %}
 <style>
+    /* TaskBud Goals Page Styles */
+    :root {
+        --input-bg: #F9FAFB;
+        --input-border: var(--border-color);
+        --input-focus: var(--taskbud-primary);
+    }
+
+    [data-theme="dark"] {
+        --input-bg: rgba(30, 41, 59, 0.5);
+    }
+    
+    .goals-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    /* Filter bar */
+    .filters-section {
+        margin-bottom: 2rem;
+    }
+    
+    .filter-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-bottom: 1.25rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 1rem;
+    }
+    
+    .filter-tab {
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: 1px solid var(--border-color);
+        background-color: transparent;
+        color: var(--text-primary);
+        font-size: 0.875rem;
+        display: inline-flex;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .filter-tab i {
+        margin-right: 0.5rem;
+    }
+    
+    .filter-tab::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 0;
+        height: 3px;
+        background-color: var(--taskbud-primary);
+        transition: width 0.3s ease;
+    }
+    
+    .filter-tab:hover {
+        background-color: var(--hover-overlay);
+        transform: translateY(-2px);
+    }
+    
+    .filter-tab.active {
+        background-color: var(--taskbud-primary);
+        color: white;
+        border-color: var(--taskbud-primary);
+    }
+    
+    .filter-tab.active::after {
+        width: 100%;
+    }
+    
+    .filter-controls {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .filter-stats {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+    
+    .filter-count {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+    
+    .sort-control {
+        display: flex;
+        align-items: center;
+    }
+    
+    .sort-label {
+        margin-right: 0.5rem;
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+    }
+    
+    .sort-select {
+        background-color: var(--input-bg);
+        border: 1px solid var(--input-border);
+        color: var(--text-primary);
+        border-radius: 0.5rem;
+        padding: 0.5rem 2rem 0.5rem 0.75rem;
+        font-size: 0.875rem;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 0.5rem center;
+        background-size: 16px 12px;
+        transition: all 0.3s ease;
+        min-width: 180px;
+    }
+    
+    .sort-select:focus {
+        border-color: var(--input-focus);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        outline: none;
+    }
+    
+    /* Goals grid */
+    .goals-grid {
+        display: grid;
+        grid-template-columns: repeat(1, 1fr);
+        gap: 1.5rem;
+    }
+    
+    @media (min-width: 768px) {
+        .goals-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    
+    @media (min-width: 1024px) {
+        .goals-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+    
+    /* Goal card */
     .goal-card {
+        background: var(--card-bg);
+        border-radius: 0.75rem;
+        overflow: hidden;
         transition: transform 0.3s ease, box-shadow 0.3s ease;
+        height: 100%;
+        border: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    [data-theme="dark"] .goal-card {
+        background: var(--card-gradient);
     }
     
     .goal-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
     }
     
     .goal-card.completed {
-        border-left: 4px solid #10B981;
+        border-left: 4px solid var(--taskbud-success);
     }
     
     .goal-card.active {
-        border-left: 4px solid #3B82F6;
+        border-left: 4px solid var(--taskbud-primary);
     }
     
     .goal-card.archived {
-        border-left: 4px solid #9CA3AF;
+        border-left: 4px solid var(--text-secondary);
     }
     
-    .goal-progress {
-        height: 6px;
-        background-color: #E5E7EB;
-        border-radius: 3px;
-        overflow: hidden;
+    .goal-card.on_hold {
+        border-left: 4px solid var(--taskbud-warning);
     }
     
-    .goal-progress-bar {
-        height: 100%;
-        border-radius: 3px;
-        transition: width 0.5s ease;
+    .goal-card-body {
+        padding: 1.5rem;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
     }
     
-    .filter-button {
-        transition: all 0.3s ease;
+    .goal-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+        gap: 0.5rem;
     }
     
-    .filter-button.active {
-        background-color: #3B82F6;
-        color: white;
-    }
-    
-    .progress-0-25 {
-        background-color: #EF4444;
-    }
-    
-    .progress-25-50 {
-        background-color: #F97316;
-    }
-    
-    .progress-50-75 {
-        background-color: #3B82F6;
-    }
-    
-    .progress-75-100 {
-        background-color: #10B981;
+    .goal-title-wrapper {
+        display: flex;
+        align-items: flex-start;
     }
     
     .priority-indicator {
@@ -68,248 +211,956 @@
         height: 10px;
         border-radius: 50%;
         display: inline-block;
-        margin-right: 4px;
+        margin-right: 0.5rem;
+        margin-top: 0.375rem;
+        flex-shrink: 0;
     }
     
     .priority-1 {
-        background-color: #EF4444;
+        background-color: var(--taskbud-danger);
     }
     
     .priority-2 {
-        background-color: #F97316;
+        background-color: var(--taskbud-warning);
     }
     
     .priority-3 {
-        background-color: #3B82F6;
+        background-color: var(--taskbud-primary);
     }
     
-    .list-enter-active, .list-leave-active {
-        transition: all 0.5s ease;
+    .goal-title {
+        margin: 0;
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        line-height: 1.4;
     }
     
-    .list-enter-from, .list-leave-to {
-        opacity: 0;
-        transform: translateY(30px);
+    .goal-type-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+    
+    .type-long-term {
+        background-color: rgba(59, 130, 246, 0.1);
+        color: var(--taskbud-primary);
+    }
+
+    [data-theme="dark"] .type-long-term {
+        background-color: rgba(59, 130, 246, 0.2);
+    }
+    
+    .type-short-term {
+        background-color: rgba(16, 185, 129, 0.1);
+        color: var(--taskbud-success);
+    }
+
+    [data-theme="dark"] .type-short-term {
+        background-color: rgba(16, 185, 129, 0.2);
+    }
+    
+    .goal-description {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        margin-bottom: 1rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        min-height: 2.5rem;
+    }
+    
+    .goal-meta {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        row-gap: 0.5rem;
+    }
+    
+    .goal-meta-item {
+        display: flex;
+        align-items: center;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+    
+    .goal-meta-item i {
+        margin-right: 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .goal-deadline {
+        white-space: nowrap;
+    }
+    
+    .goal-deadline.overdue {
+        color: var(--taskbud-danger);
+        font-weight: 500;
+    }
+    
+    .goal-tasks-count {
+        display: flex;
+        align-items: center;
+    }
+    
+    /* Progress tracking */
+    .goal-progress-wrapper {
+        margin-top: auto;
+    }
+    
+    .goal-progress {
+        height: 6px;
+        background-color: var(--border-color);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 0.75rem;
+    }
+    
+    .goal-progress-bar {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 1s ease;
+    }
+    
+    .progress-0-25 {
+        background-color: var(--taskbud-danger);
+    }
+    
+    .progress-25-50 {
+        background-color: var(--taskbud-warning);
+    }
+    
+    .progress-50-75 {
+        background-color: var(--taskbud-primary);
+    }
+    
+    .progress-75-100 {
+        background-color: var(--taskbud-success);
+    }
+    
+    .goal-progress-details {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .goal-progress-text {
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .progress-0-25-text {
+        color: var(--taskbud-danger);
+    }
+    
+    .progress-25-50-text {
+        color: var(--taskbud-warning);
+    }
+    
+    .progress-50-75-text {
+        color: var(--taskbud-primary);
+    }
+    
+    .progress-75-100-text {
+        color: var(--taskbud-success);
+    }
+    
+    .goal-status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    .status-completed {
+        background-color: rgba(16, 185, 129, 0.1);
+        color: var(--taskbud-success);
+    }
+
+    [data-theme="dark"] .status-completed {
+        background-color: rgba(16, 185, 129, 0.2);
+    }
+    
+    .status-archived {
+        background-color: rgba(156, 163, 175, 0.1);
+        color: var(--text-secondary);
+    }
+
+    [data-theme="dark"] .status-archived {
+        background-color: rgba(156, 163, 175, 0.2);
+    }
+    
+    .status-overdue {
+        background-color: rgba(239, 68, 68, 0.1);
+        color: var(--taskbud-danger);
+    }
+
+    [data-theme="dark"] .status-overdue {
+        background-color: rgba(239, 68, 68, 0.2);
+    }
+    
+    .status-on-hold {
+        background-color: rgba(249, 115, 22, 0.1);
+        color: var(--taskbud-warning);
+    }
+
+    [data-theme="dark"] .status-on-hold {
+        background-color: rgba(249, 115, 22, 0.2);
+    }
+    
+    /* Goal card footer */
+    .goal-card-footer {
+        padding: 1rem 1.5rem;
+        background-color: rgba(0, 0, 0, 0.025);
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    [data-theme="dark"] .goal-card-footer {
+        background-color: rgba(0, 0, 0, 0.15);
+    }
+    
+    .goal-details-link {
+        color: var(--taskbud-primary);
+        font-weight: 500;
+        font-size: 0.875rem;
+        display: inline-flex;
+        align-items: center;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    
+    .goal-details-link:hover {
+        color: var(--primary-hover);
+        transform: translateX(3px);
+    }
+    
+    .goal-details-link i {
+        margin-left: 0.35rem;
+        transition: transform 0.3s ease;
+    }
+    
+    .goal-details-link:hover i {
+        transform: translateX(2px);
+    }
+    
+    .goal-actions {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .goal-action-btn {
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        width: 34px;
+        height: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        color: var(--text-secondary);
+        transition: all 0.3s ease;
+    }
+    
+    .goal-action-btn:hover {
+        background-color: var(--hover-overlay);
+        transform: translateY(-2px);
+    }
+    
+    .edit-btn:hover {
+        color: var(--taskbud-primary);
+    }
+    
+    .complete-btn {
+        color: var(--taskbud-success);
+    }
+    
+    .delete-btn:hover {
+        color: var(--taskbud-danger);
+    }
+    
+    /* Empty state */
+    .empty-state {
+        background: var(--card-bg);
+        border-radius: 0.75rem;
+        padding: 3rem 2rem;
+        text-align: center;
+        border: 1px solid var(--border-color);
+        grid-column: 1 / -1;
+    }
+
+    [data-theme="dark"] .empty-state {
+        background: var(--card-gradient);
+    }
+    
+    .empty-state-icon {
+        font-size: 3rem;
+        color: var(--border-color);
+        margin-bottom: 1.5rem;
+    }
+    
+    .empty-state-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.75rem;
+    }
+    
+    .empty-state-text {
+        color: var(--text-secondary);
+        margin-bottom: 1.5rem;
+        max-width: 400px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    /* Goal counter badges */
+    .counter-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 22px;
+        height: 22px;
+        background-color: var(--taskbud-primary);
+        color: white;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border-radius: 11px;
+        padding: 0 0.35rem;
+        margin-left: 0.5rem;
+    }
+    
+    .counter-badge-active {
+        background-color: var(--taskbud-primary);
+    }
+    
+    .counter-badge-completed {
+        background-color: var(--taskbud-success);
+    }
+    
+    .counter-badge-archived {
+        background-color: var(--text-secondary);
+    }
+    
+    .counter-badge-on-hold {
+        background-color: var(--taskbud-warning);
+    }
+    
+    .counter-badge-long-term {
+        background-color: var(--taskbud-primary);
+    }
+    
+    .counter-badge-short-term {
+        background-color: var(--taskbud-success);
+    }
+    
+    /* Stats Card */
+    .stats-card {
+        background: var(--card-bg);
+        border-radius: 0.75rem;
+        overflow: hidden;
+        padding: 1.5rem;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: 1px solid var(--border-color);
+        margin-top: 2rem;
+    }
+
+    [data-theme="dark"] .stats-card {
+        background: var(--card-gradient);
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stats-card-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .stats-card-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0;
+    }
+    
+    .stats-card-title i {
+        margin-right: 0.5rem;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
+    @media (min-width: 768px) {
+        .stats-grid {
+            grid-template-columns: repeat(4, 1fr);
+        }
+    }
+    
+    .stat-item {
+        display: flex;
+        align-items: center;
+    }
+    
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        margin-right: 1rem;
+    }
+    
+    .stat-icon-blue {
+        background-color: rgba(59, 130, 246, 0.1);
+        color: var(--taskbud-primary);
+    }
+    
+    .stat-icon-green {
+        background-color: rgba(16, 185, 129, 0.1);
+        color: var(--taskbud-success);
+    }
+    
+    .stat-icon-orange {
+        background-color: rgba(249, 115, 22, 0.1);
+        color: var(--taskbud-warning);
+    }
+    
+    .stat-icon-purple {
+        background-color: rgba(139, 92, 246, 0.1);
+        color: var(--tertiary-color);
+    }
+    
+    .stat-label {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.25rem;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        line-height: 1;
+    }
+    
+    /* Animation */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .fade-in-up {
+        animation: fadeInUp 0.5s ease forwards;
+    }
+    
+    @keyframes progress-fill {
+        from {
+            width: 0;
+        }
+    }
+    
+    .progress-animate {
+        animation: progress-fill 1s ease forwards;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .filter-controls {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .filter-tabs {
+            gap: 0.5rem;
+        }
+        
+        .goal-card-footer {
+            flex-direction: column;
+            gap: 0.75rem;
+            align-items: flex-start;
+        }
+        
+        .goal-actions {
+            width: 100%;
+            justify-content: flex-end;
+        }
     }
 </style>
 {% endblock %}
-
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <div class="flex justify-between items-center mb-8">
-        <h1 class="text-3xl font-bold text-gray-800">Your Goals</h1>
-        <a href="{{ url_for('taskbud.new_goal') }}" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-300 flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
-            </svg>
-            New Goal
+<div class="taskbud-container goals-container fade-in">
+    <div class="section-header">
+        <h1 class="section-title">Your Goals</h1>
+        <a href="{{ url_for('taskbud.new_goal') }}" class="taskbud-btn taskbud-btn-primary">
+            <i class="fas fa-plus"></i> New Goal
+        </a>
+    </div>
+<!-- Filters Section -->
+<div class="filters-section slide-in">
+    <div class="filter-tabs">
+        <a href="{{ url_for('taskbud.goals') }}" class="filter-tab {{ 'active' if not goal_type and not status else '' }}">
+            <i class="fas fa-th-large"></i> All Goals
+            <span class="counter-badge">{{ goals|length }}</span>
+        </a>
+        <a href="{{ url_for('taskbud.goals', type='long_term') }}" class="filter-tab {{ 'active' if goal_type == 'long_term' else '' }}">
+            <i class="fas fa-mountain"></i> Long Term
+            <span class="counter-badge counter-badge-long-term">{{ goals|selectattr('goal_type', 'equalto', 'long_term')|list|length }}</span>
+        </a>
+        <a href="{{ url_for('taskbud.goals', type='short_term') }}" class="filter-tab {{ 'active' if goal_type == 'short_term' else '' }}">
+            <i class="fas fa-flag-checkered"></i> Short Term
+            <span class="counter-badge counter-badge-short-term">{{ goals|selectattr('goal_type', 'equalto', 'short_term')|list|length }}</span>
+        </a>
+        <a href="{{ url_for('taskbud.goals', status='active') }}" class="filter-tab {{ 'active' if status == 'active' else '' }}">
+            <i class="fas fa-play-circle"></i> Active
+            <span class="counter-badge counter-badge-active">{{ goals|selectattr('status', 'equalto', 'active')|list|length }}</span>
+        </a>
+        <a href="{{ url_for('taskbud.goals', status='completed') }}" class="filter-tab {{ 'active' if status == 'completed' else '' }}">
+            <i class="fas fa-check-circle"></i> Completed
+            <span class="counter-badge counter-badge-completed">{{ goals|selectattr('status', 'equalto', 'completed')|list|length }}</span>
+        </a>
+        <a href="{{ url_for('taskbud.goals', status='on_hold') }}" class="filter-tab {{ 'active' if status == 'on_hold' else '' }}">
+            <i class="fas fa-pause-circle"></i> On Hold
+            <span class="counter-badge counter-badge-on-hold">{{ goals|selectattr('status', 'equalto', 'on_hold')|list|length }}</span>
+        </a>
+        <a href="{{ url_for('taskbud.goals', status='archived') }}" class="filter-tab {{ 'active' if status == 'archived' else '' }}">
+            <i class="fas fa-archive"></i> Archived
+            <span class="counter-badge counter-badge-archived">{{ goals|selectattr('status', 'equalto', 'archived')|list|length }}</span>
         </a>
     </div>
     
-    <!-- Filters -->
-    <div class="mb-8">
-        <div class="flex flex-wrap gap-2 mb-4">
-            <a href="{{ url_for('taskbud.goals') }}" class="filter-button px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm {{ 'active' if not goal_type and not status }}">
-                All
-            </a>
-            <a href="{{ url_for('taskbud.goals', type='long_term') }}" class="filter-button px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm {{ 'active' if goal_type == 'long_term' }}">
-                Long Term
-            </a>
-            <a href="{{ url_for('taskbud.goals', type='short_term') }}" class="filter-button px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm {{ 'active' if goal_type == 'short_term' }}">
-                Short Term
-            </a>
-            <a href="{{ url_for('taskbud.goals', status='active') }}" class="filter-button px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm {{ 'active' if status == 'active' }}">
-                Active
-            </a>
-            <a href="{{ url_for('taskbud.goals', status='completed') }}" class="filter-button px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm {{ 'active' if status == 'completed' }}">
-                Completed
-            </a>
-            <a href="{{ url_for('taskbud.goals', status='archived') }}" class="filter-button px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm {{ 'active' if status == 'archived' }}">
-                Archived
-            </a>
+    <div class="filter-controls">
+        <div class="filter-stats">
+            <span>Showing <span class="filter-count">{{ goals|length }}</span> goals</span>
+            {% if status %}
+            <span class="mx-1">•</span>
+            <span>Status: <span class="filter-count">{{ status|replace('_', ' ')|title }}</span></span>
+            {% endif %}
+            {% if goal_type %}
+            <span class="mx-1">•</span>
+            <span>Type: <span class="filter-count">{{ goal_type|replace('_', ' ')|title }}</span></span>
+            {% endif %}
         </div>
         
-        <div class="flex justify-between items-center">
-            <p class="text-gray-600">Showing {{ goals|length }} goals</p>
-            <div class="flex items-center">
-                <span class="text-gray-600 mr-2">Sort by:</span>
-                <select id="sort-select" class="border border-gray-300 rounded-lg px-3 py-2 text-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="priority">Priority</option>
-                    <option value="progress">Progress</option>
-                    <option value="deadline">Deadline</option>
-                    <option value="created">Date Created</option>
-                </select>
-            </div>
+        <div class="sort-control">
+            <span class="sort-label">Sort by:</span>
+            <select id="sort-select" class="sort-select">
+                <option value="priority">Priority (High to Low)</option>
+                <option value="priority-asc">Priority (Low to High)</option>
+                <option value="progress">Progress (High to Low)</option>
+                <option value="progress-asc">Progress (Low to High)</option>
+                <option value="deadline">Deadline (Soonest First)</option>
+                <option value="deadline-asc">Deadline (Latest First)</option>
+                <option value="created">Newest First</option>
+                <option value="created-asc">Oldest First</option>
+            </select>
         </div>
     </div>
-    
-    <!-- Goals List -->
-    <div id="goals-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {% if goals %}
-            {% for goal in goals %}
-            <div class="goal-card bg-white rounded-lg shadow-md overflow-hidden {{ goal.status }}" data-priority="{{ goal.priority }}" data-progress="{{ goal.progress }}" data-deadline="{{ goal.target_date.strftime('%Y%m%d') if goal.target_date else '99999999' }}" data-created="{{ goal.created_at.strftime('%Y%m%d') }}">
-                <div class="px-6 py-4">
-                    <div class="flex justify-between items-start mb-2">
-                        <h3 class="text-xl font-semibold text-gray-800">
-                            <span class="priority-indicator priority-{{ goal.priority }}"></span>
-                            {{ goal.title }}
-                        </h3>
-                        <span class="px-2 py-1 rounded text-xs font-semibold 
-                            {% if goal.goal_type == 'long_term' %}bg-blue-100 text-blue-600
-                            {% else %}bg-green-100 text-green-600{% endif %}">
-                            {{ goal.goal_type|replace('_', ' ')|title }}
-                        </span>
+</div>
+
+<!-- Goals Grid -->
+<div id="goals-grid" class="goals-grid">
+    {% if goals %}
+        {% for goal in goals %}
+        <div class="goal-card {{ goal.status }} fade-in-up" style="animation-delay: {{ loop.index0 * 0.05 }}s;"
+             data-priority="{{ goal.priority }}" 
+             data-progress="{{ goal.progress }}" 
+             data-deadline="{{ goal.target_date.strftime('%Y%m%d') if goal.target_date else '99999999' }}" 
+             data-created="{{ goal.created_at.strftime('%Y%m%d') }}">
+            
+            <div class="goal-card-body">
+                <div class="goal-card-header">
+                    <div class="goal-title-wrapper">
+                        <span class="priority-indicator priority-{{ goal.priority }}" title="Priority: {{ {1: 'High', 2: 'Medium', 3: 'Low'}[goal.priority] }}"></span>
+                        <h3 class="goal-title">{{ goal.title }}</h3>
                     </div>
                     
-                    <p class="text-gray-600 text-sm mb-4 line-clamp-2">
-                        {{ goal.description or 'No description provided.' }}
-                    </p>
-                    
-                    <div class="flex justify-between items-center mb-2 text-sm">
-                        <div class="flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            {% if goal.target_date %}
-                            <span class="text-gray-600">
-                                Due {{ goal.target_date.strftime('%b %d, %Y') }}
+                    <span class="goal-type-badge type-{{ goal.goal_type }}">
+                        {{ goal.goal_type|replace('_', ' ')|title }}
+                    </span>
+                </div>
+                
+                <div class="goal-description">
+                    {{ goal.description or 'No description provided.' }}
+                </div>
+                
+                <div class="goal-meta">
+                    <div class="goal-meta-item">
+                        <i class="far fa-calendar-alt"></i>
+                        {% if goal.target_date %}
+                            {% if goal.is_overdue() %}
+                            <span class="goal-deadline overdue">
+                                Overdue: {{ goal.target_date.strftime('%b %d, %Y') }}
                             </span>
                             {% else %}
-                            <span class="text-gray-500">No deadline</span>
+                            <span class="goal-deadline">
+                                Due: {{ goal.target_date.strftime('%b %d, %Y') }}
+                            </span>
                             {% endif %}
-                        </div>
-                        
-                        <span class="text-gray-600">
-                            {{ goal.tasks|length }} tasks
-                        </span>
+                        {% else %}
+                            <span>No deadline set</span>
+                        {% endif %}
                     </div>
                     
-                    <div class="goal-progress mb-4">
-                        <div class="goal-progress-bar 
+                    <div class="goal-meta-item goal-tasks-count">
+                        <i class="fas fa-tasks"></i>
+                        <span>{{ goal.tasks|length }} tasks</span>
+                    </div>
+                </div>
+                
+                <div class="goal-progress-wrapper">
+                    <div class="goal-progress">
+                        <div class="goal-progress-bar progress-animate
                             {% if goal.progress < 25 %}progress-0-25
                             {% elif goal.progress < 50 %}progress-25-50
                             {% elif goal.progress < 75 %}progress-50-75
                             {% else %}progress-75-100{% endif %}" 
-                            style="width: {{ goal.progress }}%">
+                            style="width: {{ goal.progress }}%;">
                         </div>
                     </div>
                     
-                    <div class="flex justify-between items-center text-sm">
-                        <span class="text-gray-600">
+                    <div class="goal-progress-details">
+                        <span class="goal-progress-text 
+                            {% if goal.progress < 25 %}progress-0-25-text
+                            {% elif goal.progress < 50 %}progress-25-50-text
+                            {% elif goal.progress < 75 %}progress-50-75-text
+                            {% else %}progress-75-100-text{% endif %}">
                             {{ goal.progress|round|int }}% complete
                         </span>
                         
                         {% if goal.status == 'completed' %}
-                        <span class="px-2 py-1 bg-green-100 text-green-600 rounded-full">Completed</span>
+                        <span class="goal-status-badge status-completed">
+                            <i class="fas fa-check-circle me-1"></i> Completed
+                        </span>
                         {% elif goal.status == 'archived' %}
-                        <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded-full">Archived</span>
+                        <span class="goal-status-badge status-archived">
+                            <i class="fas fa-archive me-1"></i> Archived
+                        </span>
+                        {% elif goal.status == 'on_hold' %}
+                        <span class="goal-status-badge status-on-hold">
+                            <i class="fas fa-pause-circle me-1"></i> On Hold
+                        </span>
                         {% elif goal.is_overdue() %}
-                        <span class="px-2 py-1 bg-red-100 text-red-600 rounded-full">Overdue</span>
+                        <span class="goal-status-badge status-overdue">
+                            <i class="fas fa-exclamation-circle me-1"></i> Overdue
+                        </span>
                         {% endif %}
                     </div>
                 </div>
+            </div>
+            
+            <div class="goal-card-footer">
+                <a href="{{ url_for('taskbud.view_goal', goal_id=goal.id) }}" class="goal-details-link">
+                    View Details <i class="fas fa-chevron-right"></i>
+                </a>
                 
-                <div class="px-6 py-3 bg-gray-50 border-t border-gray-100">
-                    <div class="flex justify-between">
-                        <a href="{{ url_for('taskbud.view_goal', goal_id=goal.id) }}" class="text-blue-500 hover:text-blue-600 transition-colors duration-300">
-                            View Details
-                        </a>
-                        <div class="flex space-x-2">
-                            <a href="{{ url_for('taskbud.edit_goal', goal_id=goal.id) }}" class="text-gray-500 hover:text-gray-600 transition-colors duration-300">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                </svg>
-                            </a>
-                            {% if goal.status != 'completed' %}
-                            <form method="POST" action="{{ url_for('taskbud.complete_goal', goal_id=goal.id) }}" class="inline">
-                                <button type="submit" class="text-green-500 hover:text-green-600 transition-colors duration-300">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                </button>
-                            </form>
-                            {% endif %}
-                        </div>
-                    </div>
+                <div class="goal-actions">
+                    <a href="{{ url_for('taskbud.edit_goal', goal_id=goal.id) }}" class="goal-action-btn edit-btn" title="Edit Goal">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    
+                    {% if goal.status != 'completed' %}
+                    <form method="POST" action="{{ url_for('taskbud.complete_goal', goal_id=goal.id) }}" class="d-inline" id="complete-form-{{ goal.id }}">
+                        <button type="button" class="goal-action-btn complete-btn" 
+                                onclick="confirmComplete({{ goal.id }}, '{{ goal.title|replace("'", "\\'") }}')" 
+                                title="Mark as Complete">
+                            <i class="fas fa-check"></i>
+                        </button>
+                    </form>
+                    {% endif %}
+                    
+                    {% if goal.tasks|length == 0 %}
+                    <form method="POST" action="{{ url_for('taskbud.delete_goal', goal_id=goal.id) }}" class="d-inline" id="delete-form-{{ goal.id }}">
+                        <button type="button" class="goal-action-btn delete-btn" 
+                                onclick="confirmDelete({{ goal.id }}, '{{ goal.title|replace("'", "\\'") }}')" 
+                                title="Delete Goal">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </form>
+                    {% endif %}
                 </div>
             </div>
-            {% endfor %}
-        {% else %}
-            <div class="col-span-full bg-white rounded-lg shadow-md p-8 text-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-                <h3 class="text-xl font-semibold text-gray-700 mb-2">No Goals Found</h3>
-                <p class="text-gray-500 mb-6">You don't have any goals matching the current filters</p>
-                <a href="{{ url_for('taskbud.new_goal') }}" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg inline-flex items-center transition-colors duration-300">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
-                    </svg>
-                    Create Goal
-                </a>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="fas fa-clipboard-list"></i>
             </div>
-        {% endif %}
+            <h3 class="empty-state-title">No Goals Found</h3>
+            <p class="empty-state-text">You don't have any goals matching the current filters. Create a new goal to get started!</p>
+            <a href="{{ url_for('taskbud.new_goal') }}" class="taskbud-btn taskbud-btn-primary">
+                <i class="fas fa-plus"></i> Create Goal
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Stats Card -->
+{% if goals %}
+<div class="stats-card slide-in" style="animation-delay: 0.2s;">
+    <div class="stats-card-header">
+        <h3 class="stats-card-title"><i class="fas fa-chart-pie"></i> Goals Overview</h3>
+    </div>
+    
+    <div class="stats-grid">
+        <div class="stat-item">
+            <div class="stat-icon stat-icon-blue">
+                <i class="fas fa-flag fa-lg"></i>
+            </div>
+            <div>
+                <div class="stat-label">Total Goals</div>
+                <div class="stat-value">{{ goals|length }}</div>
+            </div>
+        </div>
+        
+        <div class="stat-item">
+            <div class="stat-icon stat-icon-green">
+                <i class="fas fa-check-circle fa-lg"></i>
+            </div>
+            <div>
+                <div class="stat-label">Completed</div>
+                <div class="stat-value">{{ goals|selectattr('status', 'equalto', 'completed')|list|length }}</div>
+            </div>
+        </div>
+        
+        <div class="stat-item">
+            <div class="stat-icon stat-icon-orange">
+                <i class="fas fa-play-circle fa-lg"></i>
+            </div>
+            <div>
+                <div class="stat-label">Active</div>
+                <div class="stat-value">{{ goals|selectattr('status', 'equalto', 'active')|list|length }}</div>
+            </div>
+        </div>
+        
+        <div class="stat-item">
+            <div class="stat-icon stat-icon-purple">
+                <i class="fas fa-tasks fa-lg"></i>
+            </div>
+            <div>
+                <div class="stat-label">Total Tasks</div>
+                <div class="stat-value">{{ goals|map(attribute='tasks')|map('length')|sum }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+</div>
+<!-- Confirmation Modal - Complete Goal -->
+<div class="modal fade" id="completeGoalModal" tabindex="-1" aria-labelledby="completeGoalModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="completeGoalModalLabel">Mark Goal as Complete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to mark <strong id="completeGoalTitle"></strong> as complete?</p>
+                <p class="text-muted small">This will set the goal's progress to 100% and change its status to "Completed".</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="taskbud-btn taskbud-btn-outline" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="taskbud-btn taskbud-btn-success" id="confirmCompleteBtn">
+                    <i class="fas fa-check me-2"></i> Mark as Complete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Confirmation Modal - Delete Goal -->
+<div class="modal fade" id="deleteGoalModal" tabindex="-1" aria-labelledby="deleteGoalModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteGoalModalLabel">Delete Goal</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i> This action cannot be undone.
+                </div>
+                <p>Are you sure you want to delete <strong id="deleteGoalTitle"></strong>?</p>
+                <p class="text-muted small">Only goals without tasks can be deleted.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="taskbud-btn taskbud-btn-outline" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="taskbud-btn taskbud-btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash-alt me-2"></i> Delete Goal
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
-
 {% block scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const sortSelect = document.getElementById('sort-select');
-        const goalsContainer = document.getElementById('goals-container');
+        const goalsGrid = document.getElementById('goals-grid');
         const goalCards = Array.from(document.querySelectorAll('.goal-card'));
         
         // Function to sort goal cards
         function sortGoals(criteria) {
             const sortedGoals = goalCards.sort((a, b) => {
-                let aValue, bValue;
+                let aValue, bValue, direction = 1;
+                
+                // Handle ascending sorts
+                if (criteria.endsWith('-asc')) {
+                    direction = -1;
+                    criteria = criteria.replace('-asc', '');
+                }
                 
                 switch(criteria) {
                     case 'priority':
                         aValue = parseInt(a.dataset.priority);
                         bValue = parseInt(b.dataset.priority);
-                        return aValue - bValue;
+                        return direction * (aValue - bValue);
                     case 'progress':
                         aValue = parseFloat(a.dataset.progress);
                         bValue = parseFloat(b.dataset.progress);
-                        return bValue - aValue;
+                        return direction * (bValue - aValue);
                     case 'deadline':
                         aValue = a.dataset.deadline;
                         bValue = b.dataset.deadline;
-                        return aValue.localeCompare(bValue);
+                        return direction * aValue.localeCompare(bValue);
                     case 'created':
                         aValue = a.dataset.created;
                         bValue = b.dataset.created;
-                        return bValue.localeCompare(aValue);
+                        return direction * (bValue.localeCompare(aValue));
                     default:
                         return 0;
                 }
             });
             
-            // Remove all cards
+            // Remove all cards from the grid
             goalCards.forEach(card => card.remove());
             
             // Add sorted cards back
-            sortedGoals.forEach(card => goalsContainer.appendChild(card));
-            
-            // Add animation
             sortedGoals.forEach(card => {
-                card.classList.add('opacity-0', 'translate-y-4');
-                setTimeout(() => {
-                    card.classList.remove('opacity-0', 'translate-y-4');
-                    card.classList.add('transition-all', 'duration-500');
-                }, 10);
+                card.style.animationDelay = '0s'; // Reset animation delay
+                goalsGrid.appendChild(card);
             });
+            
+            // Reapply animations with a staggered delay
+            setTimeout(() => {
+                sortedGoals.forEach((card, index) => {
+                    card.classList.remove('fade-in-up');
+                    void card.offsetWidth; // Force reflow
+                    card.classList.add('fade-in-up');
+                    card.style.animationDelay = `${index * 0.05}s`;
+                });
+            }, 10);
         }
         
         // Handle sort selection
-        sortSelect.addEventListener('change', function() {
-            sortGoals(this.value);
-        });
+        if (sortSelect) {
+            sortSelect.addEventListener('change', function() {
+                sortGoals(this.value);
+            });
+            
+            // Initial sort
+            sortGoals('priority');
+        }
         
-        // Initial sort
-        sortGoals('priority');
+        // Function to handle goal completion confirmation
+        window.confirmComplete = function(goalId, goalTitle) {
+            // Set goal title in modal
+            document.getElementById('completeGoalTitle').textContent = goalTitle;
+            
+            // Set up confirmation button
+            const confirmBtn = document.getElementById('confirmCompleteBtn');
+            confirmBtn.onclick = function() {
+                document.getElementById(`complete-form-${goalId}`).submit();
+            };
+            
+            // Show modal
+            const completeModal = new bootstrap.Modal(document.getElementById('completeGoalModal'));
+            completeModal.show();
+        };
+        
+        // Function to handle goal deletion confirmation
+        window.confirmDelete = function(goalId, goalTitle) {
+            // Set goal title in modal
+            document.getElementById('deleteGoalTitle').textContent = goalTitle;
+            
+            // Set up confirmation button
+            const confirmBtn = document.getElementById('confirmDeleteBtn');
+            confirmBtn.onclick = function() {
+                document.getElementById(`delete-form-${goalId}`).submit();
+            };
+            
+            // Show modal
+            const deleteModal = new bootstrap.Modal(document.getElementById('deleteGoalModal'));
+            deleteModal.show();
+        };
+        
+        // Animate progress bars when they come into view
+        const progressBars = document.querySelectorAll('.goal-progress-bar');
+        
+        if ('IntersectionObserver' in window) {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        // Restart animation
+                        const bar = entry.target;
+                        const targetWidth = bar.style.width;
+                        bar.style.width = '0%';
+                        
+                        setTimeout(() => {
+                            bar.style.width = targetWidth;
+                        }, 50);
+                        
+                        // Stop observing after animation
+                        observer.unobserve(bar);
+                    }
+                });
+            }, { threshold: 0.2 });
+            
+            progressBars.forEach(bar => {
+                observer.observe(bar);
+            });
+        }
+        
+        // Set active class on the correct sort option based on URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const sortParam = urlParams.get('sort');
+        
+        if (sortParam && sortSelect) {
+            // Find and select the matching option
+            const option = Array.from(sortSelect.options).find(opt => opt.value === sortParam);
+            if (option) {
+                option.selected = true;
+                
+                // Apply the sort
+                sortGoals(sortParam);
+            }
+        }
     });
 </script>
 {% endblock %}

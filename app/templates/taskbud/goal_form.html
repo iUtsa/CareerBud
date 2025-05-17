@@ -1,136 +1,419 @@
 {% extends "base.html" %}
-
 {% block title %}{{ 'Edit Goal' if goal else 'New Goal' }} | TaskBud{% endblock %}
-
-{% block additional_styles %}
+{% block extra_head %}
 <style>
+    /* TaskBud Goal Form Styles */
+    :root {
+        --input-bg: #F9FAFB;
+        --input-border: var(--border-color);
+        --input-focus: var(--taskbud-primary);
+    }
+
+    [data-theme="dark"] {
+        --input-bg: rgba(30, 41, 59, 0.5);
+    }
+    
+    .goal-form-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .taskbud-form-card {
+        background: var(--card-bg);
+        border-radius: 0.75rem;
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border: 1px solid var(--border-color);
+    }
+
+    [data-theme="dark"] .taskbud-form-card {
+        background: var(--card-gradient);
+    }
+    
+    .taskbud-form-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        background: rgba(0, 0, 0, 0.05);
+    }
+
+    [data-theme="dark"] .taskbud-form-header {
+        background: rgba(0, 0, 0, 0.15);
+    }
+    
+    .taskbud-form-body {
+        padding: 1.5rem;
+    }
+    
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    @media (min-width: 768px) {
+        .form-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .form-group.full-width {
+            grid-column: span 2;
+        }
+    }
+    
     .form-group {
-        margin-bottom: 1.5rem;
+        margin-bottom: 0.5rem;
     }
     
     .form-label {
         display: block;
         margin-bottom: 0.5rem;
         font-weight: 500;
-        color: #4B5563;
+        color: var(--text-primary);
     }
     
     .form-control {
         width: 100%;
         padding: 0.75rem;
-        border: 1px solid #D1D5DB;
-        border-radius: 0.375rem;
-        background-color: #F9FAFB;
-        color: #1F2937;
-        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        border: 1px solid var(--input-border);
+        border-radius: 0.5rem;
+        background-color: var(--input-bg);
+        color: var(--text-primary);
+        transition: all 0.3s ease;
     }
     
     .form-control:focus {
-        border-color: #3B82F6;
-        outline: 0;
-        box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+        border-color: var(--input-focus);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        outline: none;
     }
     
     .form-select {
         width: 100%;
         padding: 0.75rem;
-        border: 1px solid #D1D5DB;
-        border-radius: 0.375rem;
-        background-color: #F9FAFB;
-        color: #1F2937;
+        border: 1px solid var(--input-border);
+        border-radius: 0.5rem;
+        background-color: var(--input-bg);
+        color: var(--text-primary);
         appearance: none;
         background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
         background-repeat: no-repeat;
         background-position: right 0.75rem center;
         background-size: 16px 12px;
+        transition: all 0.3s ease;
     }
     
     .form-select:focus {
-        border-color: #3B82F6;
-        outline: 0;
-        box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+        border-color: var(--input-focus);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        outline: none;
     }
     
-    .btn-primary {
-        background-color: #3B82F6;
-        color: white;
-        padding: 0.75rem 1.5rem;
-        border-radius: 0.375rem;
-        font-weight: 500;
-        border: none;
+    /* Types of goals */
+    .goal-type-selector {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .goal-type-option {
+        position: relative;
+    }
+    
+    .goal-type-option input {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    
+    .goal-type-label {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 1.25rem 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: 0.5rem;
+        text-align: center;
         cursor: pointer;
-        transition: background-color 0.15s ease-in-out;
+        transition: all 0.3s ease;
     }
     
-    .btn-primary:hover {
-        background-color: #2563EB;
+    .goal-type-label:hover {
+        border-color: var(--taskbud-primary-light);
+        background-color: rgba(59, 130, 246, 0.05);
+        transform: translateY(-2px);
     }
     
-    .btn-secondary {
-        background-color: #9CA3AF;
-        color: white;
-        padding: 0.75rem 1.5rem;
-        border-radius: 0.375rem;
-        font-weight: 500;
-        border: none;
+    .goal-type-option input:checked + .goal-type-label {
+        border-color: var(--taskbud-primary);
+        background-color: rgba(59, 130, 246, 0.1);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .goal-type-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-secondary);
+    }
+    
+    .goal-type-option input:checked + .goal-type-label .goal-type-icon {
+        color: var(--taskbud-primary);
+    }
+    
+    .goal-type-title {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        color: var(--text-primary);
+    }
+    
+    .goal-type-desc {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+    }
+    
+    /* Priority Selector */
+    .priority-selector {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .priority-option {
+        position: relative;
+    }
+    
+    .priority-option input {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    
+    .priority-label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 0.5rem;
+        text-align: center;
         cursor: pointer;
-        transition: background-color 0.15s ease-in-out;
+        transition: all 0.3s ease;
     }
     
-    .btn-secondary:hover {
-        background-color: #6B7280;
+    .priority-label:hover {
+        transform: translateY(-2px);
+    }
+    
+    .priority-option input:checked + .priority-label {
+        transform: translateY(-2px);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .priority-1 {
+        border-color: var(--taskbud-danger);
+        background-color: rgba(239, 68, 68, 0.05);
+    }
+    
+    .priority-option input:checked + .priority-label.priority-1 {
+        background-color: rgba(239, 68, 68, 0.15);
+    }
+    
+    .priority-2 {
+        border-color: var(--taskbud-warning);
+        background-color: rgba(249, 115, 22, 0.05);
+    }
+    
+    .priority-option input:checked + .priority-label.priority-2 {
+        background-color: rgba(249, 115, 22, 0.15);
+    }
+    
+    .priority-3 {
+        border-color: var(--taskbud-primary);
+        background-color: rgba(59, 130, 246, 0.05);
+    }
+    
+    .priority-option input:checked + .priority-label.priority-3 {
+        background-color: rgba(59, 130, 246, 0.15);
+    }
+    
+    .priority-indicator {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+    }
+    
+    .priority-indicator.priority-1 {
+        background-color: var(--taskbud-danger);
+    }
+    
+    .priority-indicator.priority-2 {
+        background-color: var(--taskbud-warning);
+    }
+    
+    .priority-indicator.priority-3 {
+        background-color: var(--taskbud-primary);
+    }
+    
+    /* Form action buttons */
+    .form-actions {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border-color);
+    }
+    
+    /* Animations */
+    @keyframes fadeIn {
+        0% { opacity: 0; }
+        100% { opacity: 1; }
+    }
+    
+    @keyframes slideIn {
+        0% { transform: translateY(20px); opacity: 0; }
+        100% { transform: translateY(0); opacity: 1; }
+    }
+    
+    .fade-in {
+        animation: fadeIn 0.5s ease-in-out;
+    }
+    
+    .slide-in {
+        animation: slideIn 0.5s ease-in-out;
+    }
+    
+    /* Help text for fields */
+    .form-help-text {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-top: 0.25rem;
+    }
+    
+    /* Mobile adjustments */
+    @media (max-width: 768px) {
+        .goal-type-selector, .priority-selector {
+            grid-template-columns: 1fr;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .form-actions .btn-group {
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
     }
 </style>
 {% endblock %}
-
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <div class="mb-6">
-        <a href="{{ url_for('taskbud.goals') }}" class="text-blue-500 hover:text-blue-600 transition-colors duration-300 flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-            </svg>
-            Back to Goals
+<div class="taskbud-container goal-form-container fade-in">
+    <div class="section-header">
+        <h1 class="section-title">{{ 'Edit Goal' if goal else 'Create New Goal' }}</h1>
+        <a href="{{ url_for('taskbud.goals') }}" class="taskbud-btn taskbud-btn-outline">
+            <i class="fas fa-arrow-left"></i> Back to Goals
         </a>
     </div>
+<div class="taskbud-form-card slide-in">
+    <div class="taskbud-form-header">
+        <div class="d-flex align-items-center">
+            <i class="fas {% if goal %}fa-edit{% else %}fa-plus-circle{% endif %} text-primary me-3" style="font-size: 1.5rem;"></i>
+            <div>
+                <h2 class="h4 mb-0">{{ 'Update your goal details' if goal else 'Tell us about your goal' }}</h2>
+                <p class="text-muted mb-0 small">{{ 'Edit the information below to update your goal' if goal else 'Fill in the details below to create a new goal' }}</p>
+            </div>
+        </div>
+    </div>
     
-    <div class="bg-white rounded-lg shadow-md p-6">
-        <h1 class="text-2xl font-bold text-gray-800 mb-6">{{ 'Edit Goal' if goal else 'Create New Goal' }}</h1>
-        
-        <form method="POST" action="{{ url_for('taskbud.edit_goal', goal_id=goal.id) if goal else url_for('taskbud.new_goal') }}">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="form-group md:col-span-2">
-                    <label for="title" class="form-label">Goal Title</label>
-                    <input type="text" id="title" name="title" class="form-control" value="{{ goal.title if goal else '' }}" required>
+    <div class="taskbud-form-body">
+        <form method="POST" action="{{ url_for('taskbud.edit_goal', goal_id=goal.id) if goal else url_for('taskbud.new_goal') }}" id="goalForm">
+            <div class="form-group full-width mb-4">
+                <label for="title" class="form-label">Goal Title</label>
+                <input type="text" id="title" name="title" class="form-control" 
+                       value="{{ goal.title if goal else '' }}" required
+                       placeholder="What do you want to accomplish?">
+                <div class="form-help-text">A clear, specific title helps define your goal</div>
+            </div>
+            
+            <!-- Goal Type Selection -->
+            <div class="form-group full-width mb-4">
+                <label class="form-label">Goal Type</label>
+                <div class="goal-type-selector">
+                    <div class="goal-type-option">
+                        <input type="radio" id="type_long_term" name="goal_type" value="long_term" 
+                               {% if not goal or (goal and goal.goal_type == 'long_term') %}checked{% endif %}>
+                        <label for="type_long_term" class="goal-type-label">
+                            <i class="fas fa-mountain goal-type-icon"></i>
+                            <div class="goal-type-title">Long Term</div>
+                            <div class="goal-type-desc">Larger goals that typically take months to achieve</div>
+                        </label>
+                    </div>
+                    <div class="goal-type-option">
+                        <input type="radio" id="type_short_term" name="goal_type" value="short_term"
+                               {% if goal and goal.goal_type == 'short_term' %}checked{% endif %}>
+                        <label for="type_short_term" class="goal-type-label">
+                            <i class="fas fa-flag-checkered goal-type-icon"></i>
+                            <div class="goal-type-title">Short Term</div>
+                            <div class="goal-type-desc">Smaller goals that typically take days or weeks</div>
+                        </label>
+                    </div>
                 </div>
-                
+            </div>
+            
+            <div class="form-grid">
+                <!-- Priority Selection -->
                 <div class="form-group">
-                    <label for="goal_type" class="form-label">Goal Type</label>
-                    <select id="goal_type" name="goal_type" class="form-select">
-                        <option value="long_term" {{ 'selected' if goal and goal.goal_type == 'long_term' else '' }}>Long Term</option>
-                        <option value="short_term" {{ 'selected' if goal and goal.goal_type == 'short_term' else '' }}>Short Term</option>
-                    </select>
+                    <label class="form-label">Priority Level</label>
+                    <div class="priority-selector">
+                        <div class="priority-option">
+                            <input type="radio" id="priority_1" name="priority" value="1"
+                                   {% if goal and goal.priority == 1 %}checked{% endif %}>
+                            <label for="priority_1" class="priority-label priority-1">
+                                <span class="priority-indicator priority-1"></span>
+                                High
+                            </label>
+                        </div>
+                        <div class="priority-option">
+                            <input type="radio" id="priority_2" name="priority" value="2"
+                                   {% if not goal or (goal and goal.priority == 2) %}checked{% endif %}>
+                            <label for="priority_2" class="priority-label priority-2">
+                                <span class="priority-indicator priority-2"></span>
+                                Medium
+                            </label>
+                        </div>
+                        <div class="priority-option">
+                            <input type="radio" id="priority_3" name="priority" value="3"
+                                   {% if goal and goal.priority == 3 %}checked{% endif %}>
+                            <label for="priority_3" class="priority-label priority-3">
+                                <span class="priority-indicator priority-3"></span>
+                                Low
+                            </label>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="form-group">
-                    <label for="priority" class="form-label">Priority</label>
-                    <select id="priority" name="priority" class="form-select">
-                        <option value="1" {{ 'selected' if goal and goal.priority == 1 else '' }}>High</option>
-                        <option value="2" {{ 'selected' if goal and goal.priority == 2 else '' }}>Medium</option>
-                        <option value="3" {{ 'selected' if goal and goal.priority == 3 else '' }}>Low</option>
-                    </select>
-                </div>
-                
+                <!-- Target Date -->
                 <div class="form-group">
                     <label for="target_date" class="form-label">Target Date</label>
                     <input type="date" id="target_date" name="target_date" class="form-control" 
                            value="{{ goal.target_date.strftime('%Y-%m-%d') if goal and goal.target_date else '' }}">
+                    <div class="form-help-text">When do you want to achieve this goal?</div>
                 </div>
                 
+                <!-- Parent Goal Selection -->
                 <div class="form-group">
-                    <label for="parent_goal_id" class="form-label">Parent Goal (Optional)</label>
+                    <label for="parent_goal_id" class="form-label">Parent Goal</label>
                     <select id="parent_goal_id" name="parent_goal_id" class="form-select">
-                        <option value="none">None</option>
+                        <option value="none">None - This is a top-level goal</option>
                         {% for parent_goal in parent_goals %}
                             {% if goal and parent_goal.id != goal.id %}
                             <option value="{{ parent_goal.id }}" {{ 'selected' if goal and goal.parent_goal_id == parent_goal.id else '' }}>
@@ -141,19 +424,140 @@
                             {% endif %}
                         {% endfor %}
                     </select>
+                    <div class="form-help-text">Optional - attach this goal to a larger one</div>
                 </div>
                 
-                <div class="form-group md:col-span-2">
+                <!-- Status - only for editing -->
+                {% if goal %}
+                <div class="form-group">
+                    <label for="status" class="form-label">Status</label>
+                    <select id="status" name="status" class="form-select">
+                        <option value="active" {{ 'selected' if goal and goal.status == 'active' else '' }}>Active</option>
+                        <option value="on_hold" {{ 'selected' if goal and goal.status == 'on_hold' else '' }}>On Hold</option>
+                        <option value="completed" {{ 'selected' if goal and goal.status == 'completed' else '' }}>Completed</option>
+                        <option value="archived" {{ 'selected' if goal and goal.status == 'archived' else '' }}>Archived</option>
+                    </select>
+                </div>
+                {% endif %}
+                
+                <!-- Description -->
+                <div class="form-group full-width">
                     <label for="description" class="form-label">Description</label>
-                    <textarea id="description" name="description" class="form-control" rows="5">{{ goal.description if goal else '' }}</textarea>
+                    <textarea id="description" name="description" class="form-control" rows="5" 
+                              placeholder="Describe your goal in more detail...">{{ goal.description if goal else '' }}</textarea>
+                    <div class="form-help-text">Optional - add any additional details about your goal</div>
                 </div>
             </div>
             
-            <div class="flex justify-end space-x-3 mt-6">
-                <a href="{{ url_for('taskbud.goals') }}" class="btn-secondary">Cancel</a>
-                <button type="submit" class="btn-primary">{{ 'Update Goal' if goal else 'Create Goal' }}</button>
+            <div class="form-actions">
+                <div>
+                    {% if goal %}
+                    <div class="form-help-text mb-2">
+                        <i class="fas fa-info-circle"></i> Created on: {{ goal.created_at.strftime('%b %d, %Y') }}
+                        {% if goal.updated_at %}
+                        | Last updated: {{ goal.updated_at.strftime('%b %d, %Y') }}
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="btn-group">
+                    <a href="{{ url_for('taskbud.goals') }}" class="taskbud-btn taskbud-btn-outline">Cancel</a>
+                    <button type="submit" class="taskbud-btn taskbud-btn-primary">
+                        <i class="fas {% if goal %}fa-save{% else %}fa-plus{% endif %} me-2"></i>
+                        {{ 'Update Goal' if goal else 'Create Goal' }}
+                    </button>
+                </div>
             </div>
         </form>
     </div>
 </div>
+
+<!-- Quick Tips Card -->
+<div class="taskbud-card mt-4 slide-in" style="animation-delay: 0.1s;">
+    <div class="taskbud-card-header">
+        <h3 class="h5 mb-0"><i class="fas fa-lightbulb me-2 text-warning"></i> Tips for Setting Effective Goals</h3>
+    </div>
+    <div class="taskbud-card-body">
+        <ul class="mb-0 ps-4">
+            <li class="mb-2">Make goals <strong>specific and measurable</strong> so you know when you've achieved them</li>
+            <li class="mb-2">Break down <strong>long-term goals</strong> into smaller, manageable short-term goals</li>
+            <li class="mb-2">Set <strong>realistic timeframes</strong> to avoid overwhelming yourself</li>
+            <li class="mb-2">Focus on <strong>high priority</strong> goals to make the most impact</li>
+            <li>Use the <strong>description field</strong> to add any motivations or details</li>
+        </ul>
+    </div>
+</div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Form validation and handling
+        const goalForm = document.getElementById('goalForm');
+        const titleInput = document.getElementById('title');
+        
+        if (goalForm) {
+            goalForm.addEventListener('submit', function(e) {
+                let isValid = true;
+                
+                // Basic validation - Title must not be empty
+                if (!titleInput.value.trim()) {
+                    titleInput.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    titleInput.classList.remove('is-invalid');
+                }
+                
+                // Enhanced validation for target date
+                const targetDateInput = document.getElementById('target_date');
+                const goalTypeInputs = document.querySelectorAll('input[name="goal_type"]');
+                let selectedGoalType = '';
+                
+                goalTypeInputs.forEach(input => {
+                    if (input.checked) {
+                        selectedGoalType = input.value;
+                    }
+                });
+                
+                // If short term goal without target date, show warning
+                if (selectedGoalType === 'short_term' && !targetDateInput.value) {
+                    // Ask confirmation without preventing submission
+                    if (!confirm('You\'ve selected a short-term goal but haven\'t set a target date. This may make it harder to track progress. Continue anyway?')) {
+                        e.preventDefault();
+                        return false;
+                    }
+                }
+                
+                if (!isValid) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+        }
+        
+        // Dynamic label for parent goal select
+        const parentGoalSelect = document.getElementById('parent_goal_id');
+        const goalTypeRadios = document.querySelectorAll('input[name="goal_type"]');
+        
+        function updateParentGoalLabel() {
+            const selectedType = document.querySelector('input[name="goal_type"]:checked').value;
+            const parentGoalLabel = document.querySelector('label[for="parent_goal_id"]');
+            
+            if (selectedType === 'short_term') {
+                parentGoalLabel.textContent = 'Parent Goal (Recommended)';
+            } else {
+                parentGoalLabel.textContent = 'Parent Goal';
+            }
+        }
+        
+        if (goalTypeRadios.length > 0 && parentGoalSelect) {
+            goalTypeRadios.forEach(radio => {
+                radio.addEventListener('change', updateParentGoalLabel);
+            });
+            
+            // Initialize on page load
+            updateParentGoalLabel();
+        }
+    });
+</script>
 {% endblock %}

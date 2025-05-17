@@ -2,218 +2,574 @@
 
 {% block title %}Statistics | TaskBud{% endblock %}
 
-{% block additional_styles %}
+{% block extra_head %}
 <style>
+    :root {
+        --chart-height: 400px;
+        --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        --card-hover-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        --heatmap-empty: #ffffff; /* White for empty cells */
+        --heatmap-low: #d4f0d8; /* Very light green */
+        --heatmap-medium: #a3e4b0; /* Light green */
+        --heatmap-high: #40c463; /* Medium green */
+        --heatmap-very-high: #30a14e; /* Darker green */
+        --heatmap-extreme: #216e39; /* Darkest green */
+        --heatmap-border: #000000; /* Black border for all cells */
+        --tooltip-bg: #ffffff;
+        --tooltip-text: #333333;
+    }
+
+    [data-theme="dark"] {
+        --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        --card-hover-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        --heatmap-empty: #1e2226; /* Slightly darker for dark mode */
+        --heatmap-low: #2d6b3a;
+        --heatmap-medium: #3f9e54;
+        --heatmap-high: #4fc46b;
+        --heatmap-very-high: #6dd483;
+        --heatmap-extreme: #88d18a;
+        --heatmap-border: #333333; /* Lighter border in dark mode */
+        --tooltip-bg: #2d333b;
+        --tooltip-text: #ffffff;
+    }
+
+    .stats-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
     .stats-card {
-        transition: transform 0.3s ease;
+        background: var(--card-bg);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+        border: 1px solid var(--border-color);
+        box-shadow: var(--card-shadow);
     }
-    
+
     .stats-card:hover {
-        transform: translateY(-5px);
+        transform: translateY(-4px);
+        box-shadow: var(--card-hover-shadow);
     }
-    
-    .activity-item {
-        transition: background-color 0.3s ease;
+
+    .stats-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-right: 1.25rem;
     }
-    
-    .activity-item:hover {
-        background-color: rgba(59, 130, 246, 0.05);
+
+    .stats-icon-blue {
+        background-color: rgba(59, 130, 246, 0.1);
+        color: var(--taskbud-primary);
     }
-    
+
+    .stats-icon-green {
+        background-color: rgba(16, 185, 129, 0.1);
+        color: var(--taskbud-success);
+    }
+
+    .stats-icon-purple {
+        background-color: rgba(139, 92, 246, 0.1);
+        color: var(--tertiary-color);
+    }
+
+    .stats-icon-orange {
+        background-color: rgba(249, 115, 22, 0.1);
+        color: var(--taskbud-warning);
+    }
+
+    .stats-grid {
+        display: grid;
+        gap: 1.5rem;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+
+    .chart-card {
+        background: var(--card-bg);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: var(--card-shadow);
+        transition: all 0.3s ease;
+    }
+
     .chart-container {
         position: relative;
-        height: 300px;
+        height: var(--chart-height);
+        width: 100%;
+    }
+
+    .heatmap-container {
+        overflow-x: auto;
+        padding: 1rem 0;
+        min-height: 300px; /* Ensure the container has a minimum height */
+    }
+
+    .heatmap-legend {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        font-size: 0.8rem;
+        color: var(--text-primary);
+    }
+
+    .heatmap-legend div {
+        width: 16px;
+        height: 16px;
+        border-radius: 3px;
+        border: 1px solid var(--heatmap-border);
+    }
+
+    .filter-group {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .filter-btn, .dashboard-btn {
+        padding: 0.5rem 1rem;
+        border-radius: 2rem;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+        color: var(--text-primary);
+        text-decoration: none; /* For the dashboard link */
+    }
+
+    .filter-btn.active {
+        background: var(--taskbud-primary);
+        color: white;
+        border-color: var(--taskbud-primary);
+    }
+
+    .filter-btn:hover:not(.active), .dashboard-btn:hover {
+        background: var(--hover-overlay);
+    }
+
+    .dashboard-btn i {
+        margin-right: 0.5rem;
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .activity-timeline {
+        max-height: 400px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--taskbud-primary) var(--card-bg);
+    }
+
+    .activity-item {
+        padding: 1rem;
+        border-radius: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .activity-item:hover {
+        background: var(--hover-overlay);
+        transform: translateX(4px);
+    }
+
+    .progress-ring {
+        position: relative;
+        width: 80px;
+        height: 80px;
+    }
+
+    .progress-ring__circle {
+        transition: stroke-dashoffset 0.5s ease;
+        transform: rotate(-90deg);
+        transform-origin: 50% 50%;
+    }
+
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: var(--text-muted);
+    }
+
+    @media (max-width: 768px) {
+        .stats-container {
+            padding: 1rem;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .heatmap-container {
+            padding: 0.5rem;
+        }
+
+        .section-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .filter-group {
+            margin-bottom: 0;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold text-gray-800 mb-8">Statistics & Analytics</h1>
-    
+<div class="stats-container fade-in">
+    <div class="section-header mb-4">
+        <h1 class="section-title">Statistics & Analytics</h1>
+        <div class="filter-group">
+            <a href="{{ url_for('taskbud.index') }}" class="dashboard-btn">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+            <button class="filter-btn active" data-filter="year">This Year</button>
+            <button class="filter-btn" data-filter="month">This Month</button>
+            <button class="filter-btn" data-filter="week">This Week</button>
+        </div>
+    </div>
+
     <!-- Overview Stats -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div class="stats-card bg-white rounded-lg shadow-md p-6">
-            <div class="flex items-center mb-3">
-                <div class="rounded-full bg-blue-100 p-3 mr-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
+    <div class="stats-grid mb-4">
+        <div class="stats-card">
+            <div class="d-flex align-items-center">
+                <div class="stats-icon stats-icon-blue">
+                    <i class="fas fa-list-alt"></i>
                 </div>
                 <div>
-                    <h3 class="text-gray-500 text-sm">Total Goals</h3>
-                    <p class="text-2xl font-bold text-gray-800">{{ stats.long_term_count + stats.short_term_count }}</p>
+                    <p class="text-muted mb-1 small">Total Goals</p>
+                    <h3 class="h2 mb-0 fw-bold">{{ stats.total_goals|default(0) }}</h3>
+                    <div class="d-flex gap-3 mt-2">
+                        <span class="text-muted small">Long Term: {{ stats.long_term_count|default(0) }}</span>
+                        <span class="text-muted small">Short Term: {{ stats.short_term_count|default(0) }}</span>
+                    </div>
                 </div>
-            </div>
-            <div class="flex justify-between items-center text-sm">
-                <span class="text-gray-500">Long Term: {{ stats.long_term_count }}</span>
-                <span class="text-gray-500">Short Term: {{ stats.short_term_count }}</span>
             </div>
         </div>
-        
-        <div class="stats-card bg-white rounded-lg shadow-md p-6">
-            <div class="flex items-center mb-3">
-                <div class="rounded-full bg-green-100 p-3 mr-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+
+        <div class="stats-card">
+            <div class="d-flex align-items-center">
+                <div class="progress-ring">
+                    <svg width="80" height="80">
+                        <circle stroke="var(--border-color)" stroke-width="8" fill="transparent" r="36" cx="40" cy="40"/>
+                        <circle class="progress-ring__circle" stroke="var(--taskbud-success)" stroke-width="8" fill="transparent" r="36" cx="40" cy="40"/>
                     </svg>
                 </div>
-                <div>
-                    <h3 class="text-gray-500 text-sm">Completed Goals</h3>
-                    <p class="text-2xl font-bold text-gray-800">{{ stats.completed_count }}</p>
+                <div class="ms-3">
+                    <p class="text-muted mb-1 small">Completion Rate</p>
+                    <h3 class="h2 mb-0 fw-bold">{{ stats.completion_rate|round|int|default(0) }}%</h3>
+                    <span class="text-muted small">Completed: {{ stats.completed_tasks|default(0) }} / {{ stats.all_tasks|default(0) }}</span>
                 </div>
-            </div>
-            <div class="flex justify-between items-center text-sm">
-                <span class="text-gray-500">Active: {{ stats.active_count }}</span>
-                <span class="text-green-500">{{ ((stats.completed_count / (stats.completed_count + stats.active_count)) * 100)|round|int }}% Success Rate</span>
             </div>
         </div>
-        
-        <div class="stats-card bg-white rounded-lg shadow-md p-6">
-            <div class="flex items-center mb-3">
-                <div class="rounded-full bg-purple-100 p-3 mr-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+
+        <div class="stats-card">
+            <div class="d-flex align-items-center">
+                <div class="stats-icon stats-icon-purple">
+                    <i class="fas fa-fire"></i>
                 </div>
                 <div>
-                    <h3 class="text-gray-500 text-sm">Task Completion</h3>
-                    <p class="text-2xl font-bold text-gray-800">{{ stats.completed_tasks }}</p>
+                    <p class="text-muted mb-1 small">Current Streak</p>
+                    <h3 class="h2 mb-0 fw-bold">{{ stats.current_streak|default(0) }} days</h3>
+                    <span class="text-muted small">Longest: {{ stats.longest_streak|default(0) }} days</span>
                 </div>
-            </div>
-            <div class="flex justify-between items-center text-sm">
-                <span class="text-gray-500">Total: {{ stats.all_tasks }}</span>
-                <span class="text-purple-500">{{ stats.completion_rate|round|int }}% Complete</span>
             </div>
         </div>
-        
-        <div class="stats-card bg-white rounded-lg shadow-md p-6">
-            <div class="flex items-center mb-3">
-                <div class="rounded-full bg-orange-100 p-3 mr-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                    </svg>
+
+        <div class="stats-card">
+            <div class="d-flex align-items-center">
+                <div class="stats-icon stats-icon-orange">
+                    <i class="fas fa-chart-line"></i>
                 </div>
                 <div>
-                    <h3 class="text-gray-500 text-sm">Average Progress</h3>
-                    <p class="text-2xl font-bold text-gray-800">{{ stats.avg_progress|round|int }}%</p>
+                    <p class="text-muted mb-1 small">Average Progress</p>
+                    <h3 class="h2 mb-0 fw-bold">{{ stats.avg_progress|round|int|default(0) }}%</h3>
+                    <span class="text-muted small">Across {{ stats.active_count|default(0) }} active goals</span>
                 </div>
-            </div>
-            <div class="text-sm text-gray-500">
-                Across all active goals
             </div>
         </div>
     </div>
-    
-    <!-- Completion History Chart -->
-    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-        <h2 class="text-xl font-bold text-gray-800 mb-4">Task Completion History</h2>
-        <div class="chart-container">
-            <canvas id="completionChart"></canvas>
+
+    <!-- Charts Section -->
+    <div class="stats-grid mb-4">
+        <div class="chart-card">
+            <h2 class="h5 mb-3">Task Activity Heatmap</h2>
+            <div class="heatmap-container">
+                <canvas id="heatmapChart" style="min-height: 300px; width: 100%;"></canvas>
+            </div>
+            <div class="heatmap-legend">
+                <span>Less</span>
+                <div style="background: var(--heatmap-empty);"></div>
+                <div style="background: var(--heatmap-low);"></div>
+                <div style="background: var(--heatmap-medium);"></div>
+                <div style="background: var(--heatmap-high);"></div>
+                <div style="background: var(--heatmap-very-high);"></div>
+                <div style="background: var(--heatmap-extreme);"></div>
+                <span>More</span>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <h2 class="h5 mb-3">Goal Distribution</h2>
+            <div class="chart-container">
+                <canvas id="goalDistributionChart"></canvas>
+            </div>
         </div>
     </div>
-    
-    <!-- Recent Activity -->
-    <div class="bg-white rounded-lg shadow-md overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-xl font-bold text-gray-800">Recent Activity</h2>
-        </div>
-        
-        {% if activities %}
-            <ul class="divide-y divide-gray-200">
+
+    <!-- Activity Timeline -->
+    <div class="chart-card">
+        <h2 class="h5 mb-3">Recent Activity</h2>
+        <div class="activity-timeline">
+            {% if activities %}
                 {% for activity in activities %}
-                <li class="activity-item p-4">
-                    <div class="flex items-start">
-                        <div class="rounded-full p-2 mr-3 
-                            {% if activity.activity_type == 'completed' %}bg-green-100
-                            {% elif activity.activity_type == 'created' %}bg-blue-100
-                            {% elif activity.activity_type == 'updated' %}bg-yellow-100
-                            {% elif activity.activity_type == 'deleted' %}bg-red-100
-                            {% else %}bg-gray-100{% endif %}">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 
-                                {% if activity.activity_type == 'completed' %}text-green-500
-                                {% elif activity.activity_type == 'created' %}text-blue-500
-                                {% elif activity.activity_type == 'updated' %}text-yellow-500
-                                {% elif activity.activity_type == 'deleted' %}text-red-500
-                                {% else %}text-gray-500{% endif %}" 
-                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                {% if activity.activity_type == 'completed' %}
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                {% elif activity.activity_type == 'created' %}
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                                {% elif activity.activity_type == 'updated' %}
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                {% elif activity.activity_type == 'deleted' %}
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                {% else %}
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                {% endif %}
-                            </svg>
+                <div class="activity-item">
+                    <div class="d-flex align-items-start">
+                        <div class="me-3 rounded-circle p-2
+                            {% if activity.activity_type == 'completed' %}bg-success bg-opacity-10 text-success
+                            {% elif activity.activity_type == 'created' %}bg-primary bg-opacity-10 text-primary
+                            {% elif activity.activity_type == 'updated' %}bg-warning bg-opacity-10 text-warning
+                            {% elif activity.activity_type == 'deleted' %}bg-danger bg-opacity-10 text-danger
+                            {% elif activity.activity_type == 'generated' %}bg-info bg-opacity-10 text-info
+                            {% else %}bg-secondary bg-opacity-10 text-secondary{% endif %}">
+                            <i class="fas
+                                {% if activity.activity_type == 'completed' %} fa-check
+                                {% elif activity.activity_type == 'created' %} fa-plus
+                                {% elif activity.activity_type == 'updated' %} fa-edit
+                                {% elif activity.activity_type == 'deleted' %} fa-trash
+                                {% elif activity.activity_type == 'generated' %} fa-robot
+                                {% else %} fa-info-circle{% endif %}"></i>
                         </div>
-                        <div class="flex-1">
-                            <p class="text-sm text-gray-900">{{ activity.details }}</p>
-                            <p class="text-xs text-gray-500 mt-1">{{ activity.created_at|timeago }}</p>
+                        <div class="flex-grow-1">
+                            <p class="small mb-1">{{ activity.details }}</p>
+                            <p class="text-muted x-small mb-0">{{ activity.created_at|timeago }}</p>
                         </div>
                     </div>
-                </li>
+                </div>
                 {% endfor %}
-            </ul>
-        {% else %}
-            <div class="p-8 text-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <h3 class="text-gray-700 mb-2">No recent activity</h3>
-                <p class="text-gray-500">Start working on your goals to see activity here</p>
-            </div>
-        {% endif %}
+            {% else %}
+                <div class="empty-state p-4 text-center">
+                    <i class="fas fa-clock fa-2x text-muted mb-3"></i>
+                    <h3 class="h5">No Recent Activity</h3>
+                    <p class="text-muted small">Start working on your goals to see activity here</p>
+                </div>
+            {% endif %}
+        </div>
     </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-matrix@2.0.1/dist/chartjs-chart-matrix.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Prepare data for the chart
-        const dates = {{ history|map(attribute='date')|list|tojson }};
-        const counts = {{ history|map(attribute='count')|list|tojson }};
+        // Debug data
+        console.log('History Data:', {{ history|tojson|safe }});
+        console.log('Stats Data:', {{ stats|tojson|safe }});
+        console.log('Activities Data:', {{ activities|map(attribute='__dict__')|tojson|safe }});
+
+        // Progress Ring Animation
+        const progress = {{ stats.completion_rate|round|int|default(0) }};
+        const circle = document.querySelector('.progress-ring__circle');
+        const circumference = 2 * Math.PI * 36;
+        circle.style.strokeDasharray = `${circumference} ${circumference}`;
+        circle.style.strokeDashoffset = circumference - (progress / 100) * circumference;
+
+        // Heatmap Data Preparation
+        const heatmapData = {{ history|tojson|safe }} || [];
+        const today = new Date('2025-05-17'); // Hardcode to match current date
+        const startDate = new Date(today.getFullYear(), 0, 1); // Jan 1, 2025
+        const daysInYear = (today - startDate) / (1000 * 60 * 60 * 24) + 1; // Days from Jan 1 to May 17
+        const weeks = Math.ceil(daysInYear / 7);
         
-        // Create the completion history chart
-        const ctx = document.getElementById('completionChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'line',
+        // Create a map of the data
+        const dataByDate = new Map(heatmapData.map(item => {
+            if (!item.date || typeof item.count !== 'number') {
+                console.warn('Invalid history entry:', item);
+                return [null, 0];
+            }
+            return [item.date, item.count];
+        }).filter(([date]) => date));
+
+        // Initialize the heatmap matrix (7 days x N weeks)
+        const heatmapMatrix = Array(7).fill().map(() => Array(weeks).fill(0));
+
+        // Populate the matrix
+        for (let i = 0; i < daysInYear; i++) {
+            const currentDate = new Date(startDate);
+            currentDate.setDate(startDate.getDate() + i);
+            const dateStr = currentDate.toISOString().split('T')[0];
+            const week = Math.floor(i / 7);
+            const day = currentDate.getDay();
+            const count = dataByDate.get(dateStr) || 0;
+            if (week < weeks && day < 7) { // Ensure we don't exceed matrix bounds
+                heatmapMatrix[day][week] = count;
+            }
+        }
+
+        console.log('Heatmap Matrix:', heatmapMatrix);
+
+        // Heatmap Chart
+        const heatmapCtx = document.getElementById('heatmapChart').getContext('2d');
+        const heatmapChart = new Chart(heatmapCtx, {
+            type: 'matrix',
             data: {
-                labels: dates.map(date => {
-                    const d = new Date(date);
-                    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                }),
                 datasets: [{
                     label: 'Tasks Completed',
-                    data: counts,
-                    borderColor: '#3B82F6',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    tension: 0.4,
-                    fill: true
+                    data: heatmapMatrix.flatMap((row, day) => 
+                        row.map((value, week) => ({
+                            x: week,
+                            y: day,
+                            v: value
+                        }))
+                    ),
+                    backgroundColor: (ctx) => {
+                        const value = ctx.dataset.data[ctx.dataIndex]?.v || 0;
+                        if (value === 0) return 'var(--heatmap-empty)';
+                        if (value <= 2) return 'var(--heatmap-low)';
+                        if (value <= 5) return 'var(--heatmap-medium)';
+                        if (value <= 10) return 'var(--heatmap-high)';
+                        if (value <= 15) return 'var(--heatmap-very-high)';
+                        return 'var(--heatmap-extreme)';
+                    },
+                    borderColor: 'var(--heatmap-border)',
+                    borderWidth: 1,
+                    width: ({ chart }) => {
+                        const width = chart.chartArea.width / weeks;
+                        return Math.max(width * 0.85, 10); // Ensure minimum width
+                    },
+                    height: ({ chart }) => {
+                        const height = chart.chartArea.height / 7;
+                        return Math.max(height * 0.85, 10); // Ensure minimum height
+                    },
+                    borderRadius: 2
                 }]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
+                responsive: true;
+                maintainAspectRatio: false;
+                scales: {
+                    x: {
+                        display: true;
+                        title: { display: true, text: 'Weeks', color: 'var(--text-primary)' },
+                        ticks: {
+                            callback: (value) => {
+                                const date = new Date(startDate);
+                                date.setDate(date.getDate() + value * 7);
+                                return date.toLocaleString('en-US', { month: 'short' });
+                            },
+                            maxTicksLimit: 12,
+                            color: 'var(--text-primary)'
+                        },
+                        grid: { display: false }
+                    },
+                    y: {
+                        display: true;
+                        title: { display: true, text: 'Day', color: 'var(--text-primary)' },
+                        ticks: {
+                            callback: (value) => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][value],
+                            color: 'var(--text-primary)'
+                        },
+                        grid: { display: false }
                     }
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            stepSize: 1
-                        }
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            title: (ctx) => {
+                                const { x, y } = ctx[0].raw;
+                                const date = new Date(startDate);
+                                date.setDate(date.getDate() + (x * 7 + y));
+                                return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+                            },
+                            label: (ctx) => `${ctx.raw.v} task${ctx.raw.v === 1 ? '' : 's'} completed`
+                        },
+                        backgroundColor: 'var(--tooltip-bg)',
+                        titleColor: 'var(--tooltip-text)',
+                        bodyColor: 'var(--tooltip-text)',
+                        borderColor: 'var(--border-color)',
+                        borderWidth: 1
                     }
                 }
             }
+        });
+
+        // Goal Distribution Chart
+        const goalData = [
+            {{ stats.long_term_count|default(0) }},
+            {{ stats.short_term_count|default(0) }},
+            {{ stats.completed_count|default(0) }},
+            {{ stats.active_count|default(0) }}
+        ];
+        const distributionCtx = document.getElementById('goalDistributionChart').getContext('2d');
+        new Chart(distributionCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Long Term', 'Short Term', 'Completed', 'Active'],
+                datasets: [{
+                    data: goalData,
+                    backgroundColor: [
+                        'var(--taskbud-primary)',
+                        'var(--taskbud-success)',
+                        'var(--taskbud-warning)',
+                        'var(--tertiary-color)'
+                    ],
+                    borderColor: 'var(--card-bg)',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true;
+                maintainAspectRatio: false;
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: 'var(--text-primary)',
+                            padding: 20,
+                            font: { size: 12 }
+                        }
+                    },
+                    datalabels: {
+                        color: '#fff',
+                        font: { weight: 'bold', size: 12 },
+                        formatter: (value) => value || ''
+                    }
+                }
+            },
+            plugins: [ChartDataLabels]
+        });
+
+        // Filter Functionality
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        filterButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                console.log('Filter selected:', button.dataset.filter);
+                // Implement AJAX or redirect for filter
+                // Example: fetch(`/taskbud/stats?filter=${button.dataset.filter}`)
+            });
         });
     });
 </script>

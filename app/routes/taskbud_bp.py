@@ -569,28 +569,32 @@ def statistics():
         user_id=current_user.id
     ).order_by(TaskActivity.created_at.desc()).limit(20).all()
     
-    # Get completion history
-    # For each day in the last 30 days, count completed tasks
-    today = datetime.utcnow().date()
+    # Get completion history for the entire year
+    today = datetime.utcnow().date()  # May 17, 2025
+    start_date = datetime(today.year, 1, 1).date()  # Jan 1, 2025
+    days = (today - start_date).days + 1  # Number of days from Jan 1 to today
     history = []
     
-    for i in range(30):
-        date = today - timedelta(days=i)
-        
-        # Count tasks completed on this date
-        completed_count = Task.query.join(Goal).filter(
-            Goal.user_id == current_user.id,
-            Task.completed_at.cast(db.Date) == date,
-            Task.completed == True
-        ).count()
-        
-        history.append({
-            'date': date.strftime('%Y-%m-%d'),
-            'count': completed_count
-        })
+    # Pre-populate history with all dates from Jan 1 to today
+    for i in range(days):
+        date = start_date + timedelta(days=i)
+        history.append({'date': date.strftime('%Y-%m-%d'), 'count': 0})
     
-    # Reverse so oldest is first
-    history.reverse()
+    # Fetch completed tasks and update counts
+    completed_tasks = Task.query.join(Goal).filter(
+        Goal.user_id == current_user.id,
+        Task.completed == True,
+        Task.completed_at >= start_date,
+        Task.completed_at <= today
+    ).with_entities(Task.completed_at.cast(db.Date), db.func.count()).group_by(Task.completed_at.cast(db.Date)).all()
+    
+    # Update history with actual counts
+    for date, count in completed_tasks:
+        date_str = date.strftime('%Y-%m-%d')
+        for entry in history:
+            if entry['date'] == date_str:
+                entry['count'] = count
+                break
     
     return render_template(
         'taskbud/statistics.html',
