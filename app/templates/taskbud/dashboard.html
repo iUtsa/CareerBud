@@ -1,0 +1,844 @@
+{% extends "base.html" %}
+
+{% block title %}TaskBud Dashboard{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* TaskBud Specific Styles */
+    :root {
+        --taskbud-primary: var(--primary-color);
+        --taskbud-primary-light: var(--primary-light);
+        --taskbud-secondary: var(--secondary-color);
+        --taskbud-accent: var(--tertiary-color);
+        --taskbud-danger: var(--danger-color);
+        --taskbud-warning: var(--warning-color);
+        --taskbud-success: var(--success-color);
+    }
+
+    /* Layout & Containers */
+    .taskbud-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0;
+    }
+
+    /* Cards & Card Components */
+    .taskbud-card {
+        background: var(--card-bg);
+        border-radius: 0.75rem;
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        height: 100%;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border: 1px solid var(--border-color);
+    }
+
+    [data-theme="dark"] .taskbud-card {
+        background: var(--card-gradient);
+    }
+    
+    .taskbud-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    .taskbud-card.completed {
+        border-left: 4px solid var(--taskbud-success);
+    }
+    
+    .taskbud-card.active {
+        border-left: 4px solid var(--taskbud-primary);
+    }
+    
+    .taskbud-card.archived {
+        border-left: 4px solid var(--text-secondary);
+    }
+    
+    /* Card headers */
+    .taskbud-card-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        background: rgba(0, 0, 0, 0.05);
+    }
+
+    [data-theme="dark"] .taskbud-card-header {
+        background: rgba(0, 0, 0, 0.15);
+    }
+    
+    /* Card body */
+    .taskbud-card-body {
+        padding: 1.5rem;
+    }
+    
+    /* Progress Indicators */
+    .progress-circle {
+        position: relative;
+        height: 80px;
+        width: 80px;
+        margin: 0 auto;
+    }
+    
+    .progress-circle .circle {
+        stroke-dashoffset: 0;
+        transition: stroke-dashoffset 1s ease;
+        stroke: var(--border-color);
+        stroke-width: 4px;
+    }
+    
+    .progress-circle .progress {
+        stroke-dashoffset: 0;
+        transition: stroke-dashoffset 1s ease;
+        stroke: var(--taskbud-primary);
+        stroke-width: 4px;
+        stroke-linecap: round;
+    }
+    
+    .progress-circle .percentage {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 1rem;
+        font-weight: bold;
+    }
+    
+    .progress-circle.small {
+        height: 60px;
+        width: 60px;
+    }
+    
+    .progress-circle.small .circle,
+    .progress-circle.small .progress {
+        stroke-width: 3px;
+    }
+    
+    .progress-circle.small .percentage {
+        font-size: 0.8rem;
+    }
+    
+    .goal-progress {
+        height: 6px;
+        background-color: var(--border-color);
+        border-radius: 3px;
+        overflow: hidden;
+        margin: 0.5rem 0;
+    }
+    
+    .goal-progress-bar {
+        height: 100%;
+        border-radius: 3px;
+        transition: width 0.5s ease;
+    }
+    
+    /* Progress color variations */
+    .progress-0-25 {
+        background-color: var(--taskbud-danger);
+    }
+    
+    .progress-25-50 {
+        background-color: var(--taskbud-warning);
+    }
+    
+    .progress-50-75 {
+        background-color: var(--taskbud-primary);
+    }
+    
+    .progress-75-100 {
+        background-color: var(--taskbud-success);
+    }
+    
+    /* Priority indicators */
+    .priority-indicator {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 4px;
+    }
+    
+    .priority-1 {
+        border-left: 4px solid var(--taskbud-danger);
+    }
+    
+    .priority-2 {
+        border-left: 4px solid var(--taskbud-warning);
+    }
+    
+    .priority-3 {
+        border-left: 4px solid var(--taskbud-primary);
+    }
+    
+    .priority-indicator.priority-1 {
+        background-color: var(--taskbud-danger);
+    }
+    
+    .priority-indicator.priority-2 {
+        background-color: var(--taskbud-warning);
+    }
+    
+    .priority-indicator.priority-3 {
+        background-color: var(--taskbud-primary);
+    }
+    
+    /* Task items */
+    .task-item {
+        transition: all 0.3s ease;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .task-item:hover {
+        background-color: var(--hover-overlay);
+    }
+    
+    .task-item:last-child {
+        border-bottom: none;
+    }
+    
+    .task-completed {
+        opacity: 0.6;
+        text-decoration: line-through;
+    }
+    
+    /* Buttons */
+    .taskbud-btn {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .taskbud-btn i {
+        margin-right: 0.5rem;
+    }
+    
+    .taskbud-btn-primary {
+        background-color: var(--taskbud-primary);
+        color: white;
+    }
+    
+    .taskbud-btn-primary:hover {
+        background-color: var(--primary-hover);
+        transform: translateY(-2px);
+    }
+    
+    .taskbud-btn-secondary {
+        background-color: var(--taskbud-secondary);
+        color: white;
+    }
+    
+    .taskbud-btn-secondary:hover {
+        background-color: var(--secondary-hover);
+        transform: translateY(-2px);
+    }
+    
+    .taskbud-btn-outline {
+        background-color: transparent;
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+    }
+    
+    .taskbud-btn-outline:hover {
+        background-color: var(--hover-overlay);
+        transform: translateY(-2px);
+    }
+    
+    /* Stats cards */
+    .stats-card {
+        background: var(--card-bg);
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        height: 100%;
+        border: 1px solid var(--border-color);
+    }
+
+    [data-theme="dark"] .stats-card {
+        background: var(--card-gradient);
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stats-icon {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        margin-right: 1rem;
+    }
+    
+    .stats-icon-blue {
+        background-color: rgba(59, 130, 246, 0.1);
+        color: var(--taskbud-primary);
+    }
+    
+    .stats-icon-green {
+        background-color: rgba(16, 185, 129, 0.1);
+        color: var(--taskbud-success);
+    }
+    
+    .stats-icon-orange {
+        background-color: rgba(249, 115, 22, 0.1);
+        color: var(--taskbud-warning);
+    }
+    
+    .stats-icon-purple {
+        background-color: rgba(139, 92, 246, 0.1);
+        color: var(--tertiary-color);
+    }
+
+    /* Status pills */
+    .pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    /* Section headers */
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin: 0;
+        color: var(--text-primary);
+    }
+
+    /* Empty states */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+    }
+
+    .empty-state-icon {
+        color: var(--border-color);
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    .empty-state-title {
+        font-size: 1.25rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-primary);
+    }
+
+    .empty-state-description {
+        color: var(--text-secondary);
+        margin-bottom: 1.5rem;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+        0% { opacity: 0; }
+        100% { opacity: 1; }
+    }
+    
+    @keyframes slideIn {
+        0% { transform: translateY(20px); opacity: 0; }
+        100% { transform: translateY(0); opacity: 1; }
+    }
+    
+    .fade-in {
+        animation: fadeIn 0.5s ease-in-out;
+    }
+    
+    .slide-in {
+        animation: slideIn 0.5s ease-in-out;
+    }
+
+    /* Dashboard-specific spacing */
+    .taskbud-dashboard-section {
+        margin-bottom: 2rem;
+    }
+
+    /* Dashboard grid layout */
+    .taskbud-grid {
+        display: grid;
+        gap: 1.5rem;
+    }
+
+    .taskbud-grid-cols-1 {
+        grid-template-columns: 1fr;
+    }
+
+    .taskbud-grid-cols-2 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .taskbud-grid-cols-3 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .taskbud-grid-cols-4 {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 1200px) {
+        .taskbud-grid-cols-4 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 992px) {
+        .taskbud-grid-cols-3 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .taskbud-grid-cols-2,
+        .taskbud-grid-cols-3,
+        .taskbud-grid-cols-4 {
+            grid-template-columns: 1fr;
+        }
+
+        .section-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="taskbud-container fade-in">
+    <div class="section-header">
+        <h1 class="section-title">TaskBud Dashboard</h1>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('taskbud.goals') }}" class="taskbud-btn taskbud-btn-primary">
+                <i class="fas fa-th-large"></i> All Goals
+            </a>
+            <a href="{{ url_for('taskbud.daily_plan') }}" class="taskbud-btn taskbud-btn-secondary">
+                <i class="fas fa-clock"></i> Daily Plan
+            </a>
+        </div>
+    </div>
+    
+    <!-- Stats Cards Row -->
+    <div class="taskbud-dashboard-section slide-in">
+        <div class="taskbud-grid taskbud-grid-cols-4">
+            <div class="stats-card">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="stats-icon stats-icon-blue">
+                        <i class="fas fa-list-alt"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted mb-0 small">Active Goals</p>
+                        <h3 class="h2 mb-0 fw-bold">{{ stats.active_count }}</h3>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted small">Total: {{ stats.active_count + stats.completed_count }}</span>
+                    <span class="text-success small fw-bold">{{ stats.completed_count }} completed</span>
+                </div>
+            </div>
+            
+            <div class="stats-card">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="stats-icon stats-icon-green">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted mb-0 small">Task Completion</p>
+                        <h3 class="h2 mb-0 fw-bold">{{ stats.completed_tasks }}</h3>
+                    </div>
+                </div>
+                <div class="goal-progress mb-1">
+                    <div class="goal-progress-bar 
+                        {% if stats.completion_rate < 25 %}progress-0-25
+                        {% elif stats.completion_rate < 50 %}progress-25-50
+                        {% elif stats.completion_rate < 75 %}progress-50-75
+                        {% else %}progress-75-100{% endif %}" 
+                        style="width: {{ stats.completion_rate }}%">
+                    </div>
+                </div>
+                <div class="text-end">
+                    <span class="small fw-bold 
+                        {% if stats.completion_rate < 25 %}text-danger
+                        {% elif stats.completion_rate < 50 %}text-warning
+                        {% elif stats.completion_rate < 75 %}text-primary
+                        {% else %}text-success{% endif %}">
+                        {{ stats.completion_rate|round(1) }}%
+                    </span>
+                    <span class="text-muted small"> completed</span>
+                </div>
+            </div>
+            
+            <div class="stats-card">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="stats-icon stats-icon-orange">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted mb-0 small">Average Progress</p>
+                        <h3 class="h2 mb-0 fw-bold">{{ stats.avg_progress|round(1) }}%</h3>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted small">Across active goals</span>
+                    <a href="{{ url_for('taskbud.statistics') }}" class="text-primary small">View Statistics</a>
+                </div>
+            </div>
+            
+            <div class="stats-card">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="stats-icon stats-icon-purple">
+                        <i class="fas fa-calendar-day"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted mb-0 small">Today's Date</p>
+                        <h3 class="h2 mb-0 fw-bold">{{ today.strftime('%b %d') }}</h3>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted small">{{ today.strftime('%A, %Y') }}</span>
+                    <a href="{{ url_for('taskbud.daily_plan') }}" class="text-primary small">View Today</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Active Goals Section -->
+    <div class="taskbud-dashboard-section slide-in" style="animation-delay: 0.1s;">
+        <div class="section-header">
+            <h2 class="section-title">Active Goals</h2>
+            <a href="{{ url_for('taskbud.new_goal') }}" class="taskbud-btn taskbud-btn-primary">
+                <i class="fas fa-plus"></i> New Goal
+            </a>
+        </div>
+        
+        {% if active_goals %}
+        <div class="taskbud-grid taskbud-grid-cols-3">
+            {% for goal in active_goals %}
+            <div class="taskbud-card active">
+                <div class="taskbud-card-header">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h3 class="h5 mb-0">{{ goal.title }}</h3>
+                        <span class="pill 
+                            {% if goal.goal_type == 'long_term' %}bg-primary text-white
+                            {% else %}bg-success text-white{% endif %}">
+                            {{ goal.goal_type|replace('_', ' ')|title }}
+                        </span>
+                    </div>
+                    <p class="text-muted small mb-0 text-truncate">
+                        {{ goal.description or 'No description provided.' }}
+                    </p>
+                </div>
+                
+                <div class="taskbud-card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-clock text-muted me-2 small"></i>
+                            {% if goal.target_date %}
+                            <span class="small 
+                                {% if goal.days_remaining() < 3 %}text-danger
+                                {% elif goal.days_remaining() < 7 %}text-warning
+                                {% else %}text-muted{% endif %}">
+                                {{ goal.days_remaining() }} days left
+                            </span>
+                            {% else %}
+                            <span class="small text-muted">No target date</span>
+                            {% endif %}
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-tasks text-muted me-2 small"></i>
+                            <span class="small text-muted">
+                                {{ goal.tasks|length }} tasks
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="progress-circle">
+                            <svg width="80" height="80" viewBox="0 0 120 120">
+                                <circle cx="60" cy="60" r="54" fill="none" class="circle"></circle>
+                                <circle cx="60" cy="60" r="54" fill="none" class="progress" 
+                                        stroke-dasharray="339.292" 
+                                        stroke-dashoffset="{{ 339.292 * (1 - goal.progress/100)|float }}"
+                                        {% if goal.progress < 25 %}stroke="var(--taskbud-danger)"
+                                        {% elif goal.progress < 50 %}stroke="var(--taskbud-warning)"
+                                        {% elif goal.progress < 75 %}stroke="var(--taskbud-primary)"
+                                        {% else %}stroke="var(--taskbud-success)"{% endif %}>
+                                </circle>
+                            </svg>
+                            <div class="percentage">{{ goal.progress|round|int }}%</div>
+                        </div>
+                        
+                        <div class="d-flex flex-column gap-2">
+                            <a href="{{ url_for('taskbud.view_goal', goal_id=goal.id) }}" 
+                               class="taskbud-btn taskbud-btn-primary">
+                                View Goal
+                            </a>
+                            <a href="{{ url_for('taskbud.view_goal', goal_id=goal.id) }}#tasks" 
+                               class="taskbud-btn taskbud-btn-outline">
+                                See Tasks
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="taskbud-card">
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                <h3 class="empty-state-title">No Active Goals</h3>
+                <p class="empty-state-description">Start by creating your first goal</p>
+                <a href="{{ url_for('taskbud.new_goal') }}" class="taskbud-btn taskbud-btn-primary">
+                    <i class="fas fa-plus"></i> Create Goal
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Today's Tasks Section -->
+    <div class="taskbud-dashboard-section slide-in" style="animation-delay: 0.2s;">
+        <div class="section-header">
+            <h2 class="section-title">Today's Tasks</h2>
+            <a href="{{ url_for('taskbud.daily_plan') }}" class="text-primary d-flex align-items-center">
+                View Daily Plan
+                <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+        </div>
+        
+        <div class="taskbud-card">
+            {% if daily_plan and daily_plan.get_tasks() %}
+                <ul class="list-unstyled m-0 p-0">
+                    {% for task in daily_plan.get_tasks()[:5] %}
+                    <li class="task-item {% if task.completed %}task-completed{% endif %}" id="task-{{ loop.index }}">
+                        <div class="d-flex align-items-center">
+                            <div class="form-check">
+                                <input type="checkbox" 
+                                       class="form-check-input task-checkbox"
+                                       data-plan-id="{{ daily_plan.id }}"
+                                       data-task-index="{{ loop.index0 }}"
+                                       {% if task.completed %}checked{% endif %}>
+                            </div>
+                            <div class="ms-3 flex-grow-1">
+                                <p class="mb-0 small fw-medium">{{ task.title }}</p>
+                                <p class="mb-0 text-muted x-small">{{ task.goal_title }}</p>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                {% if task.estimated_hours %}
+                                <span class="text-muted small me-3">{{ task.estimated_hours }} hrs</span>
+                                {% endif %}
+                                <span class="pill 
+                                    {% if task.priority == 1 %}bg-danger text-white
+                                    {% elif task.priority == 2 %}bg-warning text-dark
+                                    {% else %}bg-primary text-white{% endif %}">
+                                    {{ {1: 'High', 2: 'Medium', 3: 'Low'}[task.priority] }}
+                                </span>
+                            </div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                
+                {% if daily_plan.get_tasks()|length > 5 %}
+                <div class="p-3 text-center border-top">
+                    <a href="{{ url_for('taskbud.daily_plan') }}" class="text-primary small">
+                        View {{ daily_plan.get_tasks()|length - 5 }} more tasks
+                    </a>
+                </div>
+                {% endif %}
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <h3 class="empty-state-title">No tasks for today</h3>
+                    <p class="empty-state-description">Generate a daily plan or add tasks to your goals</p>
+                    <form action="{{ url_for('taskbud.regenerate_daily_plan') }}" method="post">
+                        <input type="hidden" name="date" value="{{ today.strftime('%Y-%m-%d') }}">
+                        <button type="submit" class="taskbud-btn taskbud-btn-primary">
+                            Generate Daily Plan
+                        </button>
+                    </form>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Upcoming Tasks Section -->
+    <div class="taskbud-dashboard-section slide-in" style="animation-delay: 0.3s;">
+        <div class="section-header">
+            <h2 class="section-title">Upcoming Tasks</h2>
+            <a href="{{ url_for('taskbud.tasks') }}" class="text-primary d-flex align-items-center">
+                View All Tasks
+                <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+        </div>
+        
+        <div class="taskbud-card">
+            {% if upcoming_tasks %}
+                <ul class="list-unstyled m-0 p-0">
+                    {% for task in upcoming_tasks[:5] %}
+                    <li class="task-item priority-{{ task.priority }}">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <a href="{{ url_for('taskbud.view_goal', goal_id=task.goal_id) }}" 
+                                   class="mb-0 small fw-medium text-decoration-none">{{ task.title }}</a>
+                                <p class="mb-0 text-muted x-small">{{ task.goal.title }}</p>
+                            </div>
+                            <div class="d-flex align-items-center gap-3">
+                                <span class="text-muted small">
+                                    {{ task.due_date.strftime('%b %d') if task.due_date else 'No date' }}
+                                </span>
+                                <span class="pill 
+                                    {% if task.priority == 1 %}bg-danger text-white
+                                    {% elif task.priority == 2 %}bg-warning text-dark
+                                    {% else %}bg-primary text-white{% endif %}">
+                                    {{ {1: 'High', 2: 'Medium', 3: 'Low'}[task.priority] }}
+                                </span>
+                            </div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                
+                {% if upcoming_tasks|length > 5 %}
+                <div class="p-3 text-center border-top">
+                    <a href="{{ url_for('taskbud.tasks') }}" class="text-primary small">
+                        View {{ upcoming_tasks|length - 5 }} more tasks
+                    </a>
+                </div>
+                {% endif %}
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <h3 class="empty-state-title">No upcoming tasks</h3>
+                    <p class="empty-state-description">Add tasks to your goals to see them here</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize progress circles
+        const circles = document.querySelectorAll('.progress-circle');
+        circles.forEach(function(circle) {
+            const progressCircle = circle.querySelector('.progress');
+            const percentage = circle.querySelector('.percentage').textContent;
+            const percentageValue = parseInt(percentage);
+            
+            // Calculate stroke-dashoffset
+            const radius = 54;
+            const circumference = 2 * Math.PI * radius;
+            const offset = circumference * (1 - percentageValue / 100);
+            
+            progressCircle.style.strokeDasharray = circumference;
+            progressCircle.style.strokeDashoffset = offset;
+            
+            // Set color based on progress
+            if (percentageValue < 25) {
+                progressCircle.style.stroke = '#EF4444'; // Red
+            } else if (percentageValue < 50) {
+                progressCircle.style.stroke = '#F97316'; // Orange
+            } else if (percentageValue < 75) {
+                progressCircle.style.stroke = '#3B82F6'; // Blue
+            } else {
+                progressCircle.style.stroke = '#10B981'; // Green
+            }
+        });
+        
+        // Handle task completion
+        const taskCheckboxes = document.querySelectorAll('.task-checkbox');
+        taskCheckboxes.forEach(function(checkbox) {
+            checkbox.addEventListener('change', function() {
+                const planId = this.dataset.planId;
+                const taskIndex = this.dataset.taskIndex;
+                const taskItem = this.closest('.task-item');
+                
+                if (this.checked) {
+                    // Add completed class
+                    taskItem.classList.add('task-completed');
+                    taskItem.classList.add('task-complete-animation');
+                    
+                    // Send AJAX request to mark task as complete
+                    fetch('{{ url_for("taskbud.update_daily_task") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: new URLSearchParams({
+                            'plan_id': planId,
+                            'task_index': taskIndex,
+                            'completed': 'true'
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            console.log('Task marked as complete!');
+                            
+                            // After animation completes, refresh the page to update all elements
+                            setTimeout(() => {
+                                location.reload();
+                            }, 1000);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+                } else {
+                    // Remove completed class
+                    taskItem.classList.remove('task-completed');
+                    
+                    // Send AJAX request to mark task as incomplete
+                    fetch('{{ url_for("taskbud.update_daily_task") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: new URLSearchParams({
+                            'plan_id': planId,
+                            'task_index': taskIndex,
+                            'completed': 'false'
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            console.log('Task marked as incomplete!');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

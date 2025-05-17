@@ -76,12 +76,13 @@
                                 <i class="fas fa-book"></i> Course Bud
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.endpoint == 'jobs.todo' %}active{% endif %}"
-                                href="{{ url_for('jobs.todo') }}">
-                                <i class="fas fa-tasks"></i> Todo
-                            </a>
-                        </li>
+                        <!-- Add TaskBud as a premium feature -->
+<li class="nav-item">
+    <a class="nav-link {% if request.endpoint and request.endpoint.startswith('taskbud.') %}active{% endif %}"
+       href="{{ url_for('taskbud.index') }}">
+        <i class="fas fa-check-square"></i> Task Bud
+    </a>
+</li>
                         {% if current_user.is_premium %}
                         <li class="nav-item">
                             <a class="nav-link {% if request.endpoint == 'jobs.passive_income' %}active{% endif %}"

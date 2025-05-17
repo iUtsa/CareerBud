@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}Daily Plan | TaskBud{% endblock %}
+
+{% block additional_styles %}
+<style>
+    .task-item {
+        transition: all 0.3s ease;
+    }
+    
+    .task-item:hover {
+        background-color: rgba(59, 130, 246, 0.05);
+    }
+    
+    .task-completed {
+        opacity: 0.6;
+        text-decoration: line-through;
+    }
+    
+    .priority-1 {
+        border-left: 4px solid #EF4444;
+    }
+    
+    .priority-2 {
+        border-left: 4px solid #F97316;
+    }
+    
+    .priority-3 {
+        border-left: 4px solid #3B82F6;
+    }
+    
+    .progress-bar {
+        transition: width 0.3s ease;
+    }
+    
+    .date-nav {
+        transition: all 0.3s ease;
+    }
+    
+    .date-nav:hover {
+        background-color: rgba(59, 130, 246, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-800">Daily Plan</h1>
+        <form action="{{ url_for('taskbud.regenerate_daily_plan') }}" method="post" class="flex items-center">
+            <input type="hidden" name="date" value="{{ date.strftime('%Y-%m-%d') }}">
+            <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-300 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+                </svg>
+                Regenerate Plan
+            </button>
+        </form>
+    </div>
+    
+    <!-- Date Navigation -->
+    <div class="flex justify-between items-center mb-6">
+        <a href="{{ url_for('taskbud.daily_plan', date=prev_date.strftime('%Y-%m-%d')) }}" 
+           class="date-nav flex items-center px-4 py-2 rounded-lg text-gray-600">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+            </svg>
+            {{ prev_date.strftime('%b %d') }}
+        </a>
+        
+        <div class="text-center">
+            <h2 class="text-xl font-semibold text-gray-800">{{ date.strftime('%A, %B %d') }}</h2>
+            <div class="mt-2">
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div class="progress-bar bg-blue-500 h-2 rounded-full" style="width: {{ plan.completion_rate }}%"></div>
+                </div>
+                <p class="text-sm text-gray-600 mt-1">{{ plan.completion_rate|round|int }}% Complete</p>
+            </div>
+        </div>
+        
+        <a href="{{ url_for('taskbud.daily_plan', date=next_date.strftime('%Y-%m-%d')) }}" 
+           class="date-nav flex items-center px-4 py-2 rounded-lg text-gray-600">
+            {{ next_date.strftime('%b %d') }}
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+            </svg>
+        </a>
+    </div>
+    
+    <!-- Tasks List -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        {% if plan and plan.get_tasks() %}
+            <ul class="divide-y divide-gray-200">
+                {% for task in plan.get_tasks() %}
+                <li class="task-item p-4 priority-{{ task.priority }} {% if task.completed %}task-completed{% endif %}" id="task-{{ loop.index }}">
+                    <div class="flex items-center">
+                        <input type="checkbox" 
+                               class="task-checkbox h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                               data-plan-id="{{ plan.id }}"
+                               data-task-index="{{ loop.index0 }}"
+                               {% if task.completed %}checked{% endif %}>
+                        <div class="ml-3 flex-1">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">{{ task.title }}</p>
+                                    <p class="text-xs text-gray-500">
+                                        Goal: <a href="{{ url_for('taskbud.view_goal', goal_id=task.goal_id) }}" class="text-blue-500 hover:text-blue-600">{{ task.goal_title }}</a>
+                                    </p>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    {% if task.estimated_hours %}
+                                    <span class="text-xs text-gray-500">{{ task.estimated_hours }} hrs</span>
+                                    {% endif %}
+                                    <span class="px-2 py-1 text-xs rounded-full 
+                                        {% if task.priority == 1 %}bg-red-100 text-red-800
+                                        {% elif task.priority == 2 %}bg-yellow-100 text-yellow-800
+                                        {% else %}bg-blue-100 text-blue-800{% endif %}">
+                                        {{ {1: 'High', 2: 'Medium', 3: 'Low'}[task.priority] }}
+                                    </span>
+                                    <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-600">
+                                        {{ task.source|replace('_', ' ')|title }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <div class="p-8 text-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <h3 class="text-gray-700 mb-2">No tasks planned for today</h3>
+                <p class="text-gray-500 mb-4">Generate a plan to organize your tasks</p>
+                <form action="{{ url_for('taskbud.regenerate_daily_plan') }}" method="post">
+                    <input type="hidden" name="date" value="{{ date.strftime('%Y-%m-%d') }}">
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg transition-colors duration-300">
+                        Generate Plan
+                    </button>
+                </form>
+            </div>
+        {% endif %}
+    </div>
+    
+    {% if plan and plan.notes %}
+    <div class="mt-6 p-4 bg-yellow-50 rounded-lg">
+        <h3 class="text-lg font-semibold text-gray-800 mb-2">Notes</h3>
+        <p class="text-gray-600">{{ plan.notes }}</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle task completion
+        const taskCheckboxes = document.querySelectorAll('.task-checkbox');
+        const progressBar = document.querySelector('.progress-bar');
+        
+        taskCheckboxes.forEach(function(checkbox) {
+            checkbox.addEventListener('change', function() {
+                const planId = this.dataset.planId;
+                const taskIndex = this.dataset.taskIndex;
+                const taskItem = this.closest('.task-item');
+                
+                if (this.checked) {
+                    // Add completed class and animation
+                    taskItem.classList.add('task-completed');
+                    taskItem.classList.add('task-complete-animation');
+                    
+                    // Send AJAX request to mark task as complete
+                    fetch('{{ url_for('taskbud.update_daily_task') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: new URLSearchParams({
+                            'plan_id': planId,
+                            'task_index': taskIndex,
+                            'completed': 'true'
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Update progress bar
+                            progressBar.style.width = `${data.completion_rate}%`;
+                            document.querySelector('.text-gray-600').textContent = `${Math.round(data.completion_rate)}% Complete`;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        
+                        // Revert UI change on error
+                        checkbox.checked = false;
+                        taskItem.classList.remove('task-completed', 'task-complete-animation');
+                    });
+                } else {
+                    // Remove completed class
+                    taskItem.classList.remove('task-completed');
+                    
+                    // Send AJAX request to mark task as incomplete
+                    fetch('{{ url_for('taskbud.update_daily_task') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: new URLSearchParams({
+                            'plan_id': planId,
+                            'task_index': taskIndex,
+                            'completed': 'false'
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Update progress bar
+                            progressBar.style.width = `${data.completion_rate}%`;
+                            document.querySelector('.text-gray-600').textContent = `${Math.round(data.completion_rate)}% Complete`;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit Goal' if goal else 'New Goal' }} | TaskBud{% endblock %}
+
+{% block additional_styles %}
+<style>
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: #4B5563;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #D1D5DB;
+        border-radius: 0.375rem;
+        background-color: #F9FAFB;
+        color: #1F2937;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+    
+    .form-control:focus {
+        border-color: #3B82F6;
+        outline: 0;
+        box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+    }
+    
+    .form-select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #D1D5DB;
+        border-radius: 0.375rem;
+        background-color: #F9FAFB;
+        color: #1F2937;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 16px 12px;
+    }
+    
+    .form-select:focus {
+        border-color: #3B82F6;
+        outline: 0;
+        box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+    }
+    
+    .btn-primary {
+        background-color: #3B82F6;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.375rem;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.15s ease-in-out;
+    }
+    
+    .btn-primary:hover {
+        background-color: #2563EB;
+    }
+    
+    .btn-secondary {
+        background-color: #9CA3AF;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.375rem;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.15s ease-in-out;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #6B7280;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-6">
+        <a href="{{ url_for('taskbud.goals') }}" class="text-blue-500 hover:text-blue-600 transition-colors duration-300 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+            </svg>
+            Back to Goals
+        </a>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">{{ 'Edit Goal' if goal else 'Create New Goal' }}</h1>
+        
+        <form method="POST" action="{{ url_for('taskbud.edit_goal', goal_id=goal.id) if goal else url_for('taskbud.new_goal') }}">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="form-group md:col-span-2">
+                    <label for="title" class="form-label">Goal Title</label>
+                    <input type="text" id="title" name="title" class="form-control" value="{{ goal.title if goal else '' }}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="goal_type" class="form-label">Goal Type</label>
+                    <select id="goal_type" name="goal_type" class="form-select">
+                        <option value="long_term" {{ 'selected' if goal and goal.goal_type == 'long_term' else '' }}>Long Term</option>
+                        <option value="short_term" {{ 'selected' if goal and goal.goal_type == 'short_term' else '' }}>Short Term</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="priority" class="form-label">Priority</label>
+                    <select id="priority" name="priority" class="form-select">
+                        <option value="1" {{ 'selected' if goal and goal.priority == 1 else '' }}>High</option>
+                        <option value="2" {{ 'selected' if goal and goal.priority == 2 else '' }}>Medium</option>
+                        <option value="3" {{ 'selected' if goal and goal.priority == 3 else '' }}>Low</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="target_date" class="form-label">Target Date</label>
+                    <input type="date" id="target_date" name="target_date" class="form-control" 
+                           value="{{ goal.target_date.strftime('%Y-%m-%d') if goal and goal.target_date else '' }}">
+                </div>
+                
+                <div class="form-group">
+                    <label for="parent_goal_id" class="form-label">Parent Goal (Optional)</label>
+                    <select id="parent_goal_id" name="parent_goal_id" class="form-select">
+                        <option value="none">None</option>
+                        {% for parent_goal in parent_goals %}
+                            {% if goal and parent_goal.id != goal.id %}
+                            <option value="{{ parent_goal.id }}" {{ 'selected' if goal and goal.parent_goal_id == parent_goal.id else '' }}>
+                                {{ parent_goal.title }}
+                            </option>
+                            {% elif not goal %}
+                            <option value="{{ parent_goal.id }}">{{ parent_goal.title }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group md:col-span-2">
+                    <label for="description" class="form-label">Description</label>
+                    <textarea id="description" name="description" class="form-control" rows="5">{{ goal.description if goal else '' }}</textarea>
+                </div>
+            </div>
+            
+            <div class="flex justify-end space-x-3 mt-6">
+                <a href="{{ url_for('taskbud.goals') }}" class="btn-secondary">Cancel</a>
+                <button type="submit" class="btn-primary">{{ 'Update Goal' if goal else 'Create Goal' }}</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

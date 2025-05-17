@@ -7,6 +7,7 @@ import os
 from datetime import datetime
 from app.routes.resume_bp import resume_bp
 from app.routes.coursebud_bp import coursebud_bp
+from app.routes.taskbud_bp import taskbud_bp
 
 def timeago(dt):
     return humanize.naturaltime(datetime.utcnow() - dt)
@@ -63,6 +64,8 @@ def create_app(config_class=None):
     # Register the new coursebud_bp
     app.register_blueprint(coursebud_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(taskbud_bp)
+
 
     # Import models here to avoid circular imports
     from app import models

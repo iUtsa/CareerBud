@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}Statistics | TaskBud{% endblock %}
+
+{% block additional_styles %}
+<style>
+    .stats-card {
+        transition: transform 0.3s ease;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .activity-item {
+        transition: background-color 0.3s ease;
+    }
+    
+    .activity-item:hover {
+        background-color: rgba(59, 130, 246, 0.05);
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-gray-800 mb-8">Statistics & Analytics</h1>
+    
+    <!-- Overview Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="stats-card bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center mb-3">
+                <div class="rounded-full bg-blue-100 p-3 mr-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-gray-500 text-sm">Total Goals</h3>
+                    <p class="text-2xl font-bold text-gray-800">{{ stats.long_term_count + stats.short_term_count }}</p>
+                </div>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+                <span class="text-gray-500">Long Term: {{ stats.long_term_count }}</span>
+                <span class="text-gray-500">Short Term: {{ stats.short_term_count }}</span>
+            </div>
+        </div>
+        
+        <div class="stats-card bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center mb-3">
+                <div class="rounded-full bg-green-100 p-3 mr-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-gray-500 text-sm">Completed Goals</h3>
+                    <p class="text-2xl font-bold text-gray-800">{{ stats.completed_count }}</p>
+                </div>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+                <span class="text-gray-500">Active: {{ stats.active_count }}</span>
+                <span class="text-green-500">{{ ((stats.completed_count / (stats.completed_count + stats.active_count)) * 100)|round|int }}% Success Rate</span>
+            </div>
+        </div>
+        
+        <div class="stats-card bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center mb-3">
+                <div class="rounded-full bg-purple-100 p-3 mr-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-gray-500 text-sm">Task Completion</h3>
+                    <p class="text-2xl font-bold text-gray-800">{{ stats.completed_tasks }}</p>
+                </div>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+                <span class="text-gray-500">Total: {{ stats.all_tasks }}</span>
+                <span class="text-purple-500">{{ stats.completion_rate|round|int }}% Complete</span>
+            </div>
+        </div>
+        
+        <div class="stats-card bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center mb-3">
+                <div class="rounded-full bg-orange-100 p-3 mr-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-gray-500 text-sm">Average Progress</h3>
+                    <p class="text-2xl font-bold text-gray-800">{{ stats.avg_progress|round|int }}%</p>
+                </div>
+            </div>
+            <div class="text-sm text-gray-500">
+                Across all active goals
+            </div>
+        </div>
+    </div>
+    
+    <!-- Completion History Chart -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">Task Completion History</h2>
+        <div class="chart-container">
+            <canvas id="completionChart"></canvas>
+        </div>
+    </div>
+    
+    <!-- Recent Activity -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-xl font-bold text-gray-800">Recent Activity</h2>
+        </div>
+        
+        {% if activities %}
+            <ul class="divide-y divide-gray-200">
+                {% for activity in activities %}
+                <li class="activity-item p-4">
+                    <div class="flex items-start">
+                        <div class="rounded-full p-2 mr-3 
+                            {% if activity.activity_type == 'completed' %}bg-green-100
+                            {% elif activity.activity_type == 'created' %}bg-blue-100
+                            {% elif activity.activity_type == 'updated' %}bg-yellow-100
+                            {% elif activity.activity_type == 'deleted' %}bg-red-100
+                            {% else %}bg-gray-100{% endif %}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 
+                                {% if activity.activity_type == 'completed' %}text-green-500
+                                {% elif activity.activity_type == 'created' %}text-blue-500
+                                {% elif activity.activity_type == 'updated' %}text-yellow-500
+                                {% elif activity.activity_type == 'deleted' %}text-red-500
+                                {% else %}text-gray-500{% endif %}" 
+                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                {% if activity.activity_type == 'completed' %}
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                {% elif activity.activity_type == 'created' %}
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                {% elif activity.activity_type == 'updated' %}
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                {% elif activity.activity_type == 'deleted' %}
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                {% else %}
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                {% endif %}
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm text-gray-900">{{ activity.details }}</p>
+                            <p class="text-xs text-gray-500 mt-1">{{ activity.created_at|timeago }}</p>
+                        </div>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <div class="p-8 text-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <h3 class="text-gray-700 mb-2">No recent activity</h3>
+                <p class="text-gray-500">Start working on your goals to see activity here</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Prepare data for the chart
+        const dates = {{ history|map(attribute='date')|list|tojson }};
+        const counts = {{ history|map(attribute='count')|list|tojson }};
+        
+        // Create the completion history chart
+        const ctx = document.getElementById('completionChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: dates.map(date => {
+                    const d = new Date(date);
+                    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                }),
+                datasets: [{
+                    label: 'Tasks Completed',
+                    data: counts,
+                    borderColor: '#3B82F6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}
