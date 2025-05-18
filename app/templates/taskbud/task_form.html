@@ -1,220 +1,728 @@
 {% extends "base.html" %}
 
-{% block title %}Statistics | TaskBud{% endblock %}
+{% block title %}{{ 'Edit Task' if task else 'New Task' }} | TaskBud{% endblock %}
 
 {% block additional_styles %}
 <style>
-    .stats-card {
-        transition: transform 0.3s ease;
+    /* ================ VARIABLES ================ */
+    :root {
+        --taskbud-primary: #3b82f6;
+        --taskbud-success: #10b981;
+        --taskbud-warning: #f97316;
+        --taskbud-danger: #ef4444;
+        --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        --input-bg: #F9FAFB;
+        --input-border: #e2e8f0;
+        --input-focus: #3b82f6;
+        --border-color: #e5e7eb;
+        --text-primary: #1f2937;
+        --text-secondary: #6b7280;
+        --hover-overlay: rgba(0, 0, 0, 0.02);
+    }
+
+    [data-theme="dark"] {
+        --input-bg: rgba(30, 41, 59, 0.5);
+        --card-bg: #1e293b;
+        --card-gradient: linear-gradient(145deg, #1e293b, #0f172a);
+        --border-color: #334155;
+        --text-primary: #f8fafc;
+        --text-secondary: #cbd5e1;
+        --hover-overlay: rgba(255, 255, 255, 0.05);
     }
     
-    .stats-card:hover {
-        transform: translateY(-5px);
+    /* ================ LAYOUT ================ */
+    .task-form-container {
+        max-width: 800px;
+        margin: 0 auto;
     }
     
-    .activity-item {
-        transition: background-color 0.3s ease;
+    /* ================ CARDS ================ */
+    .form-card {
+        background: var(--card-bg, white);
+        border-radius: 0.75rem;
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--border-color);
+        margin-bottom: 2rem;
+    }
+
+    [data-theme="dark"] .form-card {
+        background: var(--card-gradient);
     }
     
-    .activity-item:hover {
+    .form-card:hover {
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    .form-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        background: rgba(0, 0, 0, 0.05);
+    }
+
+    [data-theme="dark"] .form-header {
+        background: rgba(0, 0, 0, 0.15);
+    }
+    
+    .form-body {
+        padding: 1.5rem;
+    }
+    
+    /* ================ FORM ELEMENTS ================ */
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    @media (min-width: 768px) {
+        .form-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .form-group.full-width {
+            grid-column: span 2;
+        }
+    }
+    
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: var(--text-primary);
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--input-border);
+        border-radius: 0.5rem;
+        background-color: var(--input-bg);
+        color: var(--text-primary);
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        border-color: var(--input-focus);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        outline: none;
+    }
+    
+    .form-select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--input-border);
+        border-radius: 0.5rem;
+        background-color: var(--input-bg);
+        color: var(--text-primary);
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 16px 12px;
+        transition: all 0.3s ease;
+    }
+    
+    .form-select:focus {
+        border-color: var(--input-focus);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        outline: none;
+    }
+    
+    /* ================ PRIORITY SELECTOR ================ */
+    .priority-selector {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .priority-option {
+        position: relative;
+    }
+    
+    .priority-option input {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    
+    .priority-label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 0.5rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .priority-label:hover {
+        transform: translateY(-2px);
+    }
+    
+    .priority-option input:checked + .priority-label {
+        transform: translateY(-2px);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .priority-1 {
+        border-color: var(--taskbud-danger);
+        background-color: rgba(239, 68, 68, 0.05);
+    }
+    
+    .priority-option input:checked + .priority-label.priority-1 {
+        background-color: rgba(239, 68, 68, 0.15);
+    }
+    
+    .priority-2 {
+        border-color: var(--taskbud-warning);
+        background-color: rgba(249, 115, 22, 0.05);
+    }
+    
+    .priority-option input:checked + .priority-label.priority-2 {
+        background-color: rgba(249, 115, 22, 0.15);
+    }
+    
+    .priority-3 {
+        border-color: var(--taskbud-primary);
         background-color: rgba(59, 130, 246, 0.05);
     }
     
-    .chart-container {
+    .priority-option input:checked + .priority-label.priority-3 {
+        background-color: rgba(59, 130, 246, 0.15);
+    }
+    
+    /* ================ GOAL INFO CARD ================ */
+    .goal-info-card {
+        background-color: rgba(59, 130, 246, 0.05);
+        border: 1px solid rgba(59, 130, 246, 0.1);
+        border-radius: 0.75rem;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .goal-info-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+    
+    .goal-progress {
+        height: 8px;
+        background-color: var(--border-color);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-top: 0.75rem;
+    }
+    
+    .goal-progress-bar {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 1s ease;
+    }
+    
+    /* ================ TAGS SYSTEM ================ */
+    .tags-input-wrapper {
         position: relative;
-        height: 300px;
+    }
+    
+    .tags-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+    
+    .tag-item {
+        display: inline-flex;
+        align-items: center;
+        background-color: var(--hover-overlay);
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.875rem;
+    }
+    
+    .tag-remove {
+        cursor: pointer;
+        margin-left: 0.5rem;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(0, 0, 0, 0.1);
+        transition: all 0.2s ease;
+    }
+    
+    .tag-remove:hover {
+        background-color: rgba(0, 0, 0, 0.2);
+    }
+    
+    /* ================ ANIMATIONS ================ */
+    @keyframes fadeIn {
+        0% { opacity: 0; }
+        100% { opacity: 1; }
+    }
+    
+    @keyframes slideIn {
+        0% { transform: translateY(20px); opacity: 0; }
+        100% { transform: translateY(0); opacity: 1; }
+    }
+    
+    .fade-in {
+        animation: fadeIn 0.5s ease-in-out;
+    }
+    
+    .slide-in {
+        animation: slideIn 0.5s ease-in-out;
+    }
+    
+    /* ================ HELPER CLASSES ================ */
+    .form-help-text {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-top: 0.25rem;
+    }
+    
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .section-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0;
+    }
+    
+    .form-actions {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border-color);
+    }
+    
+    /* ================ BUTTONS ================ */
+    .taskbud-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: none;
+    }
+    
+    .taskbud-btn-primary {
+        background-color: var(--taskbud-primary);
+        color: white;
+    }
+    
+    .taskbud-btn-primary:hover {
+        background-color: #2563eb;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(37, 99, 235, 0.2);
+    }
+    
+    .taskbud-btn-outline {
+        background-color: transparent;
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+    }
+    
+    .taskbud-btn-outline:hover {
+        border-color: var(--taskbud-primary);
+        color: var(--taskbud-primary);
+        transform: translateY(-2px);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    }
+    
+    /* ================ RESPONSIVE ADJUSTMENTS ================ */
+    @media (max-width: 768px) {
+        .section-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+        
+        .priority-selector {
+            grid-template-columns: 1fr;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .form-actions .btn-group {
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold text-gray-800 mb-8">Statistics & Analytics</h1>
-    
-    <!-- Overview Stats -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div class="stats-card bg-white rounded-lg shadow-md p-6">
-            <div class="flex items-center mb-3">
-                <div class="rounded-full bg-blue-100 p-3 mr-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                </div>
-                <div>
-                    <h3 class="text-gray-500 text-sm">Total Goals</h3>
-                    <p class="text-2xl font-bold text-gray-800">{{ stats.long_term_count + stats.short_term_count }}</p>
-                </div>
-            </div>
-            <div class="flex justify-between items-center text-sm">
-                <span class="text-gray-500">Long Term: {{ stats.long_term_count }}</span>
-                <span class="text-gray-500">Short Term: {{ stats.short_term_count }}</span>
-            </div>
-        </div>
-        
-        <div class="stats-card bg-white rounded-lg shadow-md p-6">
-            <div class="flex items-center mb-3">
-                <div class="rounded-full bg-green-100 p-3 mr-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                </div>
-                <div>
-                    <h3 class="text-gray-500 text-sm">Completed Goals</h3>
-                    <p class="text-2xl font-bold text-gray-800">{{ stats.completed_count }}</p>
-                </div>
-            </div>
-            <div class="flex justify-between items-center text-sm">
-                <span class="text-gray-500">Active: {{ stats.active_count }}</span>
-                <span class="text-green-500">{{ ((stats.completed_count / (stats.completed_count + stats.active_count)) * 100)|round|int }}% Success Rate</span>
-            </div>
-        </div>
-        
-        <div class="stats-card bg-white rounded-lg shadow-md p-6">
-            <div class="flex items-center mb-3">
-                <div class="rounded-full bg-purple-100 p-3 mr-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                </div>
-                <div>
-                    <h3 class="text-gray-500 text-sm">Task Completion</h3>
-                    <p class="text-2xl font-bold text-gray-800">{{ stats.completed_tasks }}</p>
-                </div>
-            </div>
-            <div class="flex justify-between items-center text-sm">
-                <span class="text-gray-500">Total: {{ stats.all_tasks }}</span>
-                <span class="text-purple-500">{{ stats.completion_rate|round|int }}% Complete</span>
-            </div>
-        </div>
-        
-        <div class="stats-card bg-white rounded-lg shadow-md p-6">
-            <div class="flex items-center mb-3">
-                <div class="rounded-full bg-orange-100 p-3 mr-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                    </svg>
-                </div>
-                <div>
-                    <h3 class="text-gray-500 text-sm">Average Progress</h3>
-                    <p class="text-2xl font-bold text-gray-800">{{ stats.avg_progress|round|int }}%</p>
-                </div>
-            </div>
-            <div class="text-sm text-gray-500">
-                Across all active goals
-            </div>
-        </div>
+<div class="container py-4 task-form-container fade-in">
+    <!-- Page Header -->
+    <div class="section-header mb-4">
+        <h1 class="section-title">{{ 'Edit Task' if task else 'Create New Task' }}</h1>
+        <a href="{{ url_for('taskbud.view_goal', goal_id=goal.id) }}" class="taskbud-btn taskbud-btn-outline">
+            <i class="bi bi-arrow-left me-2"></i> Back to Goal
+        </a>
     </div>
     
-    <!-- Completion History Chart -->
-    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-        <h2 class="text-xl font-bold text-gray-800 mb-4">Task Completion History</h2>
-        <div class="chart-container">
-            <canvas id="completionChart"></canvas>
-        </div>
-    </div>
-    
-    <!-- Recent Activity -->
-    <div class="bg-white rounded-lg shadow-md overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-xl font-bold text-gray-800">Recent Activity</h2>
+    <!-- Goal Info Card -->
+    <div class="goal-info-card slide-in mb-4">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h2 class="h5 mb-1">Goal: {{ goal.title }}</h2>
+                <p class="small text-muted mb-0">
+                    {{ goal.goal_type|replace('_', ' ')|title }} • 
+                    Priority: {{ {1: 'High', 2: 'Medium', 3: 'Low'}[goal.priority] }}
+                    {% if goal.target_date %} • Due: {{ goal.target_date.strftime('%b %d, %Y') }}{% endif %}
+                </p>
+            </div>
+            <div class="d-flex align-items-center">
+                <span class="small me-2">{{ goal.progress|round|int }}%</span>
+                <div class="badge rounded-pill
+                    {% if goal.status == 'active' %}bg-primary
+                    {% elif goal.status == 'completed' %}bg-success
+                    {% elif goal.status == 'on_hold' %}bg-warning
+                    {% else %}bg-secondary{% endif %}">
+                    {{ goal.status|title }}
+                </div>
+            </div>
         </div>
         
-        {% if activities %}
-            <ul class="divide-y divide-gray-200">
-                {% for activity in activities %}
-                <li class="activity-item p-4">
-                    <div class="flex items-start">
-                        <div class="rounded-full p-2 mr-3 
-                            {% if activity.activity_type == 'completed' %}bg-green-100
-                            {% elif activity.activity_type == 'created' %}bg-blue-100
-                            {% elif activity.activity_type == 'updated' %}bg-yellow-100
-                            {% elif activity.activity_type == 'deleted' %}bg-red-100
-                            {% else %}bg-gray-100{% endif %}">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 
-                                {% if activity.activity_type == 'completed' %}text-green-500
-                                {% elif activity.activity_type == 'created' %}text-blue-500
-                                {% elif activity.activity_type == 'updated' %}text-yellow-500
-                                {% elif activity.activity_type == 'deleted' %}text-red-500
-                                {% else %}text-gray-500{% endif %}" 
-                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                {% if activity.activity_type == 'completed' %}
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                {% elif activity.activity_type == 'created' %}
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                                {% elif activity.activity_type == 'updated' %}
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                {% elif activity.activity_type == 'deleted' %}
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                {% else %}
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                {% endif %}
-                            </svg>
+        <div class="goal-progress mt-3">
+            <div class="goal-progress-bar progress-animate
+                {% if goal.progress < 25 %}bg-danger
+                {% elif goal.progress < 50 %}bg-warning
+                {% elif goal.progress < 75 %}bg-primary
+                {% else %}bg-success{% endif %}"
+                style="width: {{ goal.progress }}%;">
+            </div>
+        </div>
+        
+        <!-- Stats Card - Using Bootstrap instead of Tailwind -->
+        <div class="row mt-4">
+            <div class="col-md-6 col-lg-3 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="rounded-circle bg-primary bg-opacity-10 p-2 me-3">
+                                <i class="bi bi-folder text-primary"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-muted small mb-1">Total Goals</h3>
+                                <p class="fs-4 fw-bold mb-0">
+                                    {% if stats %}
+                                        {{ stats.long_term_count + stats.short_term_count }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </p>
+                            </div>
                         </div>
-                        <div class="flex-1">
-                            <p class="text-sm text-gray-900">{{ activity.details }}</p>
-                            <p class="text-xs text-gray-500 mt-1">{{ activity.created_at|timeago }}</p>
+                        <div class="d-flex justify-content-between align-items-center small">
+                            <span class="text-muted">
+                                {% if stats %}
+                                    Long Term: {{ stats.long_term_count }}
+                                {% else %}
+                                    Long Term: -
+                                {% endif %}
+                            </span>
+                            <span class="text-muted">
+                                {% if stats %}
+                                    Short Term: {{ stats.short_term_count }}
+                                {% else %}
+                                    Short Term: -
+                                {% endif %}
+                            </span>
                         </div>
                     </div>
-                </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <div class="p-8 text-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <h3 class="text-gray-700 mb-2">No recent activity</h3>
-                <p class="text-gray-500">Start working on your goals to see activity here</p>
+                </div>
             </div>
-        {% endif %}
+        </div>
+    </div>
+    
+    <!-- Task Form Card -->
+    <div class="form-card slide-in">
+        <div class="form-header">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-{% if task %}pencil-square{% else %}plus-circle{% endif %} text-primary me-3 fs-4"></i>
+                <div>
+                    <h2 class="h4 mb-0">{{ 'Update task details' if task else 'Add a new task' }}</h2>
+                    <p class="text-muted mb-0 small">{{ 'Edit the task information below' if task else 'Fill in the details for your new task' }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-body">
+            <form method="POST" id="taskForm">
+                <!-- CSRF Token -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}"/>
+                
+                <!-- Task Title (Full Width) -->
+                <div class="mb-4">
+                    <label for="title" class="form-label">Task Title</label>
+                    <input type="text" id="title" name="title" class="form-control" 
+                           value="{{ task.title if task else '' }}" required
+                           placeholder="What needs to be done?">
+                    <div class="form-help-text">A clear, specific title helps you know exactly what to do</div>
+                </div>
+                
+                <!-- Form Grid (2 columns on desktop) -->
+                <div class="row">
+                    <!-- Priority Selection -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Priority Level</label>
+                        <div class="priority-selector">
+                            <div class="priority-option">
+                                <input type="radio" id="priority_1" name="priority" value="1"
+                                       {% if task and task.priority == 1 %}checked{% endif %}>
+                                <label for="priority_1" class="priority-label priority-1">
+                                    <span class="priority-indicator priority-1"></span>
+                                    High
+                                </label>
+                            </div>
+                            <div class="priority-option">
+                                <input type="radio" id="priority_2" name="priority" value="2"
+                                       {% if not task or (task and task.priority == 2) %}checked{% endif %}>
+                                <label for="priority_2" class="priority-label priority-2">
+                                    <span class="priority-indicator priority-2"></span>
+                                    Medium
+                                </label>
+                            </div>
+                            <div class="priority-option">
+                                <input type="radio" id="priority_3" name="priority" value="3"
+                                       {% if task and task.priority == 3 %}checked{% endif %}>
+                                <label for="priority_3" class="priority-label priority-3">
+                                    <span class="priority-indicator priority-3"></span>
+                                    Low
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Due Date -->
+                    <div class="col-md-6 mb-3">
+                        <label for="due_date" class="form-label">Due Date</label>
+                        <input type="date" id="due_date" name="due_date" class="form-control" 
+                               value="{{ task.due_date.strftime('%Y-%m-%d') if task and task.due_date else '' }}">
+                        <div class="form-help-text">When does this task need to be completed?</div>
+                    </div>
+                    
+                    <!-- Estimated Hours -->
+                    <div class="col-md-6 mb-3">
+                        <label for="estimated_hours" class="form-label">Estimated Hours</label>
+                        <input type="number" id="estimated_hours" name="estimated_hours" class="form-control" 
+                               min="0.1" step="0.1" max="40"
+                               value="{{ task.estimated_hours if task and task.estimated_hours else '1.0' }}">
+                        <div class="form-help-text">How long do you think this will take?</div>
+                    </div>
+                    
+                    <!-- Difficulty -->
+                    <div class="col-md-6 mb-3">
+                        <label for="difficulty" class="form-label">Difficulty Level</label>
+                        <select id="difficulty" name="difficulty" class="form-select">
+                            <option value="1" {% if task and task.difficulty == 1 %}selected{% endif %}>Easy</option>
+                            <option value="2" {% if not task or (task and task.difficulty == 2) %}selected{% endif %}>Medium</option>
+                            <option value="3" {% if task and task.difficulty == 3 %}selected{% endif %}>Hard</option>
+                        </select>
+                        <div class="form-help-text">How challenging is this task?</div>
+                    </div>
+                    
+                    <!-- Status - only for editing -->
+                    {% if task %}
+                    <div class="col-md-6 mb-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select id="status" name="status" class="form-select">
+                            <option value="pending" {{ 'selected' if task and task.status == 'pending' else '' }}>Pending</option>
+                            <option value="in_progress" {{ 'selected' if task and task.status == 'in_progress' else '' }}>In Progress</option>
+                            <option value="completed" {{ 'selected' if task and task.status == 'completed' else '' }}>Completed</option>
+                        </select>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Tags -->
+                    <div class="col-12 mb-3">
+                        <label for="tags" class="form-label">Tags</label>
+                        <div class="tags-input-wrapper">
+                            <input type="text" id="tags-input" class="form-control" 
+                                   placeholder="Add tags (comma separated)">
+                            <input type="hidden" id="tags" name="tags" value="{{ task.tags if task else '' }}">
+                            <div class="tags-container" id="tags-container">
+                                <!-- Tags will be added here by JavaScript -->
+                            </div>
+                        </div>
+                        <div class="form-help-text">Add tags to categorize and filter tasks</div>
+                    </div>
+                    
+                    <!-- Description -->
+                    <div class="col-12 mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea id="description" name="description" class="form-control" rows="4" 
+                                  placeholder="Add more details about this task...">{{ task.description if task else '' }}</textarea>
+                        <div class="form-help-text">Optional - provide additional information or notes</div>
+                    </div>
+                </div>
+                
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <div>
+                        {% if task %}
+                        <div class="form-help-text mb-2">
+                            <i class="bi bi-info-circle"></i> Created on: {{ task.created_at.strftime('%b %d, %Y') }}
+                            {% if task.updated_at %}
+                            | Last updated: {{ task.updated_at.strftime('%b %d, %Y') }}
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="{{ url_for('taskbud.view_goal', goal_id=goal.id) }}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-{% if task %}save{% else %}plus{% endif %} me-2"></i>
+                            {{ 'Update Task' if task else 'Create Task' }}
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Prepare data for the chart
-        const dates = {{ history|map(attribute='date')|list|tojson }};
-        const counts = {{ history|map(attribute='count')|list|tojson }};
+        // Form validation
+        const taskForm = document.getElementById('taskForm');
+        const titleInput = document.getElementById('title');
         
-        // Create the completion history chart
-        const ctx = document.getElementById('completionChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: dates.map(date => {
-                    const d = new Date(date);
-                    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                }),
-                datasets: [{
-                    label: 'Tasks Completed',
-                    data: counts,
-                    borderColor: '#3B82F6',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            stepSize: 1
-                        }
+        if (taskForm) {
+            taskForm.addEventListener('submit', function(e) {
+                let isValid = true;
+                
+                // Basic validation - Title must not be empty
+                if (!titleInput.value.trim()) {
+                    titleInput.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    titleInput.classList.remove('is-invalid');
+                }
+                
+                if (!isValid) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+        }
+        
+        // Tags handling
+        const tagsInput = document.getElementById('tags-input');
+        const tagsHidden = document.getElementById('tags');
+        const tagsContainer = document.getElementById('tags-container');
+        
+        // Initialize tags from existing value
+        if (tagsHidden && tagsContainer) {
+            const existingTags = tagsHidden.value.split(',').filter(tag => tag.trim() !== '');
+            
+            existingTags.forEach(tag => {
+                addTagElement(tag.trim());
+            });
+            
+            // Handle adding new tags
+            tagsInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ',') {
+                    e.preventDefault();
+                    
+                    const tagText = this.value.trim();
+                    if (tagText) {
+                        addTagElement(tagText);
+                        this.value = '';
+                        updateHiddenField();
                     }
                 }
+            });
+            
+            tagsInput.addEventListener('blur', function() {
+                const tagText = this.value.trim();
+                if (tagText) {
+                    addTagElement(tagText);
+                    this.value = '';
+                    updateHiddenField();
+                }
+            });
+        }
+        
+        function addTagElement(tagText) {
+            // Skip if tag is already added
+            const existingTags = Array.from(tagsContainer.querySelectorAll('.tag-item')).map(tag => 
+                tag.getAttribute('data-tag').toLowerCase()
+            );
+            
+            if (existingTags.includes(tagText.toLowerCase())) {
+                return;
             }
-        });
+            
+            const tagElement = document.createElement('div');
+            tagElement.className = 'tag-item';
+            tagElement.setAttribute('data-tag', tagText);
+            tagElement.innerHTML = `
+                <span>${tagText}</span>
+                <span class="tag-remove">&times;</span>
+            `;
+            
+            tagElement.querySelector('.tag-remove').addEventListener('click', function() {
+                tagElement.remove();
+                updateHiddenField();
+            });
+            
+            tagsContainer.appendChild(tagElement);
+        }
+        
+        function updateHiddenField() {
+            const tags = Array.from(tagsContainer.querySelectorAll('.tag-item')).map(tag => 
+                tag.getAttribute('data-tag')
+            );
+            
+            tagsHidden.value = tags.join(',');
+        }
+        
+        // Animate progress bar if present
+        const progressBar = document.querySelector('.goal-progress-bar');
+        if (progressBar) {
+            const targetWidth = progressBar.style.width;
+            progressBar.style.width = '0';
+            
+            setTimeout(() => {
+                progressBar.style.transition = 'width 1s ease';
+                progressBar.style.width = targetWidth;
+            }, 100);
+        }
     });
 </script>
 {% endblock %}

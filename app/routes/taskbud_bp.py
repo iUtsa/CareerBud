@@ -6,6 +6,7 @@ from app.models import get_user_goals, get_user_tasks, get_overdue_tasks, get_up
 from app.models import generate_daily_plan, get_goal_statistics
 from datetime import datetime, timedelta
 import re
+from app.ai_task_engine import enhanced_generate_tasks, enhanced_generate_daily_plan
 
 taskbud_bp = Blueprint('taskbud', __name__)
 
@@ -615,122 +616,10 @@ def api_generate_tasks():
     """API endpoint to generate tasks for a goal using AI."""
     goal_id = request.json.get('goal_id')
     
-    goal = Goal.query.filter_by(
-        id=goal_id,
-        user_id=current_user.id
-    ).first_or_404()
+    # Use the enhanced AI function instead of the original implementation
+    result = enhanced_generate_tasks(goal_id, current_user.id)
     
-    # Extract keywords from goal title and description
-    keywords = re.findall(r'\b\w{3,}\b', (goal.title + ' ' + (goal.description or '')).lower())
-    
-    # Generate tasks based on goal type and keywords
-    suggested_tasks = []
-    
-    if 'learn' in keywords or 'study' in keywords:
-        suggested_tasks = [
-            {
-                'title': f"Research resources for {goal.title}",
-                'priority': 1,
-                'estimated_hours': 2.0,
-                'tags': 'research,planning'
-            },
-            {
-                'title': f"Create study plan for {goal.title}",
-                'priority': 1,
-                'estimated_hours': 1.5,
-                'tags': 'planning,organization'
-            },
-            {
-                'title': f"Complete first module of {goal.title}",
-                'priority': 2,
-                'estimated_hours': 3.0,
-                'tags': 'learning,progress'
-            }
-        ]
-    elif 'project' in keywords:
-        suggested_tasks = [
-            {
-                'title': f"Define requirements for {goal.title}",
-                'priority': 1,
-                'estimated_hours': 2.0,
-                'tags': 'planning,requirements'
-            },
-            {
-                'title': f"Create timeline for {goal.title}",
-                'priority': 1,
-                'estimated_hours': 1.0,
-                'tags': 'planning,timeline'
-            },
-            {
-                'title': f"Identify resources needed for {goal.title}",
-                'priority': 2,
-                'estimated_hours': 1.5,
-                'tags': 'resources,planning'
-            }
-        ]
-    elif 'fitness' in keywords or 'exercise' in keywords or 'workout' in keywords:
-        suggested_tasks = [
-            {
-                'title': f"Research workout routines for {goal.title}",
-                'priority': 1,
-                'estimated_hours': 1.0,
-                'tags': 'research,fitness'
-            },
-            {
-                'title': f"Create workout schedule for {goal.title}",
-                'priority': 1,
-                'estimated_hours': 1.0,
-                'tags': 'planning,fitness'
-            },
-            {
-                'title': f"Complete first week of {goal.title} workouts",
-                'priority': 2,
-                'estimated_hours': 3.0,
-                'tags': 'fitness,progress'
-            }
-        ]
-    else:
-        # Generic tasks if no specific category is detected
-        suggested_tasks = [
-            {
-                'title': f"Research and planning for {goal.title}",
-                'priority': 1,
-                'estimated_hours': 2.0,
-                'tags': 'research,planning'
-            },
-            {
-                'title': f"Identify first steps for {goal.title}",
-                'priority': 1,
-                'estimated_hours': 1.0,
-                'tags': 'planning,first steps'
-            },
-            {
-                'title': f"Set milestones for {goal.title}",
-                'priority': 2,
-                'estimated_hours': 1.5,
-                'tags': 'planning,milestones'
-            }
-        ]
-    
-    # Calculate due dates based on goal target date
-    target_date = goal.target_date
-    today = datetime.utcnow()
-    
-    for i, task in enumerate(suggested_tasks):
-        if target_date:
-            # Calculate days between today and target date
-            days_range = (target_date - today).days
-            
-            if days_range > 0:
-                # Distribute tasks across the available time
-                # First tasks due sooner, later tasks due closer to the target date
-                due_days = max(1, int(days_range * (i+1) / (len(suggested_tasks) + 1)))
-                task['due_date'] = (today + timedelta(days=due_days)).strftime('%Y-%m-%d')
-    
-    return jsonify({
-        'success': True,
-        'tasks': suggested_tasks
-    })
+    return jsonify(result)
 
 @taskbud_bp.route('/taskbud/api/create-suggested-tasks', methods=['POST'])
 @login_required

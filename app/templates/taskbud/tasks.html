@@ -1,159 +1,347 @@
 {% extends "base.html" %}
 
-{% block title %}{{ 'Edit Goal' if goal else 'New Goal' }} | TaskBud{% endblock %}
+{% block title %}Tasks | TaskBud{% endblock %}
 
 {% block additional_styles %}
 <style>
-    .form-group {
+    .card {
+        border: none;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        transition: box-shadow 0.3s ease-in-out;
+    }
+    
+    .card:hover {
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    
+    .card-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+        padding: 1rem 1.25rem;
+    }
+    
+    .task-item {
+        border-left: 4px solid #dee2e6;
+        transition: all 0.2s ease-in-out;
+    }
+    
+    .task-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .task-item.priority-1 {
+        border-left-color: #dc3545; /* High priority - red */
+    }
+    
+    .task-item.priority-2 {
+        border-left-color: #fd7e14; /* Medium priority - orange */
+    }
+    
+    .task-item.priority-3 {
+        border-left-color: #0dcaf0; /* Low priority - blue */
+    }
+    
+    .task-item.completed {
+        border-left-color: #198754; /* Completed - green */
+        background-color: rgba(25, 135, 84, 0.05);
+    }
+    
+    .task-title {
+        font-weight: 500;
+    }
+    
+    .task-completed .task-title {
+        text-decoration: line-through;
+        color: #6c757d;
+    }
+    
+    .task-meta {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    
+    .task-actions {
+        visibility: hidden;
+        opacity: 0;
+        transition: all 0.2s ease-in-out;
+    }
+    
+    .task-item:hover .task-actions {
+        visibility: visible;
+        opacity: 1;
+    }
+    
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .filter-controls {
+        background-color: #f8f9fa;
+        border-radius: 0.25rem;
+        padding: 1rem;
         margin-bottom: 1.5rem;
     }
     
-    .form-label {
-        display: block;
-        margin-bottom: 0.5rem;
+    .empty-state {
+        padding: 3rem;
+        text-align: center;
+        color: #6c757d;
+    }
+    
+    .empty-state-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.3;
+    }
+    
+    .goal-badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
         font-weight: 500;
-        color: #4B5563;
+        border-radius: 0.25rem;
+        background-color: #e9ecef;
+        text-decoration: none;
+        color: #212529;
+        transition: all 0.2s ease-in-out;
     }
     
-    .form-control {
-        width: 100%;
-        padding: 0.75rem;
-        border: 1px solid #D1D5DB;
-        border-radius: 0.375rem;
-        background-color: #F9FAFB;
-        color: #1F2937;
-        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-    }
-    
-    .form-control:focus {
-        border-color: #3B82F6;
-        outline: 0;
-        box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
-    }
-    
-    .form-select {
-        width: 100%;
-        padding: 0.75rem;
-        border: 1px solid #D1D5DB;
-        border-radius: 0.375rem;
-        background-color: #F9FAFB;
-        color: #1F2937;
-        appearance: none;
-        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
-        background-repeat: no-repeat;
-        background-position: right 0.75rem center;
-        background-size: 16px 12px;
-    }
-    
-    .form-select:focus {
-        border-color: #3B82F6;
-        outline: 0;
-        box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
-    }
-    
-    .btn-primary {
-        background-color: #3B82F6;
-        color: white;
-        padding: 0.75rem 1.5rem;
-        border-radius: 0.375rem;
-        font-weight: 500;
-        border: none;
-        cursor: pointer;
-        transition: background-color 0.15s ease-in-out;
-    }
-    
-    .btn-primary:hover {
-        background-color: #2563EB;
-    }
-    
-    .btn-secondary {
-        background-color: #9CA3AF;
-        color: white;
-        padding: 0.75rem 1.5rem;
-        border-radius: 0.375rem;
-        font-weight: 500;
-        border: none;
-        cursor: pointer;
-        transition: background-color 0.15s ease-in-out;
-    }
-    
-    .btn-secondary:hover {
-        background-color: #6B7280;
+    .goal-badge:hover {
+        background-color: #dee2e6;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <div class="mb-6">
-        <a href="{{ url_for('taskbud.goals') }}" class="text-blue-500 hover:text-blue-600 transition-colors duration-300 flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-            </svg>
-            Back to Goals
-        </a>
-    </div>
-    
-    <div class="bg-white rounded-lg shadow-md p-6">
-        <h1 class="text-2xl font-bold text-gray-800 mb-6">{{ 'Edit Goal' if goal else 'Create New Goal' }}</h1>
-        
-        <form method="POST" action="{{ url_for('taskbud.edit_goal', goal_id=goal.id) if goal else url_for('taskbud.new_goal') }}">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="form-group md:col-span-2">
-                    <label for="title" class="form-label">Goal Title</label>
-                    <input type="text" id="title" name="title" class="form-control" value="{{ goal.title if goal else '' }}" required>
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">All Tasks</h4>
                 </div>
                 
-                <div class="form-group">
-                    <label for="goal_type" class="form-label">Goal Type</label>
-                    <select id="goal_type" name="goal_type" class="form-select">
-                        <option value="long_term" {{ 'selected' if goal and goal.goal_type == 'long_term' else '' }}>Long Term</option>
-                        <option value="short_term" {{ 'selected' if goal and goal.goal_type == 'short_term' else '' }}>Short Term</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="priority" class="form-label">Priority</label>
-                    <select id="priority" name="priority" class="form-select">
-                        <option value="1" {{ 'selected' if goal and goal.priority == 1 else '' }}>High</option>
-                        <option value="2" {{ 'selected' if goal and goal.priority == 2 else '' }}>Medium</option>
-                        <option value="3" {{ 'selected' if goal and goal.priority == 3 else '' }}>Low</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="target_date" class="form-label">Target Date</label>
-                    <input type="date" id="target_date" name="target_date" class="form-control" 
-                           value="{{ goal.target_date.strftime('%Y-%m-%d') if goal and goal.target_date else '' }}">
-                </div>
-                
-                <div class="form-group">
-                    <label for="parent_goal_id" class="form-label">Parent Goal (Optional)</label>
-                    <select id="parent_goal_id" name="parent_goal_id" class="form-select">
-                        <option value="none">None</option>
-                        {% for parent_goal in parent_goals %}
-                            {% if goal and parent_goal.id != goal.id %}
-                            <option value="{{ parent_goal.id }}" {{ 'selected' if goal and goal.parent_goal_id == parent_goal.id else '' }}>
-                                {{ parent_goal.title }}
-                            </option>
-                            {% elif not goal %}
-                            <option value="{{ parent_goal.id }}">{{ parent_goal.title }}</option>
-                            {% endif %}
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <div class="form-group md:col-span-2">
-                    <label for="description" class="form-label">Description</label>
-                    <textarea id="description" name="description" class="form-control" rows="5">{{ goal.description if goal else '' }}</textarea>
+                <div class="card-body">
+                    <!-- Task Filter Controls -->
+                    <div class="filter-controls mb-4">
+                        <div class="row">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <label class="form-label">Filter by Status</label>
+                                <div class="btn-group w-100" role="group" aria-label="Task status filters">
+                                    <a href="{{ url_for('taskbud.tasks') }}" class="btn btn-outline-secondary {{ 'active' if not status }}">
+                                        All
+                                    </a>
+                                    <a href="{{ url_for('taskbud.tasks', status='pending') }}" class="btn btn-outline-secondary {{ 'active' if status == 'pending' }}">
+                                        Pending
+                                    </a>
+                                    <a href="{{ url_for('taskbud.tasks', status='in_progress') }}" class="btn btn-outline-secondary {{ 'active' if status == 'in_progress' }}">
+                                        In Progress
+                                    </a>
+                                    <a href="{{ url_for('taskbud.tasks', status='completed') }}" class="btn btn-outline-secondary {{ 'active' if status == 'completed' }}">
+                                        Completed
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Filter by Date</label>
+                                <div class="input-group">
+                                    <input type="date" id="due_date_filter" class="form-control" value="{{ due_date.strftime('%Y-%m-%d') if due_date else '' }}">
+                                    <button type="button" id="apply_date_filter" class="btn btn-outline-secondary">Apply</button>
+                                    {% if due_date %}
+                                        <a href="{{ url_for('taskbud.tasks', status=status) }}" class="btn btn-outline-danger">Clear</a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tasks List -->
+                    {% if tasks %}
+                        <div class="list-group">
+                            {% for task in tasks %}
+                                <div class="list-group-item task-item priority-{{ task.priority }} {{ 'completed' if task.status == 'completed' }}">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <div class="d-flex align-items-start">
+                                            {% if task.status != 'completed' %}
+                                                <form method="POST" action="{{ url_for('taskbud.complete_task', task_id=task.id) }}" class="me-2 task-complete-form">
+                                                    <button type="submit" class="btn btn-sm btn-outline-success" title="Mark as complete">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-circle" viewBox="0 0 16 16">
+                                                            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                                            <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/>
+                                                        </svg>
+                                                    </button>
+                                                </form>
+                                            {% else %}
+                                                <div class="me-2">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-circle-fill text-success" viewBox="0 0 16 16">
+                                                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                                                    </svg>
+                                                </div>
+                                            {% endif %}
+                                            <div>
+                                                <h5 class="mb-1 task-title {{ 'task-completed' if task.status == 'completed' }}">{{ task.title }}</h5>
+                                                <div class="task-meta">
+                                                    <!-- Goal Link -->
+                                                    <a href="{{ url_for('taskbud.view_goal', goal_id=task.goal_id) }}" class="goal-badge me-2">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-flag" viewBox="0 0 16 16">
+                                                            <path d="M14.778.085A.5.5 0 0 1 15 .5V8a.5.5 0 0 1-.314.464L14.5 8l.186.464-.003.001-.006.003-.023.009a12.435 12.435 0 0 1-.397.15c-.264.095-.631.223-1.047.35-.816.252-1.879.523-2.71.523-.847 0-1.548-.28-2.158-.525l-.028-.01C7.68 8.71 7.14 8.5 6.5 8.5c-.7 0-1.638.23-2.437.477A19.626 19.626 0 0 0 3 9.342V15.5a.5.5 0 0 1-1 0V.5a.5.5 0 0 1 1 0v.282c.226-.079.496-.17.79-.26C4.606.272 5.67 0 6.5 0c.84 0 1.524.277 2.121.519l.043.018C9.286.788 9.828 1 10.5 1c.7 0 1.638-.23 2.437-.477a19.587 19.587 0 0 0 1.349-.476l.019-.007.004-.002h.001"/>
+                                                        </svg>
+                                                        {{ task.goal.title }}
+                                                    </a>
+                                                    
+                                                    {% if task.due_date %}
+                                                        <span class="me-2">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-calendar" viewBox="0 0 16 16">
+                                                                <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
+                                                            </svg>
+                                                            Due: {{ task.due_date.strftime('%b %d, %Y') }}
+                                                        </span>
+                                                    {% endif %}
+                                                    <span class="me-2">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-clock" viewBox="0 0 16 16">
+                                                            <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
+                                                            <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
+                                                        </svg>
+                                                        {{ task.estimated_hours }} hour{% if task.estimated_hours != 1 %}s{% endif %}
+                                                    </span>
+                                                    {% if task.tags %}
+                                                        <span>
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-tags" viewBox="0 0 16 16">
+                                                                <path d="M3 2v4.586l7 7L14.586 9l-7-7H3zM2 2a1 1 0 0 1 1-1h4.586a1 1 0 0 1 .707.293l7 7a1 1 0 0 1 0 1.414l-4.586 4.586a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 2 6.586V2z"/>
+                                                                <path d="M5.5 5a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1zm0 1a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM1 7.086a1 1 0 0 0 .293.707L8.75 15.25l-.043.043a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 0 7.586V3a1 1 0 0 1 1-1v5.086z"/>
+                                                            </svg>
+                                                            {{ task.tags }}
+                                                        </span>
+                                                    {% endif %}
+                                                </div>
+                                                {% if task.description %}
+                                                    <p class="mb-0 mt-1 text-muted">{{ task.description }}</p>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="d-flex align-items-center">
+                                            <span class="status-badge badge 
+                                                {%- if task.status == 'pending' %} bg-warning text-dark
+                                                {%- elif task.status == 'in_progress' %} bg-primary
+                                                {%- elif task.status == 'completed' %} bg-success
+                                                {%- elif task.status == 'overdue' %} bg-danger
+                                                {%- elif task.status == 'cancelled' %} bg-secondary
+                                                {%- else %} bg-info
+                                                {%- endif %}">
+                                                {{ task.status|replace('_', ' ')|title }}
+                                            </span>
+                                            <div class="task-actions ms-3">
+                                                <a href="{{ url_for('taskbud.edit_task', task_id=task.id) }}" class="btn btn-sm btn-outline-primary" title="Edit task">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-pencil" viewBox="0 0 16 16">
+                                                        <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
+                                                    </svg>
+                                                </a>
+                                                <form method="POST" action="{{ url_for('taskbud.delete_task', task_id=task.id) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this task?');">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete task">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6Z"/>
+                                                            <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1ZM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118ZM2.5 3h11V2h-11v1Z"/>
+                                                        </svg>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <div class="empty-state-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" class="bi bi-list-task" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M2 2.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5V3a.5.5 0 0 0-.5-.5H2zM3 3H2v1h1V3z"/>
+                                    <path d="M5 3.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM5.5 7a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1h-9zm0 4a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1h-9z"/>
+                                    <path fill-rule="evenodd" d="M1.5 7a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H2a.5.5 0 0 1-.5-.5V7zM2 7h1v1H2V7zm0 3.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5H2zm1 .5H2v1h1v-1z"/>
+                                </svg>
+                            </div>
+                            <h5>No tasks found</h5>
+                            <p>
+                                {% if status %}
+                                    No {{ status }} tasks found. 
+                                    <a href="{{ url_for('taskbud.tasks') }}">View all tasks</a>
+                                {% elif due_date %}
+                                    No tasks due on {{ due_date.strftime('%b %d, %Y') }}. 
+                                    <a href="{{ url_for('taskbud.tasks') }}">View all tasks</a>
+                                {% else %}
+                                    You don't have any tasks yet. Create a goal first, then add tasks to it.
+                                {% endif %}
+                            </p>
+                            <a href="{{ url_for('taskbud.goals') }}" class="btn btn-primary">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-flag" viewBox="0 0 16 16">
+                                    <path d="M14.778.085A.5.5 0 0 1 15 .5V8a.5.5 0 0 1-.314.464L14.5 8l.186.464-.003.001-.006.003-.023.009a12.435 12.435 0 0 1-.397.15c-.264.095-.631.223-1.047.35-.816.252-1.879.523-2.71.523-.847 0-1.548-.28-2.158-.525l-.028-.01C7.68 8.71 7.14 8.5 6.5 8.5c-.7 0-1.638.23-2.437.477A19.626 19.626 0 0 0 3 9.342V15.5a.5.5 0 0 1-1 0V.5a.5.5 0 0 1 1 0v.282c.226-.079.496-.17.79-.26C4.606.272 5.67 0 6.5 0c.84 0 1.524.277 2.121.519l.043.018C9.286.788 9.828 1 10.5 1c.7 0 1.638-.23 2.437-.477a19.587 19.587 0 0 0 1.349-.476l.019-.007.004-.002h.001"/>
+                                </svg>
+                                View Goals
+                            </a>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
-            
-            <div class="flex justify-end space-x-3 mt-6">
-                <a href="{{ url_for('taskbud.goals') }}" class="btn-secondary">Cancel</a>
-                <button type="submit" class="btn-primary">{{ 'Update Goal' if goal else 'Create Goal' }}</button>
-            </div>
-        </form>
+        </div>
     </div>
 </div>
+
+<!-- JavaScript for date filter -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const applyDateFilterBtn = document.getElementById('apply_date_filter');
+        const dueDateFilter = document.getElementById('due_date_filter');
+        
+        applyDateFilterBtn.addEventListener('click', function() {
+            const selectedDate = dueDateFilter.value;
+            if (selectedDate) {
+                let url = "{{ url_for('taskbud.tasks') }}";
+                const status = "{{ status if status else '' }}";
+                
+                // Add parameters
+                url = url + '?due_date=' + selectedDate;
+                if (status) {
+                    url = url + '&status=' + status;
+                }
+                
+                window.location.href = url;
+            }
+        });
+        
+        // Also enable pressing Enter on the date input
+        dueDateFilter.addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') {
+                applyDateFilterBtn.click();
+            }
+        });
+        
+        // JavaScript for AJAX task completion
+        const taskCompleteForms = document.querySelectorAll('.task-complete-form');
+        
+        taskCompleteForms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formAction = this.getAttribute('action');
+                
+                fetch(formAction, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Refresh the page to show updated task
+                        location.reload();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            });
+        });
+    });
+</script>
 {% endblock %}
