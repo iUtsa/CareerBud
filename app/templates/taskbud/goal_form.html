@@ -336,6 +336,13 @@
     
     <div class="taskbud-form-body">
         <form method="POST" action="{{ url_for('taskbud.edit_goal', goal_id=goal.id) if goal else url_for('taskbud.new_goal') }}" id="goalForm">
+            <!-- Include CSRF token using form.hidden_tag() -->
+            {% if form %}
+                {{ form.hidden_tag() }}
+            {% else %}
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            {% endif %}
+            
             <div class="form-group full-width mb-4">
                 <label for="title" class="form-label">Goal Title</label>
                 <input type="text" id="title" name="title" class="form-control" 

@@ -1,9 +1,11 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
+from flask_wtf.csrf import CSRFProtect, generate_csrf
 from app.models import Goal, Task, DailyPlan, TaskActivity, db
 from app.models import get_user_goals, get_user_tasks, get_overdue_tasks, get_upcoming_tasks
 from app.models import generate_daily_plan, get_goal_statistics
 from datetime import datetime, timedelta
+import re
 
 taskbud_bp = Blueprint('taskbud', __name__)
 
@@ -127,7 +129,8 @@ def new_goal():
     return render_template(
         'taskbud/goal_form.html',
         parent_goals=parent_goals,
-        goal=None
+        goal=None,
+        csrf_token=generate_csrf()
     )
 
 @taskbud_bp.route('/taskbud/goals/<int:goal_id>')
@@ -143,7 +146,7 @@ def view_goal(goal_id):
     sub_goals = Goal.query.filter_by(parent_goal_id=goal.id).all()
     
     return render_template(
-        'taskbud/view_goal.html',
+        'taskbud/view_goals.html',
         goal=goal,
         tasks=tasks,
         sub_goals=sub_goals
@@ -202,7 +205,8 @@ def edit_goal(goal_id):
     return render_template(
         'taskbud/goal_form.html',
         goal=goal,
-        parent_goals=parent_goals
+        parent_goals=parent_goals,
+        csrf_token=generate_csrf()
     )
 
 @taskbud_bp.route('/taskbud/goals/<int:goal_id>/delete', methods=['POST'])
@@ -338,7 +342,8 @@ def new_task(goal_id):
     return render_template(
         'taskbud/task_form.html',
         goal=goal,
-        task=None
+        task=None,
+        csrf_token=generate_csrf()
     )
 
 @taskbud_bp.route('/taskbud/tasks/<int:task_id>/edit', methods=['GET', 'POST'])
@@ -391,7 +396,8 @@ def edit_task(task_id):
     return render_template(
         'taskbud/task_form.html',
         task=task,
-        goal=task.goal
+        goal=task.goal,
+        csrf_token=generate_csrf()
     )
 
 @taskbud_bp.route('/taskbud/tasks/<int:task_id>/delete', methods=['POST'])
@@ -570,9 +576,9 @@ def statistics():
     ).order_by(TaskActivity.created_at.desc()).limit(20).all()
     
     # Get completion history for the entire year
-    today = datetime.utcnow().date()  # May 17, 2025
-    start_date = datetime(today.year, 1, 1).date()  # Jan 1, 2025
-    days = (today - start_date).days + 1  # Number of days from Jan 1 to today
+    today = datetime.utcnow().date()
+    start_date = datetime(today.year, 1, 1).date()
+    days = (today - start_date).days + 1
     history = []
     
     # Pre-populate history with all dates from Jan 1 to today
@@ -730,6 +736,13 @@ def api_generate_tasks():
 @login_required
 def api_create_suggested_tasks():
     """API endpoint to create suggested tasks."""
+    # Validate CSRF token for API endpoints
+    if request.json.get('csrf_token') != generate_csrf():
+        return jsonify({
+            'success': False,
+            'error': 'Invalid CSRF token'
+        }), 403
+        
     goal_id = request.json.get('goal_id')
     tasks = request.json.get('tasks', [])
     
@@ -783,3 +796,8 @@ def api_create_suggested_tasks():
         'count': len(created_tasks),
         'redirect': url_for('taskbud.view_goal', goal_id=goal.id)
     })
+
+# Initialize CSRF protection for the blueprint
+def init_csrf(app):
+    csrf = CSRFProtect(app)
+    return csrf

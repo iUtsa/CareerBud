@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_user, logout_user, current_user, login_required
 from app.forms import AchievementForm
 from app.models import Achievement, authenticate_user, create_user, update_user_profile
@@ -6,6 +6,9 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, SelectField
 from wtforms.validators import DataRequired, Email, EqualTo, Length
 from app import db, bcrypt
+from flask_wtf.file import FileAllowed, FileField
+from werkzeug.utils import secure_filename
+import os
 
 auth_bp = Blueprint('auth', __name__)
 achievement_bp = Blueprint('achievement', __name__)
@@ -33,6 +36,9 @@ class ProfileForm(FlaskForm):
     major = StringField('Major', validators=[DataRequired()])
     gpa = StringField('GPA')
     credits = StringField('Credits')
+    profile_picture = FileField('', validators=[
+        FileAllowed(['jpg', 'jpeg', 'png', 'webp'], 'Only JPG, PNG, or WEBP images allowed!')
+    ])
     submit = SubmitField('Update Profile')
 
 # Routes
@@ -80,7 +86,7 @@ def register():
 @auth_bp.route('/logout')
 def logout():
     logout_user()
-    return redirect(url_for('auth.login'))
+    return redirect(url_for('coursebud_bp.index'))
 
 @auth_bp.route('/profile', methods=['GET', 'POST'])
 @login_required
@@ -94,6 +100,7 @@ def profile():
         form.major.data = current_user.major
         form.gpa.data = current_user.gpa
         form.credits.data = current_user.credits
+        print("have profile picture GETGETGET")
     
     if form.validate_on_submit():
         profile_data = {
@@ -102,6 +109,20 @@ def profile():
             'university': form.university.data,
             'major': form.major.data
         }
+
+        if form.profile_picture.data:
+            print("have profile picture")
+            picture_file = form.profile_picture.data
+            filename = secure_filename(picture_file.filename)
+
+            # Optional: rename file to avoid conflicts
+            _, ext = os.path.splitext(filename)
+            filename = f"user_{current_user.id}{ext}"
+
+            picture_path = os.path.join(current_app.root_path, 'static/uploads/profiles', filename)
+            picture_file.save(picture_path)
+
+            profile_data['profile_picture'] = filename
         
         # Only update numeric fields if they're provided
         if form.gpa.data:

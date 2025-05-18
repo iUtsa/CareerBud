@@ -5,6 +5,7 @@ from wtforms import PasswordField, StringField, TextAreaField, FloatField, Integ
 from wtforms.validators import DataRequired, Optional, Length, NumberRange
 from flask_wtf.file import FileField
 from wtforms import RadioField  # Add this import
+from flask_wtf.file import FileAllowed, FileField
 
 
 class PostForm(FlaskForm):
@@ -30,6 +31,9 @@ class ProfileForm(FlaskForm):
     major = StringField('Major', validators=[DataRequired()])
     gpa = FloatField('GPA', validators=[DataRequired()])
     credits = IntegerField('Credits', validators=[DataRequired()])
+    profile_picture = FileField('', validators=[
+        FileAllowed(['jpg', 'jpeg', 'png', 'webp'], 'Only JPG, PNG, or WEBP images allowed!')
+    ])
     submit = SubmitField('Update Profile')
 
 class AchievementForm(FlaskForm):

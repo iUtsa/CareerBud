@@ -458,7 +458,7 @@
                         <div class="post-creator-compact" data-bs-toggle="modal" data-bs-target="#createPostModal">
                             <div class="avatar">
                                 {% if current_user.profile_picture %}
-                                    <img src="data:image/{{ mime }};base64,{{ current_user.profile_picture|safe }}" alt="Profile Picture" class="rounded-circle" width="40" height="40">
+                                    <img src="{{ url_for('static', filename='uploads/profiles/' ~ current_user.profile_picture) }}" alt="Profile Picture" class="rounded-circle" width="40" height="40">
                                 {% else %}
                                     {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
                                 {% endif %}
@@ -595,7 +595,7 @@
                                     <div class="list-group-item bg-transparent d-flex align-items-center">
                                         <div class="avatar me-3" style="width: 40px; height: 40px;">
                                             {% if user.profile_picture %}
-                                                <img src="data:image/{{ mime }};base64,{{ user.profile_picture.replace('\n', '').replace('\r', '').replace(' ', '') | safe }}"
+                                                <img src="{{ url_for('static', filename='uploads/profiles/' ~ user.profile_picture) }}" 
                                                     alt="Profile Picture"
                                                     class="rounded-circle"
                                                     style="width: 40px; height: 40px; object-fit: cover;">

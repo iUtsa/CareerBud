@@ -192,6 +192,8 @@
                 
                 {% if goal.status != 'completed' %}
                 <form method="POST" action="{{ url_for('taskbud.complete_goal', goal_id=goal.id) }}" class="inline">
+                    <!-- Add CSRF Token -->
+                    {{ csrf_token() }}
                     <button type="submit" class="bg-green-100 text-green-600 hover:bg-green-200 px-4 py-2 rounded-lg transition-colors duration-300 flex items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -406,6 +408,8 @@
                     Cancel
                 </button>
                 <form method="POST" action="{{ url_for('taskbud.delete_goal', goal_id=goal.id) }}">
+                    <!-- Add CSRF Token -->
+                    {{ csrf_token() }}
                     <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-300">
                         Delete
                     </button>
@@ -424,6 +428,8 @@
                     Cancel
                 </button>
                 <form id="delete-task-form" method="POST" action="">
+                    <!-- Add CSRF Token -->
+                    {{ csrf_token() }}
                     <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-300">
                         Delete
                     </button>
@@ -476,6 +482,9 @@
 {% block scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Get the CSRF token from the meta tag
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        
         // Initialize progress circle
         const progressCircle = document.querySelector('.progress-circle .progress');
         const percentage = document.querySelector('.progress-circle .percentage').textContent;
@@ -516,7 +525,8 @@
                     fetch(`{{ url_for('taskbud.complete_task', task_id=0) }}`.replace('0', taskId), {
                         method: 'POST',
                         headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRFToken': csrfToken
                         }
                     })
                     .then(response => response.json())
@@ -611,7 +621,8 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrfToken
                 },
                 body: JSON.stringify({
                     goal_id: {{ goal.id }}
@@ -681,7 +692,8 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrfToken
                 },
                 body: JSON.stringify({
                     goal_id: {{ goal.id }}
@@ -698,7 +710,8 @@
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest'
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRFToken': csrfToken
                         },
                         body: JSON.stringify({
                             goal_id: {{ goal.id }},

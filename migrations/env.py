@@ -1,5 +1,6 @@
 import logging
 from logging.config import fileConfig
+from app import db as target_db
 
 from flask import current_app
 

@@ -5,32 +5,28 @@
         <div class="d-flex align-items-center">
             <div class="avatar me-3" style="object-fit: cover; width: 40px; height: 40px;">
                 {% if post.user.profile_picture %}
-                    {% set raw_pic = post.user.profile_picture.replace('\n', '').replace('\r', '').replace(' ', '') %}
-                    {% if raw_pic.startswith('/9j/') %}
-                        {% set mime = 'jpeg' %}
-                    {% elif raw_pic.startswith('iVBOR') %}
-                        {% set mime = 'png' %}
-                    {% elif raw_pic.startswith('UklGR') %}
-                        {% set mime = 'webp' %}
-                    {% else %}
-                        {% set mime = 'jpeg' %}
-                    {% endif %}
-                        <img src="data:image/{{ mime }};base64,{{ raw_pic | safe }}"
+                        <img src="{{ url_for('static', filename='uploads/profiles/' ~ current_user.profile_picture) }}"
                             alt="Profile Picture"
                             class="rounded-circle"
                             style="object-fit: cover; width: 40px; height: 40px;">
                 {% else %}
                     <h4 class="bg-primary avatar me-3 rounded-circle d-flex align-items-center justify-content-center" 
                         style="width: 40px; height: 40px; margin: 0;">
-                    {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
+                    {{ post.user.first_name[0] }}{{ post.user.last_name[0] }}
                     </h4>
                 {% endif %}
             </div>
             <div>
                 <h5 class="mb-0">
-                    <a href="{{ url_for('social.view_profile', user_id=post.user.id) }}" class="text-reset text-decoration-none">
-                        {{ post.user.first_name }} {{ post.user.last_name }}
-                    </a>
+                    {% if post.user.id == user.id %}
+                        <a href="{{ url_for('auth.profile', user_id=post.user.id) }}" class="text-reset text-decoration-none">
+                            {{ post.user.first_name }} {{ post.user.last_name }}
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('social.view_profile', user_id=post.user.id) }}" class="text-reset text-decoration-none">
+                            {{ post.user.first_name }} {{ post.user.last_name }}
+                        </a>
+                    {% endif %}
                 </h5>
                 <small class="text-muted">
                     {{ post.created_at.strftime('%B %d, %Y at %I:%M %p') }}
@@ -54,9 +50,9 @@
                     <li>
                         <!-- Add data attributes for the delete confirmation modal -->
                         <a class="dropdown-item text-danger" href="#" 
-                           data-bs-toggle="modal" 
-                           data-bs-target="#deletePostModal" 
-                           data-post-id="{{ post.id }}">
+                            data-bs-toggle="modal" 
+                            data-bs-target="#deletePostModal" 
+                            data-post-id="{{ post.id }}">
                             <i class="fas fa-trash-alt me-2"></i>Delete Post
                         </a>
                     </li>

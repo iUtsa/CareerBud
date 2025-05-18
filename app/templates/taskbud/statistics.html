@@ -381,196 +381,310 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-matrix@2.0.1/dist/chartjs-chart-matrix.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Debug data
-        console.log('History Data:', {{ history|tojson|safe }});
-        console.log('Stats Data:', {{ stats|tojson|safe }});
-        console.log('Activities Data:', {{ activities|map(attribute='__dict__')|tojson|safe }});
-
-        // Progress Ring Animation
-        const progress = {{ stats.completion_rate|round|int|default(0) }};
-        const circle = document.querySelector('.progress-ring__circle');
+document.addEventListener('DOMContentLoaded', function() {
+    // Debug data
+    console.log('History Data:', {{ history|tojson|safe }});
+    console.log('Stats Data:', {{ stats|tojson|safe }});
+    
+    // Progress Ring Animation
+    const progress = {{ stats.completion_rate|round|int|default(0) }};
+    const circle = document.querySelector('.progress-ring__circle');
+    if (circle) {
         const circumference = 2 * Math.PI * 36;
         circle.style.strokeDasharray = `${circumference} ${circumference}`;
         circle.style.strokeDashoffset = circumference - (progress / 100) * circumference;
+    }
 
-        // Heatmap Data Preparation
-        const heatmapData = {{ history|tojson|safe }} || [];
-        const today = new Date('2025-05-17'); // Hardcode to match current date
-        const startDate = new Date(today.getFullYear(), 0, 1); // Jan 1, 2025
-        const daysInYear = (today - startDate) / (1000 * 60 * 60 * 24) + 1; // Days from Jan 1 to May 17
-        const weeks = Math.ceil(daysInYear / 7);
-        
-        // Create a map of the data
-        const dataByDate = new Map(heatmapData.map(item => {
-            if (!item.date || typeof item.count !== 'number') {
-                console.warn('Invalid history entry:', item);
-                return [null, 0];
-            }
-            return [item.date, item.count];
-        }).filter(([date]) => date));
-
-        // Initialize the heatmap matrix (7 days x N weeks)
-        const heatmapMatrix = Array(7).fill().map(() => Array(weeks).fill(0));
-
-        // Populate the matrix
-        for (let i = 0; i < daysInYear; i++) {
-            const currentDate = new Date(startDate);
-            currentDate.setDate(startDate.getDate() + i);
-            const dateStr = currentDate.toISOString().split('T')[0];
-            const week = Math.floor(i / 7);
-            const day = currentDate.getDay();
-            const count = dataByDate.get(dateStr) || 0;
-            if (week < weeks && day < 7) { // Ensure we don't exceed matrix bounds
-                heatmapMatrix[day][week] = count;
-            }
+    // Heatmap data preparation
+    let heatmapData = {{ history|tojson|safe }} || [];
+    const today = new Date();
+    
+    // Calculate date range for 1 year
+    const startDate = new Date(today);
+    startDate.setFullYear(startDate.getFullYear() - 1); // 1 year ago
+    
+    // Create array of all dates in the year
+    const allDates = [];
+    const currentDate = new Date(startDate);
+    while (currentDate <= today) {
+        allDates.push(new Date(currentDate));
+        currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    // Convert activity data to map for easy lookup
+    const activityMap = new Map();
+    heatmapData.forEach(item => {
+        if (item.date && typeof item.count === 'number') {
+            activityMap.set(item.date, item.count);
         }
+    });
+    
+    // Calculate weeks (columns) needed
+    const totalDays = allDates.length;
+    const totalWeeks = Math.ceil(totalDays / 7);
+    
+    // Create GitHub-style matrix data with days as rows (7) and weeks as columns
+    const matrixData = [];
+    
+    // Loop through all dates and organize by row (day of week) and column (week)
+    allDates.forEach((date, index) => {
+        const dateStr = date.toISOString().split('T')[0];
+        const dayOfWeek = date.getDay(); // 0-6 (Sunday-Saturday)
+        const weekIndex = Math.floor(index / 7);
+        
+        matrixData.push({
+            x: weekIndex,
+            y: dayOfWeek,
+            v: activityMap.get(dateStr) || 0,
+            date: dateStr
+        });
+    });
+    
+    console.log('Matrix data points:', matrixData.length);
+    
+    // Check if canvas elements exist
+    const heatmapChart = document.getElementById('heatmapChart');
+    if (!heatmapChart) {
+        console.error('Heatmap canvas element not found!');
+        return;
+    }
 
-        console.log('Heatmap Matrix:', heatmapMatrix);
-
-        // Heatmap Chart
-        const heatmapCtx = document.getElementById('heatmapChart').getContext('2d');
-        const heatmapChart = new Chart(heatmapCtx, {
-            type: 'matrix',
-            data: {
-                datasets: [{
-                    label: 'Tasks Completed',
-                    data: heatmapMatrix.flatMap((row, day) => 
-                        row.map((value, week) => ({
-                            x: week,
-                            y: day,
-                            v: value
-                        }))
-                    ),
-                    backgroundColor: (ctx) => {
-                        const value = ctx.dataset.data[ctx.dataIndex]?.v || 0;
-                        if (value === 0) return 'var(--heatmap-empty)';
-                        if (value <= 2) return 'var(--heatmap-low)';
-                        if (value <= 5) return 'var(--heatmap-medium)';
-                        if (value <= 10) return 'var(--heatmap-high)';
-                        if (value <= 15) return 'var(--heatmap-very-high)';
-                        return 'var(--heatmap-extreme)';
-                    },
-                    borderColor: 'var(--heatmap-border)',
-                    borderWidth: 1,
-                    width: ({ chart }) => {
-                        const width = chart.chartArea.width / weeks;
-                        return Math.max(width * 0.85, 10); // Ensure minimum width
-                    },
-                    height: ({ chart }) => {
-                        const height = chart.chartArea.height / 7;
-                        return Math.max(height * 0.85, 10); // Ensure minimum height
-                    },
-                    borderRadius: 2
-                }]
-            },
-            options: {
-                responsive: true;
-                maintainAspectRatio: false;
-                scales: {
-                    x: {
-                        display: true;
-                        title: { display: true, text: 'Weeks', color: 'var(--text-primary)' },
-                        ticks: {
-                            callback: (value) => {
-                                const date = new Date(startDate);
-                                date.setDate(date.getDate() + value * 7);
-                                return date.toLocaleString('en-US', { month: 'short' });
-                            },
-                            maxTicksLimit: 12,
-                            color: 'var(--text-primary)'
-                        },
-                        grid: { display: false }
-                    },
-                    y: {
-                        display: true;
-                        title: { display: true, text: 'Day', color: 'var(--text-primary)' },
-                        ticks: {
-                            callback: (value) => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][value],
-                            color: 'var(--text-primary)'
-                        },
-                        grid: { display: false }
-                    }
-                },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            title: (ctx) => {
-                                const { x, y } = ctx[0].raw;
-                                const date = new Date(startDate);
-                                date.setDate(date.getDate() + (x * 7 + y));
-                                return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-                            },
-                            label: (ctx) => `${ctx.raw.v} task${ctx.raw.v === 1 ? '' : 's'} completed`
-                        },
-                        backgroundColor: 'var(--tooltip-bg)',
-                        titleColor: 'var(--tooltip-text)',
-                        bodyColor: 'var(--tooltip-text)',
-                        borderColor: 'var(--border-color)',
-                        borderWidth: 1
-                    }
+    // Create heatmap using DIVs (consistent GitHub style)
+    const heatmapContainer = document.querySelector('.heatmap-container');
+    if (heatmapContainer) {
+        // Clear the container and remove canvas
+        heatmapContainer.innerHTML = '';
+        
+        // Create container for the heatmap
+        const heatmapWrapper = document.createElement('div');
+        heatmapWrapper.className = 'github-style-heatmap';
+        heatmapWrapper.style.display = 'flex';
+        heatmapWrapper.style.flexDirection = 'column';
+        heatmapWrapper.style.width = '100%';
+        heatmapWrapper.style.height = '100%';
+        heatmapWrapper.style.minHeight = '170px';
+        
+        // Create month labels row
+        const monthLabelsRow = document.createElement('div');
+        monthLabelsRow.style.display = 'flex';
+        monthLabelsRow.style.marginLeft = '30px'; // Space for day labels
+        monthLabelsRow.style.fontSize = '12px';
+        monthLabelsRow.style.color = 'var(--text-primary)';
+        monthLabelsRow.style.marginBottom = '5px';
+        
+        // Group dates by month
+        const months = [];
+        let currentMonth = -1;
+        allDates.forEach((date, index) => {
+            if (Math.floor(index / 7) % 4 === 0) { // Add month label every 4 weeks
+                const month = date.getMonth();
+                if (month !== currentMonth) {
+                    currentMonth = month;
+                    months.push({
+                        label: date.toLocaleString('en-US', { month: 'short' }),
+                        index: Math.floor(index / 7)
+                    });
                 }
             }
         });
+        
+        // Add month labels
+        months.forEach(month => {
+            const monthLabel = document.createElement('div');
+            monthLabel.textContent = month.label;
+            monthLabel.style.position = 'absolute';
+            monthLabel.style.left = `calc(30px + ${month.index * 15}px)`;
+            monthLabelsRow.appendChild(monthLabel);
+        });
+        
+        heatmapWrapper.appendChild(monthLabelsRow);
+        
+        // Create grid container with day labels
+        const gridContainer = document.createElement('div');
+        gridContainer.style.display = 'flex';
+        
+        // Create day labels column
+        const dayLabelsColumn = document.createElement('div');
+        dayLabelsColumn.style.display = 'flex';
+        dayLabelsColumn.style.flexDirection = 'column';
+        dayLabelsColumn.style.justifyContent = 'space-between';
+        dayLabelsColumn.style.padding = '4px 4px 0 0';
+        dayLabelsColumn.style.fontSize = '12px';
+        dayLabelsColumn.style.color = 'var(--text-primary)';
+        dayLabelsColumn.style.width = '30px';
+        
+        // Add day labels - only show Mon, Wed, Fri for compactness
+        const dayLabels = ['', 'Mon', '', 'Wed', '', 'Fri', ''];
+        dayLabels.forEach(day => {
+            const dayLabel = document.createElement('div');
+            dayLabel.textContent = day;
+            dayLabel.style.height = '15px';
+            dayLabelsColumn.appendChild(dayLabel);
+        });
+        
+        gridContainer.appendChild(dayLabelsColumn);
+        
+        // Create the actual grid of cells
+        const cellGrid = document.createElement('div');
+        cellGrid.style.display = 'grid';
+        cellGrid.style.gridTemplateRows = 'repeat(7, 15px)';
+        cellGrid.style.gridTemplateColumns = `repeat(${totalWeeks}, 15px)`;
+        cellGrid.style.gap = '2px';
+        cellGrid.style.overflow = 'hidden';
+        
+        // Add all cells to the grid
+        matrixData.forEach(item => {
+            const cell = document.createElement('div');
+            cell.style.width = '13px';
+            cell.style.height = '13px';
+            cell.style.borderRadius = '2px';
+            
+            // Set color based on activity count
+            const value = item.v;
+            if (value === 0) {
+                cell.style.backgroundColor = 'var(--heatmap-empty)';
+            } else if (value <= 2) {
+                cell.style.backgroundColor = 'var(--heatmap-low)';
+            } else if (value <= 5) {
+                cell.style.backgroundColor = 'var(--heatmap-medium)';
+            } else if (value <= 10) {
+                cell.style.backgroundColor = 'var(--heatmap-high)';
+            } else if (value <= 15) {
+                cell.style.backgroundColor = 'var(--heatmap-very-high)';
+            } else {
+                cell.style.backgroundColor = 'var(--heatmap-extreme)';
+            }
+            
+            cell.style.border = '1px solid var(--heatmap-border)';
+            
+            // Add tooltip with date and count
+            const date = new Date(item.date);
+            const formattedDate = date.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            
+            cell.title = `${formattedDate}: ${value} task${value === 1 ? '' : 's'} completed`;
+            
+            // Position in grid based on x, y coordinates
+            cell.style.gridColumn = (item.x + 1).toString();
+            cell.style.gridRow = (item.y + 1).toString();
+            
+            cellGrid.appendChild(cell);
+        });
+        
+        gridContainer.appendChild(cellGrid);
+        heatmapWrapper.appendChild(gridContainer);
+        
+        // Add color legend
+        const legend = document.createElement('div');
+        legend.className = 'heatmap-legend';
+        legend.style.display = 'flex';
+        legend.style.alignItems = 'center';
+        legend.style.gap = '4px';
+        legend.style.marginTop = '10px';
+        legend.style.fontSize = '12px';
+        
+        const legendItems = [
+            { label: 'Less', color: false },
+            { label: '', color: 'var(--heatmap-empty)' },
+            { label: '', color: 'var(--heatmap-low)' },
+            { label: '', color: 'var(--heatmap-medium)' },
+            { label: '', color: 'var(--heatmap-high)' },
+            { label: '', color: 'var(--heatmap-very-high)' },
+            { label: '', color: 'var(--heatmap-extreme)' },
+            { label: 'More', color: false }
+        ];
+        
+        legendItems.forEach(item => {
+            if (item.color) {
+                const colorBox = document.createElement('div');
+                colorBox.style.width = '12px';
+                colorBox.style.height = '12px';
+                colorBox.style.backgroundColor = item.color;
+                colorBox.style.border = '1px solid var(--heatmap-border)';
+                colorBox.style.borderRadius = '2px';
+                legend.appendChild(colorBox);
+            } else {
+                const label = document.createElement('span');
+                label.textContent = item.label;
+                label.style.color = 'var(--text-primary)';
+                legend.appendChild(label);
+            }
+        });
+        
+        heatmapWrapper.appendChild(legend);
+        heatmapContainer.appendChild(heatmapWrapper);
+    } else {
+        console.error('Heatmap container not found!');
+    }
 
-        // Goal Distribution Chart
+    // Goal Distribution Chart
+    try {
         const goalData = [
             {{ stats.long_term_count|default(0) }},
             {{ stats.short_term_count|default(0) }},
             {{ stats.completed_count|default(0) }},
             {{ stats.active_count|default(0) }}
         ];
-        const distributionCtx = document.getElementById('goalDistributionChart').getContext('2d');
-        new Chart(distributionCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Long Term', 'Short Term', 'Completed', 'Active'],
-                datasets: [{
-                    data: goalData,
-                    backgroundColor: [
-                        'var(--taskbud-primary)',
-                        'var(--taskbud-success)',
-                        'var(--taskbud-warning)',
-                        'var(--tertiary-color)'
-                    ],
-                    borderColor: 'var(--card-bg)',
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true;
-                maintainAspectRatio: false;
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            color: 'var(--text-primary)',
-                            padding: 20,
-                            font: { size: 12 }
+        
+        const distributionCtx = document.getElementById('goalDistributionChart');
+        if (distributionCtx) {
+            const goalChart = new Chart(distributionCtx.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Long Term', 'Short Term', 'Completed', 'Active'],
+                    datasets: [{
+                        data: goalData,
+                        backgroundColor: [
+                            'var(--taskbud-primary)',
+                            'var(--taskbud-success)',
+                            'var(--taskbud-warning)',
+                            'var(--tertiary-color)'
+                        ],
+                        borderColor: 'var(--card-bg)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: 'var(--text-primary)',
+                                padding: 20,
+                                font: { size: 12 }
+                            }
+                        },
+                        datalabels: {
+                            color: '#fff',
+                            font: { weight: 'bold', size: 12 },
+                            formatter: (value) => value || ''
                         }
-                    },
-                    datalabels: {
-                        color: '#fff',
-                        font: { weight: 'bold', size: 12 },
-                        formatter: (value) => value || ''
                     }
-                }
-            },
-            plugins: [ChartDataLabels]
-        });
-
-        // Filter Functionality
-        const filterButtons = document.querySelectorAll('.filter-btn');
-        filterButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                filterButtons.forEach(btn => btn.classList.remove('active'));
-                button.classList.add('active');
-                console.log('Filter selected:', button.dataset.filter);
-                // Implement AJAX or redirect for filter
-                // Example: fetch(`/taskbud/stats?filter=${button.dataset.filter}`)
+                },
+                plugins: [ChartDataLabels]
             });
+        }
+    } catch (e) {
+        console.error('Error creating goal chart:', e);
+    }
+
+    // Filter Functionality
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    filterButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            console.log('Filter selected:', button.dataset.filter);
+            // Implement AJAX or redirect for filter
+            // Example: fetch(`/taskbud/stats?filter=${button.dataset.filter}`)
         });
     });
+});
 </script>
 {% endblock %}

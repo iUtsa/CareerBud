@@ -252,6 +252,7 @@ def feed():
         connection_suggestions=connection_suggestions,
         unread_messages_count=unread_messages_count,
         mime=mime,
+        user=current_user,
         pending_connections_count=pending_connections_count
     )
 

@@ -1,22 +1,16 @@
 from flask_login import UserMixin
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy import or_
 from sqlalchemy import Column, Integer, String, Text, Boolean
-from app import db  # Ensure this is at the top of your models.py
+from app import db
 from flask import current_app
 from flask_sqlalchemy import SQLAlchemy
 from app.extensions import db, bcrypt
 from typing import Optional, Dict, Union
 import re
-from sqlalchemy import func
 import json
-from datetime import datetime, timedelta  # Add timedelta here
+from sqlalchemy import func
 
-
-#################
-# Profile picture
-#################
-DEFAULT_PROFILE_PICTURE = "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"
 
 
 def full_name(obj):
@@ -74,8 +68,6 @@ class User(UserMixin, db.Model):
     skills = db.relationship('Skill', backref='user', lazy=True)
     achievements = db.relationship('Achievement', back_populates='user', lazy=True)
     internships = db.relationship('Internship', back_populates='user', lazy=True)
-
-
     
     # Note: No course-related relationships defined here
     # They are all defined in the respective course models with backref
@@ -3653,12 +3645,21 @@ def get_course_statistics(course_id):
 
 
 # Employee-related tables
+class Employee(db.Model):
+    __tablename__ = 'employees'
+
+    bud_id = db.Column(db.Integer, primary_key=True)  # Unique ID
+    first_name = db.Column(db.String(64), nullable=False)
+    last_name = db.Column(db.String(64), nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password = db.Column(db.String(128), nullable=False)
+    passcode = db.Column(db.String(64), nullable=False)
+    profile_picture = db.Column(db.Text, nullable=True, default='default_profile.jpg') 
 
 
 
 
 
-# TaskBud Models
 class Goal(db.Model):
     """Model for long-term and short-term goals."""
     __tablename__ = 'goals'
@@ -3860,419 +3861,6 @@ class TaskActivity(db.Model):
         return f'<TaskActivity {self.activity_type}>'
 
 
-# TaskBud AI Class
-class TaskBudAI:
-    """AI service for TaskBud recommendations and task generation."""
-    
-    def __init__(self, user_data=None):
-        self.user_data = user_data or {}
-        self.task_patterns = {
-            'learning': [
-                "Research {topic} fundamentals",
-                "Complete first module on {topic}",
-                "Practice {topic} for 1 hour",
-                "Take notes on {topic} key concepts",
-                "Review {topic} materials",
-                "Find a mentor for {topic}",
-                "Join a community for {topic} learners",
-                "Create a study schedule for {topic}",
-                "Build a small project using {topic}",
-                "Test your knowledge on {topic}"
-            ],
-            'project': [
-                "Define requirements for {project}",
-                "Create a timeline for {project}",
-                "Identify resources needed for {project}",
-                "Set up development environment for {project}",
-                "Design architecture for {project}",
-                "Implement core functionality of {project}",
-                "Test {project} functionality",
-                "Get feedback on {project}",
-                "Refine {project} based on feedback",
-                "Document {project} process and results"
-            ],
-            'fitness': [
-                "Research workout routines for {goal}",
-                "Create a weekly workout schedule for {goal}",
-                "Prepare meal plan supporting {goal}",
-                "Complete first week of {goal} training",
-                "Track progress on {goal}",
-                "Adjust routine based on {goal} progress",
-                "Find accountability partner for {goal}",
-                "Research supplements for {goal}",
-                "Rest and recovery day for {goal}",
-                "Evaluate {goal} progress and adjust plan"
-            ],
-            'career': [
-                "Update resume for {career_goal}",
-                "Research companies in {career_goal} field",
-                "Network with professionals in {career_goal}",
-                "Learn a new skill for {career_goal}",
-                "Apply for {career_goal} positions",
-                "Prepare for interviews in {career_goal}",
-                "Set up job alerts for {career_goal}",
-                "Attend event related to {career_goal}",
-                "Find a mentor in {career_goal} field",
-                "Update LinkedIn profile for {career_goal}"
-            ],
-            'financial': [
-                "Create budget for {financial_goal}",
-                "Research investment options for {financial_goal}",
-                "Set up automatic savings for {financial_goal}",
-                "Track expenses related to {financial_goal}",
-                "Meet with financial advisor about {financial_goal}",
-                "Reduce expenses to support {financial_goal}",
-                "Increase income sources for {financial_goal}",
-                "Review progress on {financial_goal}",
-                "Adjust strategy for {financial_goal}",
-                "Celebrate milestone for {financial_goal}"
-            ],
-            'generic': [
-                "Research and planning for {goal}",
-                "Identify first steps for {goal}",
-                "Set milestones for {goal}",
-                "Create a timeline for {goal}",
-                "Find resources for {goal}",
-                "Get feedback on {goal} progress",
-                "Review and adjust {goal} plan",
-                "Document progress on {goal}",
-                "Share {goal} progress with stakeholders",
-                "Celebrate {goal} milestone"
-            ]
-        }
-    
-    def categorize_goal(self, goal_title, goal_description=None):
-        """Determine the category of a goal based on title and description."""
-        combined_text = (goal_title + ' ' + (goal_description or '')).lower()
-        
-        # Define keywords for each category
-        categories = {
-            'learning': ['learn', 'study', 'course', 'education', 'knowledge', 'skill', 'training', 'language', 'certification'],
-            'project': ['project', 'build', 'create', 'develop', 'launch', 'implement', 'design', 'app', 'website', 'software'],
-            'fitness': ['fitness', 'exercise', 'workout', 'health', 'weight', 'diet', 'nutrition', 'gym', 'run', 'marathon', 'muscle'],
-            'career': ['career', 'job', 'profession', 'work', 'promotion', 'salary', 'interview', 'resume', 'linkedin', 'networking'],
-            'financial': ['finance', 'money', 'save', 'invest', 'budget', 'debt', 'expense', 'income', 'retirement', 'mortgage']
-        }
-        
-        # Count keyword matches for each category
-        category_scores = {}
-        for category, keywords in categories.items():
-            score = sum(1 for keyword in keywords if keyword in combined_text)
-            category_scores[category] = score
-        
-        # Find the category with the highest score
-        best_category = max(category_scores.items(), key=lambda x: x[1])
-        
-        # If no significant matches, return generic
-        if best_category[1] == 0:
-            return 'generic'
-        
-        return best_category[0]
-    
-    def generate_tasks_for_goal(self, goal, count=5):
-        """Generate appropriate tasks for a goal."""
-        # Determine goal category
-        category = self.categorize_goal(goal.title, goal.description)
-        
-        # Get patterns for this category
-        patterns = self.task_patterns.get(category, self.task_patterns['generic'])
-        
-        # Shuffle patterns and take requested count
-        random.shuffle(patterns)
-        selected_patterns = patterns[:min(count, len(patterns))]
-        
-        # Extract key terms from goal title
-        key_terms = re.findall(r'\b[a-zA-Z]{3,}\b', goal.title)
-        key_term = key_terms[0] if key_terms else "goal"
-        
-        # Generate tasks by filling in patterns
-        tasks = []
-        for pattern in selected_patterns:
-            task_title = pattern.format(
-                topic=key_term,
-                project=goal.title,
-                goal=goal.title,
-                career_goal=key_term,
-                financial_goal=key_term
-            )
-            
-            # Generate appropriate task metadata
-            priority = random.choices([1, 2, 3], weights=[0.3, 0.5, 0.2])[0]
-            difficulty = random.choices([1, 2, 3], weights=[0.3, 0.5, 0.2])[0]
-            estimated_hours = round(random.uniform(0.5, 4.0), 1)
-            
-            # Generate appropriate tags
-            available_tags = [
-                category, key_term, 'planning', 'progress', 'milestone', 
-                'research', 'implementation', 'review', 'feedback'
-            ]
-            selected_tags = random.sample(available_tags, min(3, len(available_tags)))
-            
-            tasks.append({
-                'title': task_title,
-                'priority': priority,
-                'difficulty': difficulty,
-                'estimated_hours': estimated_hours,
-                'tags': ','.join(selected_tags)
-            })
-        
-        # Distribute tasks over time if goal has a target date
-        self._schedule_tasks(tasks, goal)
-        
-        return tasks
-    
-    def _schedule_tasks(self, tasks, goal):
-        """Schedule tasks across the goal timeline."""
-        if not goal.target_date:
-            return
-        
-        today = datetime.utcnow()
-        days_range = (goal.target_date - today).days
-        
-        if days_range <= 0:
-            return
-        
-        # Distribute tasks using different distribution patterns
-        # based on task priorities
-        for i, task in enumerate(tasks):
-            priority = task['priority']
-            
-            if priority == 1:  # High priority: front-loaded
-                due_factor = math.sqrt((i+1) / len(tasks))
-            elif priority == 2:  # Medium priority: evenly distributed
-                due_factor = (i+1) / len(tasks)
-            else:  # Low priority: back-loaded
-                due_factor = ((i+1) / len(tasks)) ** 2
-            
-            due_days = max(1, int(days_range * due_factor))
-            task['due_date'] = (today + timedelta(days=due_days)).strftime('%Y-%m-%d')
-    
-    def suggest_daily_tasks(self, user_tasks, user_goals, max_tasks=5):
-        """Suggest daily tasks based on user's goals and tasks."""
-        # Find overdue and high priority tasks
-        overdue_tasks = [task for task in user_tasks if task.is_overdue()]
-        high_priority_tasks = [task for task in user_tasks if task.priority == 1 and not task.completed]
-        
-        # Find active goals with upcoming deadlines
-        urgent_goals = sorted(
-            [goal for goal in user_goals if goal.status == 'active' and goal.target_date], 
-            key=lambda g: g.days_remaining() or 999
-        )
-        
-        # Start with most critical tasks
-        suggested_tasks = []
-        
-        # Add most overdue tasks
-        for task in sorted(overdue_tasks, key=lambda t: t.due_date)[:2]:
-            if len(suggested_tasks) < max_tasks:
-                suggested_tasks.append(task)
-        
-        # Add highest priority tasks
-        for task in high_priority_tasks[:2]:
-            if len(suggested_tasks) < max_tasks and task not in suggested_tasks:
-                suggested_tasks.append(task)
-        
-        # Add tasks from urgent goals
-        for goal in urgent_goals[:2]:
-            pending_tasks = [task for task in goal.tasks if not task.completed]
-            if pending_tasks and len(suggested_tasks) < max_tasks:
-                # Choose a task from this goal
-                chosen_task = min(pending_tasks, key=lambda t: t.priority)
-                if chosen_task not in suggested_tasks:
-                    suggested_tasks.append(chosen_task)
-        
-        # Fill remaining slots with a mix of tasks
-        remaining_tasks = [
-            task for task in user_tasks 
-            if not task.completed and task not in suggested_tasks
-        ]
-        
-        # Sort by a weighted score of priority and due date
-        def task_score(task):
-            priority_score = task.priority * 10
-            days_score = task.days_remaining() or 100
-            return priority_score + days_score
-        
-        remaining_tasks.sort(key=task_score)
-        
-        for task in remaining_tasks:
-            if len(suggested_tasks) < max_tasks:
-                suggested_tasks.append(task)
-            else:
-                break
-        
-        return suggested_tasks
-    
-    def analyze_productivity_patterns(self, task_activities, completed_tasks):
-        """Analyze user productivity patterns from task history."""
-        if not task_activities or not completed_tasks:
-            return {
-                'peak_days': ['Monday', 'Wednesday'],  # Default suggestion
-                'peak_hours': ['9 AM', '2 PM'],  # Default suggestion
-                'task_preference': 'varied',
-                'completion_rate': 0,
-                'avg_completion_time': 0
-            }
-        
-        # Extract completion timestamps
-        completion_times = [task.completed_at for task in completed_tasks if task.completed_at]
-        
-        # Analyze peak days
-        weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-        day_counts = [0] * 7
-        
-        for timestamp in completion_times:
-            day_counts[timestamp.weekday()] += 1
-        
-        # Find the top 2 days
-        day_indices = sorted(range(len(day_counts)), key=lambda i: day_counts[i], reverse=True)[:2]
-        peak_days = [weekdays[i] for i in day_indices]
-        
-        # Analyze peak hours
-        hour_counts = [0] * 24
-        
-        for timestamp in completion_times:
-            hour_counts[timestamp.hour] += 1
-        
-        # Find the top 2 hours
-        hour_indices = sorted(range(len(hour_counts)), key=lambda i: hour_counts[i], reverse=True)[:2]
-        peak_hours = [f"{i if i <= 12 else i-12} {'AM' if i < 12 or i == 24 else 'PM'}" for i in hour_indices]
-        
-        # Analyze task preferences
-        task_types = {}
-        for task in completed_tasks:
-            if task.tags:
-                for tag in task.get_tags_list():
-                    if tag not in task_types:
-                        task_types[tag] = 0
-                    task_types[tag] += 1
-        
-        # Find the most common tags
-        preferred_tasks = []
-        if task_types:
-            preferred_tasks = sorted(task_types.items(), key=lambda x: x[1], reverse=True)[:2]
-            preferred_tasks = [t[0] for t in preferred_tasks]
-            task_preference = ', '.join(preferred_tasks)
-        else:
-            task_preference = 'varied'
-        
-        # Calculate completion rate
-        total_tasks = len(completed_tasks) + len([t for t in task_activities if t.activity_type == 'created'])
-        completion_rate = (len(completed_tasks) / total_tasks * 100) if total_tasks > 0 else 0
-        
-        # Calculate average time to complete tasks
-        avg_completion_time = 0
-        completion_times = []
-        
-        for task in completed_tasks:
-            if task.created_at and task.completed_at:
-                time_diff = (task.completed_at - task.created_at).total_seconds() / 3600  # In hours
-                completion_times.append(time_diff)
-        
-        if completion_times:
-            avg_completion_time = sum(completion_times) / len(completion_times)
-        
-        return {
-            'peak_days': peak_days,
-            'peak_hours': peak_hours,
-            'task_preference': task_preference,
-            'completion_rate': round(completion_rate, 1),
-            'avg_completion_time': round(avg_completion_time, 1)
-        }
-    
-    def suggest_goal_improvements(self, goal, tasks):
-        """Suggest improvements for goal based on progress and tasks."""
-        suggestions = []
-        
-        # Check if goal has a target date
-        if not goal.target_date:
-            suggestions.append({
-                'type': 'missing_target_date',
-                'message': 'Set a target date to better track progress and stay motivated',
-                'importance': 'high'
-            })
-        
-        # Check if goal has any tasks
-        if not tasks:
-            suggestions.append({
-                'type': 'no_tasks',
-                'message': 'Break down your goal into specific tasks to make progress more manageable',
-                'importance': 'high'
-            })
-        
-        # Check if goal description is detailed enough
-        if not goal.description or len(goal.description) < 50:
-            suggestions.append({
-                'type': 'brief_description',
-                'message': 'Add more details to your goal description to clarify what success looks like',
-                'importance': 'medium'
-            })
-        
-        # Check if long-term goal has sub-goals
-        if goal.goal_type == 'long_term' and not goal.sub_goals:
-            suggestions.append({
-                'type': 'no_sub_goals',
-                'message': 'Create shorter-term sub-goals to make this long-term goal more achievable',
-                'importance': 'high'
-            })
-        
-        # Check progress rate
-        if goal.target_date and goal.progress < 20:
-            days_passed = (datetime.utcnow() - goal.start_date).days
-            total_days = (goal.target_date - goal.start_date).days
-            
-            if total_days > 0:
-                expected_progress = (days_passed / total_days) * 100
-                
-                if expected_progress > goal.progress + 20:
-                    suggestions.append({
-                        'type': 'behind_schedule',
-                        'message': 'Your goal is behind schedule. Consider adjusting the timeline or breaking it into smaller tasks',
-                        'importance': 'high'
-                    })
-        
-        return suggestions
-    
-    def recommend_resources(self, goal):
-        """Recommend resources based on goal category."""
-        category = self.categorize_goal(goal.title, goal.description)
-        
-        resources = {
-            'learning': [
-                {'type': 'app', 'name': 'Anki', 'url': 'https://apps.ankiweb.net/', 'description': 'Spaced repetition flashcard system'},
-                {'type': 'website', 'name': 'Coursera', 'url': 'https://www.coursera.org/', 'description': 'Online courses from top universities'},
-                {'type': 'book', 'name': 'How to Learn Anything Fast', 'description': 'Book by Josh Kaufman'}
-            ],
-            'project': [
-                {'type': 'app', 'name': 'Trello', 'url': 'https://trello.com/', 'description': 'Project management tool'},
-                {'type': 'website', 'name': 'GitHub', 'url': 'https://github.com/', 'description': 'Version control and collaboration'},
-                {'type': 'method', 'name': 'Agile Methodology', 'description': 'Iterative approach to project management'}
-            ],
-            'fitness': [
-                {'type': 'app', 'name': 'MyFitnessPal', 'url': 'https://www.myfitnesspal.com/', 'description': 'Nutrition and exercise tracking'},
-                {'type': 'website', 'name': 'Fitness Blender', 'url': 'https://www.fitnessblender.com/', 'description': 'Free workout videos'},
-                {'type': 'book', 'name': 'Atomic Habits', 'description': 'Book by James Clear on building fitness habits'}
-            ],
-            'career': [
-                {'type': 'website', 'name': 'LinkedIn Learning', 'url': 'https://www.linkedin.com/learning/', 'description': 'Professional skills courses'},
-                {'type': 'app', 'name': 'Glassdoor', 'url': 'https://www.glassdoor.com/', 'description': 'Company reviews and salary information'},
-                {'type': 'book', 'name': 'What Color Is Your Parachute?', 'description': 'Job-hunting and career guidance book'}
-            ],
-            'financial': [
-                {'type': 'app', 'name': 'YNAB (You Need A Budget)', 'url': 'https://www.youneedabudget.com/', 'description': 'Budgeting software'},
-                {'type': 'website', 'name': 'Investopedia', 'url': 'https://www.investopedia.com/', 'description': 'Financial education website'},
-                {'type': 'book', 'name': 'The Simple Path to Wealth', 'description': 'Investment guide by JL Collins'}
-            ],
-            'generic': [
-                {'type': 'app', 'name': 'Notion', 'url': 'https://www.notion.so/', 'description': 'All-in-one workspace'},
-                {'type': 'website', 'name': 'Mindtools', 'url': 'https://www.mindtools.com/', 'description': 'Skills development resources'},
-                {'type': 'book', 'name': 'Atomic Habits', 'description': 'Book by James Clear on building good habits'}
-            ]
-        }
-        
-        return resources.get(category, resources['generic'])
-
-
 # Helper functions for TaskBud
 def get_user_goals(user_id, goal_type=None, status=None):
     """Get goals for a user with optional filters."""
@@ -4465,42 +4053,3 @@ def get_goal_statistics(user_id):
         'avg_progress': avg_progress
     }
 
-
-
-
-    #coursebud
-
-
-def full_name(obj):
-    return f"{obj.first_name} {obj.last_name}"
-
-def short_name(obj):
-    return f"{obj.first_name} {obj.last_name[0]}." if obj.last_name else obj.first_name
-
-def has_profile_picture(obj, default_picture):
-    return bool(getattr(obj, 'profile_picture', None)) and getattr(obj, 'profile_picture') != default_picture
-
-def masked_email(obj):
-    email = getattr(obj, 'email', '')
-    parts = email.split("@")
-    if len(parts) != 2:
-        return email  # fallback
-    name, domain = parts
-    if len(name) <= 1:
-        masked_name = "*"
-    else:
-        masked_name = name[0] + "*" * (len(name) - 1)
-    return masked_name + "@" + domain
-
-
-# Employee-related tables
-class Employee(db.Model):
-    __tablename__ = 'employees'
-
-    bud_id = db.Column(db.Integer, primary_key=True)  # Unique ID
-    first_name = db.Column(db.String(64), nullable=False)
-    last_name = db.Column(db.String(64), nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password = db.Column(db.String(128), nullable=False)
-    passcode = db.Column(db.String(64), nullable=False)
-    profile_picture = db.Column(db.Text, nullable=True, default='default_profile.jpg')
