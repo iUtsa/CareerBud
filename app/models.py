@@ -66,7 +66,7 @@ class User(UserMixin, db.Model):
     credits = db.Column(db.Integer, default=0)
     total_credits = db.Column(db.Integer, default=128)
 
-    profile_picture = db.Column(db.Text, nullable=True, default=DEFAULT_PROFILE_PICTURE) 
+    profile_picture = db.Column(db.Text, nullable=True, default='default_profile.jpg') 
     
     # Relationships - non-course related
     job_applications = db.relationship('JobApplication', backref='user', lazy=True)
@@ -74,6 +74,8 @@ class User(UserMixin, db.Model):
     skills = db.relationship('Skill', backref='user', lazy=True)
     achievements = db.relationship('Achievement', back_populates='user', lazy=True)
     internships = db.relationship('Internship', back_populates='user', lazy=True)
+
+
     
     # Note: No course-related relationships defined here
     # They are all defined in the respective course models with backref
@@ -3651,16 +3653,7 @@ def get_course_statistics(course_id):
 
 
 # Employee-related tables
-class Employee(db.Model):
-    __tablename__ = 'employees'
 
-    bud_id = db.Column(db.Integer, primary_key=True)  # Unique ID
-    first_name = db.Column(db.String(64), nullable=False)
-    last_name = db.Column(db.String(64), nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password = db.Column(db.String(128), nullable=False)
-    passcode = db.Column(db.String(64), nullable=False)
-    profile_picture = db.Column(db.Text, nullable=True, default=DEFAULT_PROFILE_PICTURE) 
 
 
 
@@ -4471,3 +4464,43 @@ def get_goal_statistics(user_id):
         'completion_rate': completion_rate,
         'avg_progress': avg_progress
     }
+
+
+
+
+    #coursebud
+
+
+def full_name(obj):
+    return f"{obj.first_name} {obj.last_name}"
+
+def short_name(obj):
+    return f"{obj.first_name} {obj.last_name[0]}." if obj.last_name else obj.first_name
+
+def has_profile_picture(obj, default_picture):
+    return bool(getattr(obj, 'profile_picture', None)) and getattr(obj, 'profile_picture') != default_picture
+
+def masked_email(obj):
+    email = getattr(obj, 'email', '')
+    parts = email.split("@")
+    if len(parts) != 2:
+        return email  # fallback
+    name, domain = parts
+    if len(name) <= 1:
+        masked_name = "*"
+    else:
+        masked_name = name[0] + "*" * (len(name) - 1)
+    return masked_name + "@" + domain
+
+
+# Employee-related tables
+class Employee(db.Model):
+    __tablename__ = 'employees'
+
+    bud_id = db.Column(db.Integer, primary_key=True)  # Unique ID
+    first_name = db.Column(db.String(64), nullable=False)
+    last_name = db.Column(db.String(64), nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password = db.Column(db.String(128), nullable=False)
+    passcode = db.Column(db.String(64), nullable=False)
+    profile_picture = db.Column(db.Text, nullable=True, default='default_profile.jpg')

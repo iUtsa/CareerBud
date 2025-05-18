@@ -9,6 +9,7 @@ from app.routes.resume_bp import resume_bp
 from app.routes.coursebud_bp import coursebud_bp
 from app.routes.taskbud_bp import taskbud_bp
 
+
 def timeago(dt):
     return humanize.naturaltime(datetime.utcnow() - dt)
 
