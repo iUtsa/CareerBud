@@ -451,7 +451,7 @@
     <div class="feed-container">
         <div class="row">
             <!-- Main Feed Column -->
-            <div class="col-lg-8">
+            <div class="col-lg-8" style="position: sticky !important; top: 15px !important; z-index: 100 !important;">
                 <!-- LinkedIn-style Post Creator Card -->
                 <div class="card mb-4 post-creator-card">
                     <div class="card-body p-2">
@@ -966,6 +966,91 @@ $(document).ready(function() {
             form.action = "{{ url_for('social.delete_post_route', post_id=0) }}".replace('/0', '/' + postId);
         });
     }
+});
+
+
+// Add this to your existing JavaScript in the extra_scripts block
+
+$(document).ready(function() {
+    // Event delegation for like buttons
+    $(document).on('click', '.like-button', function(e) {
+        e.preventDefault();
+        
+        const button = $(this);
+        const postId = button.data('post-id');
+        const likeCount = button.find('.like-count');
+        const likeIcon = button.find('.like-icon');
+        
+        // Prevent multiple clicks
+        if (button.hasClass('processing')) {
+            return;
+        }
+        
+        button.addClass('processing');
+        
+        // Visual feedback immediately
+        if (button.hasClass('liked')) {
+            // Unlike action
+            likeCount.text(parseInt(likeCount.text()) - 1);
+            likeIcon.removeClass('fas text-primary').addClass('far');
+            button.removeClass('liked');
+        } else {
+            // Like action
+            likeCount.text(parseInt(likeCount.text()) + 1);
+            likeIcon.removeClass('far').addClass('fas text-primary');
+            button.addClass('liked');
+        }
+        
+        // Send AJAX request to server
+        $.ajax({
+            url: `/social/like/${postId}`,
+            type: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+            },
+            success: function(response) {
+                // Update like count with actual server count
+                likeCount.text(response.likes_count);
+                
+                // Update the like button state
+                if (response.liked) {
+                    likeIcon.removeClass('far').addClass('fas text-primary');
+                    button.addClass('liked');
+                } else {
+                    likeIcon.removeClass('fas text-primary').addClass('far');
+                    button.removeClass('liked');
+                }
+                
+                button.removeClass('processing');
+            },
+            error: function() {
+                // Revert visual changes on error
+                alert('Unable to process your like. Please try again.');
+                
+                // Reset to previous state
+                if (button.hasClass('liked')) {
+                    likeCount.text(parseInt(likeCount.text()) - 1);
+                    likeIcon.removeClass('fas text-primary').addClass('far');
+                    button.removeClass('liked');
+                } else {
+                    likeCount.text(parseInt(likeCount.text()) + 1);
+                    likeIcon.removeClass('far').addClass('fas text-primary');
+                    button.addClass('liked');
+                }
+                
+                button.removeClass('processing');
+            }
+        });
+    });
+    
+    // Optional: Add visual tooltip for like button
+    $('.like-button').tooltip({
+        title: function() {
+            return $(this).hasClass('liked') ? 'Unlike' : 'Like';
+        },
+        placement: 'top',
+        trigger: 'hover'
+    });
 });
 </script>
 {% endblock %}
