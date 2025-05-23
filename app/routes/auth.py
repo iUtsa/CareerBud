@@ -86,7 +86,7 @@ def register():
 @auth_bp.route('/logout')
 def logout():
     logout_user()
-    return redirect(url_for('coursebud_bp.index'))
+    return redirect(url_for('auth.login')) 
 
 @auth_bp.route('/profile', methods=['GET', 'POST'])
 @login_required
@@ -100,7 +100,6 @@ def profile():
         form.major.data = current_user.major
         form.gpa.data = current_user.gpa
         form.credits.data = current_user.credits
-        print("have profile picture GETGETGET")
     
     if form.validate_on_submit():
         profile_data = {
@@ -111,7 +110,6 @@ def profile():
         }
 
         if form.profile_picture.data:
-            print("have profile picture")
             picture_file = form.profile_picture.data
             filename = secure_filename(picture_file.filename)
 
@@ -198,8 +196,8 @@ def add_achievement():
         # Create a new Achievement instance
         achievement = Achievement(
             title=form.title.data,
-            description=form.description.data,  # Add description to the achievement
-            date=form.date.data,  # Ensure date is also passed
+            description=form.description.data if hasattr(form, 'description') else None,
+            date=form.date.data,
             user_id=current_user.id
         )
 
@@ -212,3 +210,24 @@ def add_achievement():
 
     return render_template('auth/add_achievement.html', form=form)
 
+def change_password_logic(user_id, current_password, new_password):
+    """Logic to change a user's password"""
+    # Get the user
+    from app.models import User
+    user = User.query.get(user_id)
+    
+    if not user:
+        return False
+    
+    # Verify current password
+    if not bcrypt.check_password_hash(user.password_hash, current_password):
+        return False
+    
+    # Hash the new password
+    hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
+    
+    # Update the password
+    user.password_hash = hashed_password
+    db.session.commit()
+    
+    return True

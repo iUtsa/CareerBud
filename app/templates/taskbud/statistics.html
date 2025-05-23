@@ -14,7 +14,7 @@
         --heatmap-high: #40c463; /* Medium green */
         --heatmap-very-high: #30a14e; /* Darker green */
         --heatmap-extreme: #216e39; /* Darkest green */
-        --heatmap-border: #000000; /* Black border for all cells */
+        --heatmap-border: #e0e0e0; /* Light gray border for all cells */
         --tooltip-bg: #ffffff;
         --tooltip-text: #333333;
     }
@@ -28,7 +28,7 @@
         --heatmap-high: #4fc46b;
         --heatmap-very-high: #6dd483;
         --heatmap-extreme: #88d18a;
-        --heatmap-border: #333333; /* Lighter border in dark mode */
+        --heatmap-border: #333333; /* Darker border in dark mode */
         --tooltip-bg: #2d333b;
         --tooltip-text: #ffffff;
     }
@@ -205,6 +205,70 @@
         justify-content: center;
         height: 100%;
         color: var(--text-muted);
+    }
+
+    /* GitHub-style heatmap */
+    .github-style-heatmap {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        overflow-x: auto;
+        padding: 1rem 0;
+    }
+
+    .heatmap-grid {
+        display: grid;
+        grid-template-rows: repeat(7, 15px);
+        gap: 2px;
+    }
+
+    .heatmap-cell {
+        width: 13px;
+        height: 13px;
+        border-radius: 2px;
+        border: 1px solid var(--heatmap-border);
+        transition: transform 0.2s ease;
+    }
+
+    .heatmap-cell:hover {
+        transform: scale(1.2);
+        z-index: 10;
+    }
+
+    .heatmap-row {
+        display: flex;
+        gap: 2px;
+    }
+
+    .heatmap-labels {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding-right: 4px;
+        font-size: 12px;
+        color: var(--text-secondary);
+    }
+
+    .heatmap-day-label {
+        height: 15px;
+        line-height: 15px;
+    }
+
+    .heatmap-month-labels {
+        display: flex;
+        margin-left: 30px;
+        margin-bottom: 5px;
+        font-size: 12px;
+        color: var(--text-secondary);
+        position: relative;
+    }
+
+    .heatmap-month-label {
+        position: absolute;
+    }
+
+    .heatmap-wrapper {
+        display: flex;
     }
 
     @media (max-width: 768px) {
@@ -424,8 +488,8 @@
     <div class="stats-grid mb-4">
         <div class="chart-card">
             <h2 class="h5 mb-3">Task Activity Heatmap</h2>
-            <div class="heatmap-container">
-                <canvas id="heatmapChart" style="min-height: 300px; width: 100%;"></canvas>
+            <div class="heatmap-container" id="heatmapContainer">
+                <!-- Heatmap will be rendered here by JavaScript -->
             </div>
             <div class="heatmap-legend">
                 <span>Less</span>
@@ -491,7 +555,6 @@
 
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-matrix@2.0.1/dist/chartjs-chart-matrix.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -536,54 +599,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const totalDays = allDates.length;
     const totalWeeks = Math.ceil(totalDays / 7);
     
-    // Create GitHub-style matrix data with days as rows (7) and weeks as columns
-    const matrixData = [];
-    
-    // Loop through all dates and organize by row (day of week) and column (week)
-    allDates.forEach((date, index) => {
-        const dateStr = date.toISOString().split('T')[0];
-        const dayOfWeek = date.getDay(); // 0-6 (Sunday-Saturday)
-        const weekIndex = Math.floor(index / 7);
-        
-        matrixData.push({
-            x: weekIndex,
-            y: dayOfWeek,
-            v: activityMap.get(dateStr) || 0,
-            date: dateStr
-        });
-    });
-    
-    console.log('Matrix data points:', matrixData.length);
-    
-    // Check if canvas elements exist
-    const heatmapChart = document.getElementById('heatmapChart');
-    if (!heatmapChart) {
-        console.error('Heatmap canvas element not found!');
-        return;
-    }
-
-    // Create heatmap using DIVs (consistent GitHub style)
-    const heatmapContainer = document.querySelector('.heatmap-container');
+    // Create GitHub-style heatmap
+    const heatmapContainer = document.getElementById('heatmapContainer');
     if (heatmapContainer) {
-        // Clear the container and remove canvas
+        // Clear the container
         heatmapContainer.innerHTML = '';
         
-        // Create container for the heatmap
-        const heatmapWrapper = document.createElement('div');
-        heatmapWrapper.className = 'github-style-heatmap';
-        heatmapWrapper.style.display = 'flex';
-        heatmapWrapper.style.flexDirection = 'column';
-        heatmapWrapper.style.width = '100%';
-        heatmapWrapper.style.height = '100%';
-        heatmapWrapper.style.minHeight = '170px';
-        
-        // Create month labels row
+        // Create month labels
         const monthLabelsRow = document.createElement('div');
-        monthLabelsRow.style.display = 'flex';
-        monthLabelsRow.style.marginLeft = '30px'; // Space for day labels
-        monthLabelsRow.style.fontSize = '12px';
-        monthLabelsRow.style.color = 'var(--text-primary)';
-        monthLabelsRow.style.marginBottom = '5px';
+        monthLabelsRow.className = 'heatmap-month-labels';
         
         // Group dates by month
         const months = [];
@@ -604,56 +628,51 @@ document.addEventListener('DOMContentLoaded', function() {
         // Add month labels
         months.forEach(month => {
             const monthLabel = document.createElement('div');
+            monthLabel.className = 'heatmap-month-label';
             monthLabel.textContent = month.label;
-            monthLabel.style.position = 'absolute';
-            monthLabel.style.left = `calc(30px + ${month.index * 15}px)`;
+            monthLabel.style.left = `${month.index * 15}px`;
             monthLabelsRow.appendChild(monthLabel);
         });
         
-        heatmapWrapper.appendChild(monthLabelsRow);
+        heatmapContainer.appendChild(monthLabelsRow);
         
-        // Create grid container with day labels
-        const gridContainer = document.createElement('div');
-        gridContainer.style.display = 'flex';
+        // Create heatmap wrapper
+        const heatmapWrapper = document.createElement('div');
+        heatmapWrapper.className = 'heatmap-wrapper';
         
-        // Create day labels column
+        // Create day labels
         const dayLabelsColumn = document.createElement('div');
-        dayLabelsColumn.style.display = 'flex';
-        dayLabelsColumn.style.flexDirection = 'column';
-        dayLabelsColumn.style.justifyContent = 'space-between';
-        dayLabelsColumn.style.padding = '4px 4px 0 0';
-        dayLabelsColumn.style.fontSize = '12px';
-        dayLabelsColumn.style.color = 'var(--text-primary)';
-        dayLabelsColumn.style.width = '30px';
+        dayLabelsColumn.className = 'heatmap-labels';
         
         // Add day labels - only show Mon, Wed, Fri for compactness
         const dayLabels = ['', 'Mon', '', 'Wed', '', 'Fri', ''];
         dayLabels.forEach(day => {
             const dayLabel = document.createElement('div');
+            dayLabel.className = 'heatmap-day-label';
             dayLabel.textContent = day;
-            dayLabel.style.height = '15px';
             dayLabelsColumn.appendChild(dayLabel);
         });
         
-        gridContainer.appendChild(dayLabelsColumn);
+        heatmapWrapper.appendChild(dayLabelsColumn);
         
-        // Create the actual grid of cells
-        const cellGrid = document.createElement('div');
-        cellGrid.style.display = 'grid';
-        cellGrid.style.gridTemplateRows = 'repeat(7, 15px)';
-        cellGrid.style.gridTemplateColumns = `repeat(${totalWeeks}, 15px)`;
-        cellGrid.style.gap = '2px';
-        cellGrid.style.overflow = 'hidden';
+        // Create heatmap grid
+        const heatmapGrid = document.createElement('div');
+        heatmapGrid.className = 'heatmap-grid';
+        heatmapGrid.style.gridTemplateColumns = `repeat(${totalWeeks}, 15px)`;
         
-        // Add all cells to the grid
-        matrixData.forEach(item => {
+        // Create cells for each day
+        allDates.forEach((date, index) => {
+            const dateStr = date.toISOString().split('T')[0];
+            const dayOfWeek = date.getDay(); // 0-6 (Sunday-Saturday)
+            const weekIndex = Math.floor(index / 7);
+            
             const cell = document.createElement('div');
-            cell.style.width = '13px';
-            cell.style.height = '13px';
-            cell.style.borderRadius = '2px';
+            cell.className = 'heatmap-cell';
+            cell.style.gridColumn = weekIndex + 1;
+            cell.style.gridRow = dayOfWeek + 1;
             
             // Set color based on activity count
-            const value = item.v;
+            const value = activityMap.get(dateStr) || 0;
             if (value === 0) {
                 cell.style.backgroundColor = 'var(--heatmap-empty)';
             } else if (value <= 2) {
@@ -668,10 +687,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 cell.style.backgroundColor = 'var(--heatmap-extreme)';
             }
             
-            cell.style.border = '1px solid var(--heatmap-border)';
-            
             // Add tooltip with date and count
-            const date = new Date(item.date);
             const formattedDate = date.toLocaleDateString('en-US', {
                 weekday: 'long',
                 year: 'numeric',
@@ -681,57 +697,11 @@ document.addEventListener('DOMContentLoaded', function() {
             
             cell.title = `${formattedDate}: ${value} task${value === 1 ? '' : 's'} completed`;
             
-            // Position in grid based on x, y coordinates
-            cell.style.gridColumn = (item.x + 1).toString();
-            cell.style.gridRow = (item.y + 1).toString();
-            
-            cellGrid.appendChild(cell);
+            heatmapGrid.appendChild(cell);
         });
         
-        gridContainer.appendChild(cellGrid);
-        heatmapWrapper.appendChild(gridContainer);
-        
-        // Add color legend
-        const legend = document.createElement('div');
-        legend.className = 'heatmap-legend';
-        legend.style.display = 'flex';
-        legend.style.alignItems = 'center';
-        legend.style.gap = '4px';
-        legend.style.marginTop = '10px';
-        legend.style.fontSize = '12px';
-        
-        const legendItems = [
-            { label: 'Less', color: false },
-            { label: '', color: 'var(--heatmap-empty)' },
-            { label: '', color: 'var(--heatmap-low)' },
-            { label: '', color: 'var(--heatmap-medium)' },
-            { label: '', color: 'var(--heatmap-high)' },
-            { label: '', color: 'var(--heatmap-very-high)' },
-            { label: '', color: 'var(--heatmap-extreme)' },
-            { label: 'More', color: false }
-        ];
-        
-        legendItems.forEach(item => {
-            if (item.color) {
-                const colorBox = document.createElement('div');
-                colorBox.style.width = '12px';
-                colorBox.style.height = '12px';
-                colorBox.style.backgroundColor = item.color;
-                colorBox.style.border = '1px solid var(--heatmap-border)';
-                colorBox.style.borderRadius = '2px';
-                legend.appendChild(colorBox);
-            } else {
-                const label = document.createElement('span');
-                label.textContent = item.label;
-                label.style.color = 'var(--text-primary)';
-                legend.appendChild(label);
-            }
-        });
-        
-        heatmapWrapper.appendChild(legend);
+        heatmapWrapper.appendChild(heatmapGrid);
         heatmapContainer.appendChild(heatmapWrapper);
-    } else {
-        console.error('Heatmap container not found!');
     }
 
     // Goal Distribution Chart

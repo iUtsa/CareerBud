@@ -1,62 +1,62 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<!-- Hero Section with Simpler Design -->
-<div class="hero-section">
-  <div class="container-fluid py-4">
+<!-- Hero Section with Modern Design -->
+<div class="hero-section py-5 bg-gradient-primary text-white">
+  <div class="container">
     <div class="row align-items-center">
-      <div class="col-lg-7">
-        <h1 class="mb-3 fw-bold">Welcome to CourseBud</h1>
-        <p class="lead mb-4">Learn from industry experts or share your knowledge with the world. Access thousands of courses across multiple categories.</p>
-        <div class="d-flex gap-3">
-          <a href="{{ url_for('coursebud.explore') }}" class="btn btn-primary px-4">
+      <div class="col-lg-6">
+        <h1 class="display-4 fw-bold mb-3">Welcome to CourseBud</h1>
+        <p class="lead mb-4">Discover, learn, and grow with our curated courses. Expand your knowledge and skills with expert-led content across multiple disciplines.</p>
+        <div class="d-flex flex-wrap gap-3">
+          <a href="{{ url_for('coursebud.explore') }}" class="btn btn-light btn-lg px-4 shadow-sm">
             <i class="fas fa-compass me-2"></i>Explore Courses
           </a>
-          <a href="{{ url_for('coursebud.teach') }}" class="btn btn-success px-4">
+          <a href="{{ url_for('coursebud.teach') }}" class="btn btn-outline-light btn-lg px-4">
             <i class="fas fa-chalkboard-teacher me-2"></i>Become an Instructor
           </a>
         </div>
       </div>
-      <div class="col-lg-5 d-none d-lg-block text-center">
-        <img src="{{ url_for('static', filename='img/course-hero.svg') }}" alt="Learning illustration" class="img-fluid hero-image">
+      <div class="col-lg-6 d-none d-lg-block">
+        <img src="https://images.pexels.com/photos/5905709/pexels-photo-5905709.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" alt="Learning illustration" class="img-fluid rounded-3 shadow-lg">
       </div>
     </div>
   </div>
 </div>
 
 <!-- Search Box -->
-<div class="container-fluid py-4">
-  <div class="row">
-    <div class="col-12">
-      <div class="card shadow-sm mb-5">
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <div class="card search-card shadow-lg border-0 mt-n5 mb-5 position-relative z-index-1">
         <div class="card-body p-4">
           <form action="{{ url_for('coursebud.explore') }}" method="get" class="row g-3">
             <div class="col-lg-5">
               <div class="input-group">
-                <span class="input-group-text bg-white">
+                <span class="input-group-text bg-transparent border-end-0">
                   <i class="fas fa-search text-primary"></i>
                 </span>
-                {{ search_form.query(class="form-control", placeholder="What do you want to learn today?") }}
+                {{ search_form.query(class="form-control border-start-0", placeholder="What do you want to learn today?") }}
               </div>
             </div>
             <div class="col-lg-3">
               <div class="input-group">
-                <span class="input-group-text bg-white">
+                <span class="input-group-text bg-transparent border-end-0">
                   <i class="fas fa-folder text-primary"></i>
                 </span>
-                {{ search_form.category(class="form-select") }}
+                {{ search_form.category(class="form-select border-start-0") }}
               </div>
             </div>
             <div class="col-lg-2">
               <div class="input-group">
-                <span class="input-group-text bg-white">
+                <span class="input-group-text bg-transparent border-end-0">
                   <i class="fas fa-signal text-primary"></i>
                 </span>
-                {{ search_form.level(class="form-select") }}
+                {{ search_form.level(class="form-select border-start-0") }}
               </div>
             </div>
             <div class="col-lg-2">
-              <button type="submit" class="btn btn-primary w-100">
+              <button type="submit" class="btn btn-primary w-100 h-100">
                 Find Courses
               </button>
             </div>
@@ -66,10 +66,10 @@
     </div>
   </div>
 
-  <!-- Categories Section with Clean Design -->
+  <!-- Categories Section with Modern Design -->
   <div class="row mb-5">
-    <div class="col-12">
-      <h2 class="mb-4">Browse Categories</h2>
+    <div class="col-12 mb-4">
+      <h2 class="fw-bold border-start border-4 border-primary ps-3">Browse Categories</h2>
     </div>
     
     <div class="col-12">
@@ -78,14 +78,16 @@
           {% for category in categories %}
             <div class="col-6 col-md-4 col-lg-3">
               <a href="{{ url_for('coursebud.category_courses', category_id=category.id) }}" class="text-decoration-none">
-                <div class="card category-card h-100 border hover-card">
-                  <div class="card-body py-3 text-center">
-                    {% set icons = ['book', 'code', 'paint-brush', 'calculator', 'music', 'heart', 'flask', 'language', 'chart-line', 'camera', 'cog', 'globe'] %}
+                <div class="card category-card h-100 border-0 shadow-sm hover-card">
+                  <div class="card-body py-4 text-center">
+                    {% set icons = ['laptop-code', 'chart-line', 'paint-brush', 'calculator', 'music', 'heart', 'flask', 'language', 'chart-pie', 'camera', 'cog', 'globe'] %}
                     {% set colors = ['primary', 'success', 'danger', 'warning', 'info', 'secondary'] %}
                     {% set icon_index = loop.index0 % icons|length %}
                     {% set color_index = loop.index0 % colors|length %}
                     
-                    <i class="fas fa-{{ icons[icon_index] }} fa-2x text-{{ colors[color_index] }} mb-3"></i>
+                    <div class="category-icon-wrapper mb-3 mx-auto">
+                      <i class="fas fa-{{ icons[icon_index] }} fa-2x text-{{ colors[color_index] }}"></i>
+                    </div>
                     <h5 class="card-title">{{ category.name }}</h5>
                     <p class="text-muted small mb-0">
                       {{ category.courses|length }} course{% if category.courses|length != 1 %}s{% endif %}
@@ -104,11 +106,11 @@
     </div>
   </div>
 
-  <!-- Featured Courses Section with Clean Cards -->
+  <!-- Featured Courses Section with Modern Cards -->
   <div class="row mb-5">
     <div class="col-12 mb-4">
       <div class="d-flex justify-content-between align-items-center">
-        <h2 class="mb-0">Featured Courses</h2>
+        <h2 class="fw-bold border-start border-4 border-primary ps-3">Featured Courses</h2>
         <a href="{{ url_for('coursebud.explore') }}" class="btn btn-outline-primary">
           View All <i class="fas fa-arrow-right ms-2"></i>
         </a>
@@ -120,9 +122,9 @@
         {% if featured_courses %}
           {% for course in featured_courses %}
             <div class="col-md-6 col-lg-4">
-              <div class="card course-card h-100">
+              <div class="card course-card h-100 border-0 shadow-sm">
                 {% if course.thumbnail %}
-                  <img src="{{ url_for('static', filename='uploads/' + course.thumbnail) }}" class="card-img-top" alt="{{ course.title }}">
+                  <img src="{{ url_for('static', filename='uploads/' + course.thumbnail) }}" class="card-img-top" alt="{{ course.title }}" style="height: 200px; object-fit: cover;">
                 {% else %}
                   <div class="bg-light text-center py-5">
                     <i class="fas fa-book fa-3x text-muted"></i>
@@ -131,11 +133,11 @@
                 
                 <div class="card-body">
                   <div class="d-flex justify-content-between mb-2">
-                    <span class="badge bg-primary">{{ course.category.name }}</span>
-                    <span class="badge bg-secondary">{{ course.level|title }}</span>
+                    <span class="badge bg-primary rounded-pill px-3">{{ course.category.name }}</span>
+                    <span class="badge bg-secondary rounded-pill px-3">{{ course.level|title }}</span>
                   </div>
                   
-                  <h5 class="card-title">{{ course.title }}</h5>
+                  <h5 class="card-title fw-bold">{{ course.title }}</h5>
                   <p class="card-text text-muted">{{ course.description|truncate(100) }}</p>
                   
                   <div class="d-flex justify-content-between align-items-center mt-3">
@@ -163,7 +165,7 @@
                     </div>
                   </div>
                 </div>
-                <div class="card-footer bg-white">
+                <div class="card-footer bg-white border-top-0">
                   <div class="d-flex justify-content-between align-items-center">
                     <small class="text-muted">
                       <i class="fas fa-users me-1"></i> {{ course.total_students() }} students
@@ -185,30 +187,30 @@
     </div>
   </div>
 
-  <!-- Trending Courses Section with Simple Design -->
+  <!-- Trending Courses Section with Modern Design -->
   {% if trending_courses %}
   <div class="row mb-5">
     <div class="col-12 mb-4">
-      <h2>Trending Courses</h2>
+      <h2 class="fw-bold border-start border-4 border-primary ps-3">Trending Courses</h2>
     </div>
     
     <div class="col-12">
       <div class="row g-4">
         {% for course in trending_courses %}
           <div class="col-md-6 col-xl-3">
-            <div class="card h-100">
+            <div class="card h-100 border-0 shadow-sm">
               {% if course.thumbnail %}
-                <img src="{{ url_for('static', filename='uploads/' + course.thumbnail) }}" class="card-img-top" alt="{{ course.title }}">
+                <img src="{{ url_for('static', filename='uploads/' + course.thumbnail) }}" class="card-img-top" alt="{{ course.title }}" style="height: 160px; object-fit: cover;">
               {% else %}
                 <div class="bg-light text-center py-4">
                   <i class="fas fa-book fa-2x text-muted"></i>
                 </div>
               {% endif %}
               <div class="card-body">
-                <h5 class="card-title">{{ course.title }}</h5>
+                <h5 class="card-title fw-bold">{{ course.title }}</h5>
                 
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                  <span class="badge bg-primary">{{ course.category.name }}</span>
+                  <span class="badge bg-primary rounded-pill px-3">{{ course.category.name }}</span>
                   <small class="text-muted">
                     <i class="fas fa-users"></i> {{ course.total_students() }}
                   </small>
@@ -228,7 +230,7 @@
                   <span class="text-muted">({{ course.reviews|length }})</span>
                 </div>
               </div>
-              <div class="card-footer bg-white">
+              <div class="card-footer bg-white border-top-0">
                 <a href="{{ url_for('coursebud.view_course', course_id=course.id) }}" class="btn btn-sm btn-outline-primary w-100">View Course</a>
               </div>
             </div>
@@ -239,21 +241,104 @@
   </div>
   {% endif %}
 
-  <!-- Become an Instructor - Simple CTA -->
-  <div class="row mb-4">
+  <!-- Become an Instructor - Modern CTA -->
+  <div class="row mb-5">
     <div class="col-12">
-      <div class="card bg-light">
-        <div class="card-body p-4">
+      <div class="card bg-gradient-secondary border-0 rounded-3 shadow">
+        <div class="card-body p-5">
           <div class="row align-items-center">
-            <div class="col-lg-9">
-              <h2 class="mb-3">Share Your Knowledge</h2>
-              <p class="lead mb-3">Become an instructor and share your expertise with students around the world.</p>
-              <a href="{{ url_for('coursebud.teach') }}" class="btn btn-success">
+            <div class="col-lg-8">
+              <h2 class="fw-bold text-white mb-3">Share Your Knowledge</h2>
+              <p class="lead text-white-50 mb-4">Join our community of instructors and share your expertise with students around the world. Create engaging courses and help others learn and grow.</p>
+              <a href="{{ url_for('coursebud.teach') }}" class="btn btn-light btn-lg shadow-sm">
                 <i class="fas fa-chalkboard-teacher me-2"></i>Start Teaching Today
               </a>
             </div>
-            <div class="col-lg-3 d-none d-lg-block text-center">
-              <i class="fas fa-chalkboard-teacher fa-5x text-success"></i>
+            <div class="col-lg-4 d-none d-lg-block text-center">
+              <i class="fas fa-chalkboard-teacher fa-5x text-white-50"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Testimonials Section -->
+  <div class="row mb-5">
+    <div class="col-12 mb-4">
+      <h2 class="fw-bold border-start border-4 border-primary ps-3">What Our Students Say</h2>
+    </div>
+    
+    <div class="col-12">
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body p-4">
+              <div class="d-flex mb-3">
+                <div class="text-warning me-1">
+                  <i class="fas fa-star"></i>
+                  <i class="fas fa-star"></i>
+                  <i class="fas fa-star"></i>
+                  <i class="fas fa-star"></i>
+                  <i class="fas fa-star"></i>
+                </div>
+              </div>
+              <p class="card-text mb-4">"The courses on CourseBud have been instrumental in advancing my career. The quality of instruction and the practical approach to learning have made a significant difference."</p>
+              <div class="d-flex align-items-center">
+                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">JD</div>
+                <div>
+                  <h6 class="mb-0">John Doe</h6>
+                  <small class="text-muted">Software Engineer</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-4">
+          <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body p-4">
+              <div class="d-flex mb-3">
+                <div class="text-warning me-1">
+                  <i class="fas fa-star"></i>
+                  <i class="fas fa-star"></i>
+                  <i class="fas fa-star"></i>
+                  <i class="fas fa-star"></i>
+                  <i class="fas fa-star-half-alt"></i>
+                </div>
+              </div>
+              <p class="card-text mb-4">"I've tried many online learning platforms, but CourseBud stands out with its intuitive interface and engaging content. The instructors are knowledgeable and responsive."</p>
+              <div class="d-flex align-items-center">
+                <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">JS</div>
+                <div>
+                  <h6 class="mb-0">Jane Smith</h6>
+                  <small class="text-muted">Data Scientist</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-4">
+          <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body p-4">
+              <div class="d-flex mb-3">
+                <div class="text-warning me-1">
+                  <i class="fas fa-star"></i>
+                  <i class="fas fa-star"></i>
+                  <i class="fas fa-star"></i>
+                  <i class="fas fa-star"></i>
+                  <i class="fas fa-star"></i>
+                </div>
+              </div>
+              <p class="card-text mb-4">"As an instructor, I've found CourseBud to be the perfect platform to share my knowledge. The tools provided make course creation a breeze, and the student engagement is fantastic."</p>
+              <div class="d-flex align-items-center">
+                <div class="rounded-circle bg-warning text-dark d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">RJ</div>
+                <div>
+                  <h6 class="mb-0">Robert Johnson</h6>
+                  <small class="text-muted">Marketing Specialist</small>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -262,82 +347,149 @@
   </div>
 </div>
 
-<!-- CSS for simple design -->
+<!-- CSS for modern design -->
 <style>
 /* General Styles */
 body {
   background-color: #f8f9fa;
 }
 
-.container-fluid {
-  max-width: 1400px;
+.container {
+  max-width: 1320px;
 }
 
-h1 {
-  font-size: 2.5rem;
-  color: #212529;
-}
-
-h2 {
-  font-size: 1.75rem;
-  font-weight: 600;
+h1, h2, h3, h4, h5, h6 {
   color: #212529;
 }
 
 /* Hero Section */
 .hero-section {
-  background-color: #f8f9fa;
-  padding: 2rem 0;
+  background: linear-gradient(135deg, #4f46e5, #3b82f6);
+  padding: 5rem 0;
+  margin-bottom: 3rem;
 }
 
-.hero-image {
-  max-height: 300px;
+.hero-section h1 {
+  font-size: 3rem;
+  line-height: 1.2;
 }
 
-/* Search Box */
+/* Search Card */
+.search-card {
+  border-radius: 1rem;
+  z-index: 10;
+}
+
+.input-group-text, .form-control, .form-select {
+  border-color: #e9ecef;
+}
+
 .input-group-text {
-  background-color: #ffffff;
+  color: #6c757d;
 }
 
 /* Category Cards */
 .category-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  border-radius: 5px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-radius: 1rem;
+  overflow: hidden;
 }
 
 .category-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+}
+
+.category-icon-wrapper {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(var(--bs-primary-rgb), 0.1);
 }
 
 /* Course Cards */
 .course-card {
-  border-radius: 5px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.course-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
 }
 
 .card-img-top {
-  height: 180px;
+  height: 200px;
   object-fit: cover;
 }
 
-.card-title {
-  font-weight: 600;
-  margin-bottom: 0.5rem;
+/* CTA Section */
+.bg-gradient-secondary {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+}
+
+/* Testimonials */
+.testimonial-card {
+  border-radius: 1rem;
 }
 
 /* Responsive Adjustments */
-@media (max-width: 767.98px) {
-  h1 {
-    font-size: 2rem;
+@media (max-width: 992px) {
+  .hero-section h1 {
+    font-size: 2.5rem;
   }
   
-  h2 {
-    font-size: 1.5rem;
+  .search-card {
+    margin-top: 0 !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-section {
+    padding: 3rem 0;
+  }
+  
+  .hero-section h1 {
+    font-size: 2rem;
   }
   
   .lead {
     font-size: 1rem;
   }
+}
+
+/* Dark Mode Adjustments */
+[data-theme="dark"] .search-card,
+[data-theme="dark"] .category-card,
+[data-theme="dark"] .course-card {
+  background-color: #1e293b;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .card-footer {
+  background-color: #1e293b;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .bg-light {
+  background-color: #1e293b !important;
+}
+
+[data-theme="dark"] .text-muted {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .category-icon-wrapper {
+  background-color: rgba(var(--bs-primary-rgb), 0.2);
+}
+
+/* Z-index utility */
+.z-index-1 {
+  z-index: 1;
 }
 </style>
 {% endblock %}

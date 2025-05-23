@@ -1,0 +1,883 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <div class="row g-0">
+        <!-- Sidebar: Course Structure -->
+        <div class="col-md-3 col-lg-3 course-sidebar border-end">
+            <div class="p-3 border-bottom bg-light">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 me-2 text-truncate">{{ course.title }}</h5>
+                    <button class="btn btn-sm btn-outline-secondary d-md-none" id="toggleSidebar">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="progress mt-2" style="height: 8px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ enrollment.progress }}%;" aria-valuenow="{{ enrollment.progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mt-1">
+                    <small class="text-muted">{{ enrollment.progress|int }}% complete</small>
+                    {% if enrollment.is_completed %}
+                        <a href="{{ url_for('coursebud.view_certificate', course_id=course.id) }}" class="btn btn-sm btn-outline-success">
+                            <i class="fas fa-certificate me-1"></i> View Certificate
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="course-sections overflow-auto" style="height: calc(100vh - 107px);">
+                {% for section in sections %}
+                    <div class="section">
+                        <div class="section-header p-3 border-bottom {% if current_lesson and current_lesson.section_id == section.id %}bg-light{% endif %}">
+                            <h6 class="mb-1 fw-bold">{{ section.title }}</h6>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">{{ section.lessons|length }} lessons</small>
+                                <small class="text-muted">
+                                    {% set completed_in_section = 0 %}
+                                    {% for lesson in section.lessons %}
+                                        {% if lesson.id in completed_lesson_ids %}
+                                            {% set completed_in_section = completed_in_section + 1 %}
+                                        {% endif %}
+                                    {% endfor %}
+                                    {{ completed_in_section }}/{{ section.lessons|length }}
+                                </small>
+                            </div>
+                        </div>
+                        <div class="lessons">
+                            <div class="list-group list-group-flush">
+                                {% for lesson in section.lessons %}
+                                    <a href="{{ url_for('coursebud.view_lesson', course_id=course.id, lesson_id=lesson.id) }}" 
+                                       class="list-group-item list-group-item-action {% if current_lesson and current_lesson.id == lesson.id %}active{% endif %}">
+                                        <div class="d-flex align-items-center">
+                                            <div class="me-2">
+                                                {% if lesson.id in completed_lesson_ids %}
+                                                    <i class="fas fa-check-circle text-success"></i>
+                                                {% else %}
+                                                    <i class="far fa-circle text-muted"></i>
+                                                {% endif %}
+                                            </div>
+                                            <div>
+                                                <div class="{% if current_lesson and current_lesson.id == lesson.id %}text-white{% endif %} fw-medium">
+                                                    {{ lesson.title }}
+                                                </div>
+                                                <div class="small {% if current_lesson and current_lesson.id == lesson.id %}text-white-50{% else %}text-muted{% endif %}">
+                                                    <i class="fas 
+                                                        {% if lesson.content_type == 'video' %}fa-play-circle
+                                                        {% elif lesson.content_type == 'quiz' %}fa-question-circle
+                                                        {% elif lesson.content_type == 'resource' %}fa-file-download
+                                                        {% else %}fa-file-alt{% endif %} me-1"></i>
+                                                    {{ lesson.content_type|title }} • {{ lesson.duration }} min
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Main Content Area -->
+        <div class="col-md-9 col-lg-9 main-content">
+            <!-- Mobile Header -->
+            <div class="d-md-none p-3 border-bottom">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-truncate">{{ course.title }}</h5>
+                    <button class="btn btn-sm btn-primary" id="showSidebar">
+                        <i class="fas fa-list me-1"></i> Course Content
+                    </button>
+                </div>
+                <div class="progress mt-2" style="height: 8px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ enrollment.progress }}%;" aria-valuenow="{{ enrollment.progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <small class="text-muted">{{ enrollment.progress|int }}% complete</small>
+            </div>
+            
+            <!-- Lesson Content -->
+            {% if current_lesson %}
+                <div class="lesson-container p-4">
+                    <div class="lesson-header mb-4">
+                        <nav aria-label="breadcrumb" class="mb-2">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="{{ url_for('coursebud.index') }}" class="text-decoration-none">CourseBud</a></li>
+                                <li class="breadcrumb-item"><a href="{{ url_for('coursebud.view_course', course_id=course.id) }}" class="text-decoration-none">{{ course.title }}</a></li>
+                                <li class="breadcrumb-item active" aria-current="page">{{ current_lesson.title }}</li>
+                            </ol>
+                        </nav>
+                        
+                        <h2 class="mb-3 fw-bold">{{ current_lesson.title }}</h2>
+                        <div class="d-flex flex-wrap align-items-center mb-3 gap-3">
+                            <span class="badge bg-secondary rounded-pill px-3">{{ current_lesson.section.title }}</span>
+                            <span class="badge 
+                                {% if current_lesson.content_type == 'video' %}bg-danger
+                                {% elif current_lesson.content_type == 'quiz' %}bg-warning text-dark
+                                {% elif current_lesson.content_type == 'resource' %}bg-success
+                                {% else %}bg-info{% endif %} rounded-pill px-3">
+                                {{ current_lesson.content_type|title }}
+                            </span>
+                            <span class="text-muted"><i class="fas fa-clock me-1"></i> {{ current_lesson.duration }} minutes</span>
+                        </div>
+                    </div>
+                    
+                    <div class="lesson-content mb-4">
+                        {% if current_lesson.content_type == 'video' %}
+                            <div class="ratio ratio-16x9 mb-3 rounded overflow-hidden shadow-sm">
+                                <!-- Handle different video URLs -->
+                                {% if 'youtube.com' in current_lesson.content or 'youtu.be' in current_lesson.content %}
+                                    {% set youtube_id = current_lesson.content.split('v=')[1] if 'v=' in current_lesson.content else current_lesson.content.split('/')[-1] %}
+                                    <iframe src="https://www.youtube.com/embed/{{ youtube_id }}" title="{{ current_lesson.title }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                                {% elif 'vimeo.com' in current_lesson.content %}
+                                    {% set vimeo_id = current_lesson.content.split('/')[-1] %}
+                                    <iframe src="https://player.vimeo.com/video/{{ vimeo_id }}" title="{{ current_lesson.title }}" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+                                {% else %}
+                                    <div class="alert alert-warning">
+                                        <i class="fas fa-exclamation-triangle me-2"></i> Unsupported video URL. Please contact the instructor.
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% elif current_lesson.content_type == 'text' %}
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body p-4">
+                                    {{ current_lesson.content|safe }}
+                                </div>
+                            </div>
+                        {% elif current_lesson.content_type == 'quiz' %}
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body p-4">
+                                    <div id="quiz-container" data-quiz-content="{{ current_lesson.content }}">
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle me-2"></i> Loading quiz...
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% elif current_lesson.content_type == 'resource' %}
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body p-5 text-center">
+                                    <i class="fas fa-file-download fa-4x mb-4 text-primary"></i>
+                                    <h4 class="mb-4 fw-bold">Downloadable Resource</h4>
+                                    <p class="mb-4 text-muted">This lesson contains a downloadable resource that you can use to enhance your learning experience.</p>
+                                    <a href="{{ current_lesson.content }}" class="btn btn-primary btn-lg" download>
+                                        <i class="fas fa-download me-2"></i> Download Resource
+                                    </a>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="lesson-actions d-flex justify-content-between align-items-center mt-4">
+                        <!-- Mark Complete Button -->
+                        <div class="d-flex gap-2">
+                            {% if current_lesson.id not in completed_lesson_ids %}
+                                <button id="markComplete" class="btn btn-success" data-course-id="{{ course.id }}" data-lesson-id="{{ current_lesson.id }}">
+                                    <i class="fas fa-check me-2"></i> Mark as Complete
+                                </button>
+                            {% else %}
+                                <button class="btn btn-outline-success" disabled>
+                                    <i class="fas fa-check-circle me-2"></i> Completed
+                                </button>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Navigation -->
+                        <div class="d-flex gap-2">
+                            {% if prev_lesson %}
+                                <a href="{{ url_for('coursebud.view_lesson', course_id=course.id, lesson_id=prev_lesson.id) }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i> Previous
+                                </a>
+                            {% endif %}
+                            
+                            {% if next_lesson %}
+                                <a href="{{ url_for('coursebud.view_lesson', course_id=course.id, lesson_id=next_lesson.id) }}" class="btn btn-primary">
+                                    Next <i class="fas fa-arrow-right ms-2"></i>
+                                </a>
+                            {% else %}
+                                <a href="{{ url_for('coursebud.view_certificate', course_id=course.id) }}" class="btn btn-primary">
+                                    Finish Course <i class="fas fa-check-circle ms-2"></i>
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Notes section -->
+                    <div class="lesson-notes mt-5">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-white py-3">
+                                <h4 class="mb-0 fw-bold">My Notes</h4>
+                            </div>
+                            <div class="card-body p-4">
+                                <div class="mb-3">
+                                    <textarea id="noteText" class="form-control" rows="3" placeholder="Write your notes for this lesson..."></textarea>
+                                </div>
+                                <div class="d-flex justify-content-end">
+                                    <button id="saveNote" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>Save Note
+                                    </button>
+                                </div>
+                                <div id="savedNotes" class="mt-4">
+                                    <!-- Saved notes will appear here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-book-open fa-5x mb-4 text-muted"></i>
+                    <h3 class="mb-3 fw-bold">Welcome to {{ course.title }}</h3>
+                    <p class="mb-4 lead">Select a lesson from the sidebar to get started.</p>
+                    
+                    {% if sections and sections[0].lessons %}
+                        <a href="{{ url_for('coursebud.view_lesson', course_id=course.id, lesson_id=sections[0].lessons[0].id) }}" class="btn btn-primary btn-lg">
+                            Start First Lesson <i class="fas fa-arrow-right ms-2"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Completion Modal -->
+<div class="modal fade" id="completionModal" tabindex="-1" aria-labelledby="completionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0 bg-success text-white">
+                <h5 class="modal-title fw-bold" id="completionModalLabel">Lesson Completed!</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center p-5">
+                <div class="rounded-circle bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-4" style="width: 80px; height: 80px;">
+                    <i class="fas fa-check-circle fa-3x text-success"></i>
+                </div>
+                <h4 class="mb-3 fw-bold">Great job!</h4>
+                <p class="mb-4">You've completed this lesson. Keep going to finish the course!</p>
+                
+                <div class="progress mb-3" style="height: 10px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: 0%" id="progressBarModal" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <p class="text-muted"><span id="progressTextModal">0</span>% complete</p>
+            </div>
+            <div class="modal-footer border-0 justify-content-center">
+                {% if next_lesson %}
+                    <a href="{{ url_for('coursebud.view_lesson', course_id=course.id, lesson_id=next_lesson.id) }}" class="btn btn-primary">
+                        Continue to Next Lesson <i class="fas fa-arrow-right ms-2"></i>
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('coursebud.view_certificate', course_id=course.id) }}" class="btn btn-success">
+                        View Certificate <i class="fas fa-certificate ms-2"></i>
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Course Completion Modal -->
+<div class="modal fade" id="courseCompletionModal" tabindex="-1" aria-labelledby="courseCompletionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0 bg-primary text-white">
+                <h5 class="modal-title fw-bold" id="courseCompletionModalLabel">Course Completed!</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center p-5">
+                <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-4" style="width: 80px; height: 80px;">
+                    <i class="fas fa-trophy fa-3x text-primary"></i>
+                </div>
+                <h4 class="mb-3 fw-bold">Congratulations!</h4>
+                <p class="mb-4">You've successfully completed this course. Your certificate is now available!</p>
+                <div class="confetti-animation">
+                    <!-- Confetti animation will be added by JavaScript -->
+                </div>
+            </div>
+            <div class="modal-footer border-0 justify-content-center">
+                <a href="{{ url_for('coursebud.view_certificate', course_id=course.id) }}" class="btn btn-success">
+                    View Certificate <i class="fas fa-certificate ms-2"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Modern Styles for Learning Interface */
+.course-sidebar {
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    overflow-y: auto;
+    background-color: #f8f9fa;
+    z-index: 100;
+}
+
+[data-theme="dark"] .course-sidebar {
+    background-color: #1e293b;
+}
+
+.section-header {
+    transition: background-color 0.2s ease;
+}
+
+.section-header:hover {
+    background-color: rgba(var(--bs-primary-rgb), 0.05) !important;
+}
+
+.list-group-item {
+    border: none;
+    border-radius: 0;
+    padding: 0.75rem 1rem;
+    transition: all 0.2s ease;
+}
+
+.list-group-item:hover {
+    background-color: rgba(var(--bs-primary-rgb), 0.05);
+    transform: translateX(5px);
+}
+
+.list-group-item.active {
+    background-color: var(--bs-primary);
+    color: white;
+    border-left: 4px solid var(--bs-primary);
+}
+
+.main-content {
+    min-height: 100vh;
+    background-color: #ffffff;
+}
+
+[data-theme="dark"] .main-content {
+    background-color: #0f172a;
+}
+
+.lesson-container {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+@media (max-width: 767.98px) {
+    .course-sidebar {
+        position: fixed;
+        top: 0;
+        left: -100%;
+        width: 80%;
+        z-index: 1000;
+        transition: left 0.3s ease;
+        height: 100%;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+    }
+    
+    .course-sidebar.show {
+        left: 0;
+    }
+    
+    .sidebar-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        display: none;
+    }
+    
+    .sidebar-backdrop.show {
+        display: block;
+    }
+    
+    .main-content {
+        width: 100%;
+    }
+}
+
+/* Dark Mode Adjustments */
+[data-theme="dark"] .card {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .card-header {
+    background-color: #1e293b !important;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .bg-light {
+    background-color: #1e293b !important;
+}
+
+[data-theme="dark"] .text-muted {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .list-group-item {
+    background-color: #1e293b;
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .list-group-item:hover {
+    background-color: #334155;
+}
+
+[data-theme="dark"] .form-control {
+    background-color: #0f172a;
+    border-color: #334155;
+    color: #f8fafc;
+}
+
+/* Note styles */
+.note-card {
+    border-left: 4px solid var(--bs-primary);
+    transition: all 0.3s ease;
+}
+
+.note-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Quiz styles */
+.quiz-question {
+    border-left: 4px solid var(--bs-primary);
+    transition: all 0.3s ease;
+}
+
+.quiz-question:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Mobile sidebar toggle
+    const sidebar = document.querySelector('.course-sidebar');
+    const showSidebarButton = document.getElementById('showSidebar');
+    const toggleSidebarButton = document.getElementById('toggleSidebar');
+    
+    if (showSidebarButton) {
+        showSidebarButton.addEventListener('click', function() {
+            sidebar.classList.add('show');
+            
+            // Create backdrop element
+            const backdrop = document.createElement('div');
+            backdrop.classList.add('sidebar-backdrop', 'show');
+            document.body.appendChild(backdrop);
+            
+            // Handle backdrop click
+            backdrop.addEventListener('click', function() {
+                sidebar.classList.remove('show');
+                backdrop.remove();
+            });
+        });
+    }
+    
+    if (toggleSidebarButton) {
+        toggleSidebarButton.addEventListener('click', function() {
+            sidebar.classList.remove('show');
+            document.querySelector('.sidebar-backdrop')?.remove();
+        });
+    }
+    
+    // Handle "Mark as Complete" button
+    const markCompleteButton = document.getElementById('markComplete');
+    if (markCompleteButton) {
+        markCompleteButton.addEventListener('click', function() {
+            const courseId = this.getAttribute('data-course-id');
+            const lessonId = this.getAttribute('data-lesson-id');
+            
+            // Disable button to prevent multiple clicks
+            markCompleteButton.disabled = true;
+            markCompleteButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Marking...';
+            
+            // Make AJAX request to mark lesson as complete
+            fetch(`/coursebud/learn/${courseId}/lesson/${lessonId}/complete`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update the button
+                    markCompleteButton.innerHTML = '<i class="fas fa-check-circle me-2"></i> Completed';
+                    markCompleteButton.classList.remove('btn-success');
+                    markCompleteButton.classList.add('btn-outline-success');
+                    
+                    // Update progress bar in sidebar
+                    const progressBars = document.querySelectorAll('.progress-bar');
+                    progressBars.forEach(bar => {
+                        bar.style.width = `${data.progress}%`;
+                        bar.setAttribute('aria-valuenow', data.progress);
+                    });
+                    
+                    // Update progress text
+                    const progressTexts = document.querySelectorAll('small.text-muted');
+                    progressTexts.forEach(text => {
+                        if (text.textContent.includes('% complete')) {
+                            text.textContent = `${Math.round(data.progress)}% complete`;
+                        }
+                    });
+                    
+                    // Update the lesson item in sidebar
+                    const lessonItem = document.querySelector(`a[href*="/lesson/${lessonId}"] .me-2 i`);
+                    if (lessonItem) {
+                        lessonItem.classList.remove('far', 'fa-circle', 'text-muted');
+                        lessonItem.classList.add('fas', 'fa-check-circle', 'text-success');
+                    }
+                    
+                    // Show completion modal
+                    const completionModal = new bootstrap.Modal(document.getElementById('completionModal'));
+                    
+                    // Update modal progress bar
+                    document.getElementById('progressBarModal').style.width = `${data.progress}%`;
+                    document.getElementById('progressTextModal').textContent = Math.round(data.progress);
+                    
+                    // Check if course is completed
+                    if (data.completed) {
+                        // Show course completion modal instead
+                        const courseCompletionModal = new bootstrap.Modal(document.getElementById('courseCompletionModal'));
+                        courseCompletionModal.show();
+                        
+                        // Add confetti animation
+                        addConfetti();
+                    } else {
+                        completionModal.show();
+                    }
+                } else {
+                    // Show error
+                    markCompleteButton.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i> Error';
+                    setTimeout(() => {
+                        markCompleteButton.innerHTML = '<i class="fas fa-check me-2"></i> Mark as Complete';
+                        markCompleteButton.disabled = false;
+                    }, 2000);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                markCompleteButton.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i> Error';
+                setTimeout(() => {
+                    markCompleteButton.innerHTML = '<i class="fas fa-check me-2"></i> Mark as Complete';
+                    markCompleteButton.disabled = false;
+                }, 2000);
+            });
+        });
+    }
+    
+    // Handle quiz content if present
+    const quizContainer = document.getElementById('quiz-container');
+    if (quizContainer && quizContainer.getAttribute('data-quiz-content')) {
+        try {
+            const quizContent = JSON.parse(quizContainer.getAttribute('data-quiz-content'));
+            renderQuiz(quizContainer, quizContent);
+        } catch (error) {
+            console.error('Error parsing quiz content:', error);
+            quizContainer.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i> Error loading quiz content. Please contact the instructor.
+                </div>
+            `;
+        }
+    }
+    
+    // Notes functionality
+    const noteText = document.getElementById('noteText');
+    const saveNoteButton = document.getElementById('saveNote');
+    const savedNotesContainer = document.getElementById('savedNotes');
+    
+    if (saveNoteButton && noteText && savedNotesContainer) {
+        // Load saved notes
+        loadNotes();
+        
+        saveNoteButton.addEventListener('click', function() {
+            if (noteText.value.trim()) {
+                saveNote(noteText.value);
+                noteText.value = '';
+            }
+        });
+    }
+    
+    function saveNote(content) {
+        const courseId = '{{ course.id }}';
+        const lessonId = '{{ current_lesson.id if current_lesson else "" }}';
+        
+        if (!courseId || !lessonId) return;
+        
+        const notes = JSON.parse(localStorage.getItem(`notes_${courseId}`) || '{}');
+        
+        if (!notes[lessonId]) {
+            notes[lessonId] = [];
+        }
+        
+        notes[lessonId].push({
+            content: content,
+            timestamp: new Date().toISOString()
+        });
+        
+        localStorage.setItem(`notes_${courseId}`, JSON.stringify(notes));
+        loadNotes();
+    }
+    
+    function loadNotes() {
+        const courseId = '{{ course.id }}';
+        const lessonId = '{{ current_lesson.id if current_lesson else "" }}';
+        
+        if (!courseId || !lessonId || !savedNotesContainer) return;
+        
+        const notes = JSON.parse(localStorage.getItem(`notes_${courseId}`) || '{}');
+        const lessonNotes = notes[lessonId] || [];
+        
+        if (lessonNotes.length === 0) {
+            savedNotesContainer.innerHTML = '<p class="text-muted text-center my-4">No notes for this lesson yet.</p>';
+            return;
+        }
+        
+        let html = '';
+        lessonNotes.forEach((note, index) => {
+            const date = new Date(note.timestamp);
+            html += `
+                <div class="card note-card mb-3 shadow-sm">
+                    <div class="card-body">
+                        <p class="mb-2">${note.content}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">${date.toLocaleString()}</small>
+                            <button class="btn btn-sm btn-outline-danger delete-note" data-index="${index}">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        savedNotesContainer.innerHTML = html;
+        
+        // Add event listeners to delete buttons
+        document.querySelectorAll('.delete-note').forEach(button => {
+            button.addEventListener('click', function() {
+                const index = this.getAttribute('data-index');
+                deleteNote(index);
+            });
+        });
+    }
+    
+    function deleteNote(index) {
+        const courseId = '{{ course.id }}';
+        const lessonId = '{{ current_lesson.id if current_lesson else "" }}';
+        
+        if (!courseId || !lessonId) return;
+        
+        const notes = JSON.parse(localStorage.getItem(`notes_${courseId}`) || '{}');
+        
+        if (notes[lessonId] && notes[lessonId][index]) {
+            notes[lessonId].splice(index, 1);
+            localStorage.setItem(`notes_${courseId}`, JSON.stringify(notes));
+            loadNotes();
+        }
+    }
+    
+    function renderQuiz(container, quizData) {
+        if (!quizData.questions || !Array.isArray(quizData.questions)) {
+            container.innerHTML = '<div class="alert alert-warning">Invalid quiz format. Please contact the instructor.</div>';
+            return;
+        }
+        
+        let html = `
+            <div class="quiz-header mb-4">
+                <h4 class="fw-bold">${quizData.title || 'Quiz'}</h4>
+                <p class="text-muted">${quizData.description || 'Test your knowledge with this quiz.'}</p>
+            </div>
+            <form id="quizForm" class="mb-4">
+        `;
+        
+        quizData.questions.forEach((question, qIndex) => {
+            html += `
+                <div class="card quiz-question mb-4 shadow-sm">
+                    <div class="card-header bg-light py-3">
+                        <h5 class="mb-0 fw-bold">Question ${qIndex + 1}: ${question.text}</h5>
+                    </div>
+                    <div class="card-body p-4" data-question-index="${qIndex}">
+            `;
+            
+            if (question.type === 'multiple-choice') {
+                html += `<div class="mb-3">`;
+                question.options.forEach((option, oIndex) => {
+                    html += `
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="radio" name="q${qIndex}" id="q${qIndex}o${oIndex}" value="${oIndex}">
+                            <label class="form-check-label" for="q${qIndex}o${oIndex}">
+                                ${option}
+                            </label>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+            } else if (question.type === 'text') {
+                html += `
+                    <div class="mb-3">
+                        <input type="text" class="form-control" name="q${qIndex}" placeholder="Your answer">
+                    </div>
+                `;
+            }
+            
+            html += `
+                        <div class="feedback-area mt-3" style="display: none;"></div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += `
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary btn-lg">Submit Answers</button>
+                </div>
+            </form>
+            <div id="quizResults" class="mt-4" style="display: none;">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4 text-center">
+                        <div class="rounded-circle bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                            <i class="fas fa-check-circle fa-3x text-success"></i>
+                        </div>
+                        <h4 class="fw-bold mb-3">Quiz Results</h4>
+                        <div class="display-4 mb-3"><span id="scoreDisplay">0</span>%</div>
+                        <p class="mb-0">You answered <span id="correctAnswers">0</span> out of <span id="totalQuestions">0</span> questions correctly.</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        container.innerHTML = html;
+        
+        // Add event listener to form
+        const quizForm = document.getElementById('quizForm');
+        if (quizForm) {
+            quizForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                gradeQuiz(quizData);
+            });
+        }
+    }
+    
+    function gradeQuiz(quizData) {
+        const questions = document.querySelectorAll('.quiz-question');
+        let correctCount = 0;
+        
+        questions.forEach((questionDiv, qIndex) => {
+            const question = quizData.questions[qIndex];
+            const feedbackArea = questionDiv.querySelector('.feedback-area');
+            
+            let isCorrect = false;
+            
+            if (question.type === 'multiple-choice') {
+                const selectedOption = questionDiv.querySelector(`input[name="q${qIndex}"]:checked`);
+                
+                if (selectedOption) {
+                    const selectedIndex = parseInt(selectedOption.value);
+                    isCorrect = selectedIndex === question.correctAnswer;
+                    
+                    if (isCorrect) {
+                        feedbackArea.innerHTML = '<div class="alert alert-success mb-0"><i class="fas fa-check-circle me-2"></i>Correct!</div>';
+                        correctCount++;
+                    } else {
+                        feedbackArea.innerHTML = `<div class="alert alert-danger mb-0"><i class="fas fa-times-circle me-2"></i>Incorrect. The correct answer is: ${question.options[question.correctAnswer]}</div>`;
+                    }
+                } else {
+                    feedbackArea.innerHTML = '<div class="alert alert-warning mb-0"><i class="fas fa-exclamation-circle me-2"></i>No answer selected.</div>';
+                }
+            } else if (question.type === 'text') {
+                const textInput = questionDiv.querySelector(`input[name="q${qIndex}"]`);
+                
+                if (textInput && textInput.value.trim()) {
+                    // Case-insensitive comparison
+                    const userAnswer = textInput.value.trim().toLowerCase();
+                    isCorrect = question.acceptableAnswers.some(answer => 
+                        userAnswer === answer.toLowerCase()
+                    );
+                    
+                    if (isCorrect) {
+                        feedbackArea.innerHTML = '<div class="alert alert-success mb-0"><i class="fas fa-check-circle me-2"></i>Correct!</div>';
+                        correctCount++;
+                    } else {
+                        feedbackArea.innerHTML = `<div class="alert alert-danger mb-0"><i class="fas fa-times-circle me-2"></i>Incorrect. Acceptable answers: ${question.acceptableAnswers.join(', ')}</div>`;
+                    }
+                } else {
+                    feedbackArea.innerHTML = '<div class="alert alert-warning mb-0"><i class="fas fa-exclamation-circle me-2"></i>No answer provided.</div>';
+                }
+            }
+            
+            feedbackArea.style.display = 'block';
+        });
+        
+        // Display results
+        const totalQuestions = quizData.questions.length;
+        const scorePercentage = Math.round((correctCount / totalQuestions) * 100);
+        
+        const resultsDiv = document.getElementById('quizResults');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const correctAnswersSpan = document.getElementById('correctAnswers');
+        const totalQuestionsSpan = document.getElementById('totalQuestions');
+        
+        if (resultsDiv && scoreDisplay && correctAnswersSpan && totalQuestionsSpan) {
+            scoreDisplay.textContent = scorePercentage;
+            correctAnswersSpan.textContent = correctCount;
+            totalQuestionsSpan.textContent = totalQuestions;
+            resultsDiv.style.display = 'block';
+            
+            // Scroll to results
+            resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        
+        // Disable form submission
+        document.getElementById('quizForm').querySelector('button[type="submit"]').disabled = true;
+    }
+    
+    // Confetti animation for course completion
+    function addConfetti() {
+        // This is a simple implementation - in a real app, you might use a library like canvas-confetti
+        const confettiContainer = document.querySelector('.confetti-animation');
+        if (!confettiContainer) return;
+        
+        for (let i = 0; i < 100; i++) {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti-piece';
+            confetti.style.width = `${Math.random() * 10 + 5}px`;
+            confetti.style.height = `${Math.random() * 10 + 5}px`;
+            confetti.style.background = `hsl(${Math.random() * 360}, 100%, 50%)`;
+            confetti.style.position = 'absolute';
+            confetti.style.top = '-10px';
+            confetti.style.left = `${Math.random() * 100}%`;
+            confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+            confetti.style.opacity = Math.random();
+            confetti.style.animation = `fall ${Math.random() * 3 + 2}s linear forwards`;
+            
+            confettiContainer.appendChild(confetti);
+        }
+    }
+    
+    // Add CSS for confetti animation
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes fall {
+            to {
+                transform: translate(${Math.random() * 200 - 100}px, 400px) rotate(${Math.random() * 360 + 360}deg);
+                opacity: 0;
+            }
+        }
+        
+        .confetti-animation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+        }
+    `;
+    document.head.appendChild(style);
+});
+</script>
+{% endblock %}

@@ -76,24 +76,21 @@
     <!-- Post Actions -->
     <div class="card-footer bg-transparent">
         <div class="d-flex justify-content-between mb-2">
+            <div class="interaction-counter" data-post-id="{{ post.id }}">
+                <i class="fas fa-thumbs-up text-primary"></i> <span class="like-count">{{ post.likes|length }}</span>
+            </div>
             <div>
-                <span>
-                    <i class="fas fa-thumbs-up text-primary"></i> {{ post.likes|length }}
-                </span>
-                <span class="ms-3">
+                <span class="comment-counter" data-bs-toggle="collapse" data-bs-target="#comments{{ post.id }}" aria-expanded="false">
                     <i class="fas fa-comment text-secondary"></i> {{ post.comments|length }}
                 </span>
             </div>
         </div>
         
         <div class="d-flex justify-content-around border-top border-bottom py-2">
-            <form method="POST" action="{{ url_for('social.like_post_route', post_id=post.id) }}" class="d-inline">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="btn btn-link text-decoration-none {% if post.likes|selectattr('user_id', 'equalto', current_user.id)|list|length > 0 %}text-primary{% else %}text-muted{% endif %}">
-                    <i class="fas fa-thumbs-up me-1"></i> Like
-                </button>
-                
-            </form>
+            <button class="btn btn-link text-decoration-none like-button {% if post.likes|selectattr('user_id', 'equalto', current_user.id)|list|length > 0 %}liked{% endif %}" 
+                    data-post-id="{{ post.id }}">
+                <i class="{% if post.likes|selectattr('user_id', 'equalto', current_user.id)|list|length > 0 %}fas{% else %}far{% endif %} fa-thumbs-up me-1 like-icon"></i> Like
+            </button>
             
             <button class="btn btn-link text-decoration-none text-muted" type="button" data-bs-toggle="collapse" data-bs-target="#comments{{ post.id }}" aria-expanded="false">
                 <i class="fas fa-comment me-1"></i> Comment
@@ -124,7 +121,7 @@
             {% endif %}
             
             <!-- Comment Form -->
-            <form method="POST" action="{{ url_for('social.comment_post', post_id=post.id) }}">
+            <form method="POST" action="{{ url_for('social.comment_post', post_id=post.id) }}" class="comment-form">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="input-group">
                     <input type="text" class="form-control" name="content" placeholder="Write a comment..." required>

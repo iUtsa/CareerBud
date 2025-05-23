@@ -1,253 +1,814 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="progress-tracker-container">
-    <h1 class="section-title">Progress Tracker</h1>
-
-    <div class="row">
-        <!-- Academic Progress -->
-        <div class="col-lg-6 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="card-title-primary">Academic Progress</h2>
-                </div>
-                <div class="card-body">
-                    <div class="mb-4">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span>GPA</span>
-                            <span><strong>{{ academic_progress.gpa }}</strong> / 4.0</span>
+<div class="container-fluid py-4">
+    <!-- Progress Tracker Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm bg-gradient-primary text-white">
+                <div class="card-body p-4">
+                    <div class="row align-items-center">
+                        <div class="col-lg-8">
+                            <h1 class="display-5 fw-bold mb-2">Progress Tracker</h1>
+                            <p class="lead mb-0">Monitor your academic and professional growth, track skills, and celebrate achievements.</p>
                         </div>
-                        <div class="progress">
-                            <div class="progress-bar progress-bar-success" role="progressbar"
-                                style="width: {{ (academic_progress.gpa / 4.0) * 100 }}%"
-                                aria-valuenow="{{ academic_progress.gpa }}" aria-valuemin="0" aria-valuemax="4.0"></div>
-                        </div>
-                    </div>
-
-                    <div class="mb-4">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span>Credits</span>
-                            <span><strong>{{ academic_progress.credits }}</strong> / {{ academic_progress.total_credits
-                                }}</span>
-                        </div>
-                        <div class="progress">
-                            <div class="progress-bar progress-bar-info" role="progressbar"
-                                style="width: {{ academic_progress.progress_percentage }}%"
-                                aria-valuenow="{{ academic_progress.credits }}" aria-valuemin="0"
-                                aria-valuemax="{{ academic_progress.total_credits }}"></div>
+                        <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                            <div class="d-flex flex-column align-items-lg-end">
+                                <div class="d-flex align-items-center mb-2">
+                                    <div class="rounded-circle bg-white bg-opacity-25 p-2 me-2">
+                                        <i class="fas fa-graduation-cap text-white"></i>
+                                    </div>
+                                    <span>{{ current_user.university }}</span>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="rounded-circle bg-white bg-opacity-25 p-2 me-2">
+                                        <i class="fas fa-book text-white"></i>
+                                    </div>
+                                    <span>{{ current_user.major }}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
-
-                    <h4 class="subsection-title">Current Courses</h4>
-                    {% if current_courses %}
-                    {% for course in current_courses %}
-                    <div class="course-item">
-                        <span>{{ course.name }}</span>
-                        <span class="course-grade grade-{{ course.grade.lower() if course.grade else 'a' }}">{{
-                            course.grade if course.grade else 'In Progress' }}</span>
-                    </div>
-                    {% endfor %}
-                    {% else %}
-                    <p>No current courses.</p>
-                    {% endif %}
-
-                    <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#updateAcademicModal">
-                        Update Academic Progress
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Professional Journey -->
-        <div class="col-lg-6 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="card-title-secondary">Professional Journey</h2>
-                </div>
-                <div class="card-body">
-                    <h4 class="subsection-title">Internships</h4>
-                    {% if internships %}
-                    {% for internship in internships %}
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <h5 class="card-title">{{ internship.company }}</h5>
-                            <h6 class="card-subtitle mb-2 text-muted">{{ internship.position }}</h6>
-                            <p class="card-text">
-                                <small>
-                                    Skills: {{ internship.skills|join(', ') }}
-                                </small>
-                            </p>
-                            <span class="status-label status-completed">Completed</span>
-                        </div>
-                    </div>
-                    {% endfor %}
-                    {% else %}
-                    <p>No internships recorded.</p>
-                    {% endif %}
-
-                    <h4 class="subsection-title mt-4">Job Applications</h4>
-                    {% if job_applications %}
-                    {% for job in job_applications %}
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <h5 class="card-title">{{ job.company }}</h5>
-                            <h6 class="card-subtitle mb-2 text-muted">{{ job.position }}</h6>
-                            <p class="card-text">
-                                <small>
-                                    Applied: 
-                                    {% if job.applied_date %}
-                                        {{ job.applied_date.strftime('%B %d, %Y') }}
-                                    {% else %}
-                                        Not yet applied
-                                    {% endif %}
-                                </small>
-                            </p>
-                            
-                            {% if job.status == 'Applied' %}
-                            <span class="status-label status-applied">Applied</span>
-                            {% elif job.status == 'Interview' %}
-                            <span class="status-label status-interview">Interview Scheduled</span>
-                            {% elif job.status == 'Offered' %}
-                            <span class="status-label status-completed">Offered</span>
-                            {% elif job.status == 'Rejected' %}
-                            <span class="status-label status-danger">Rejected</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                    {% endfor %}
-                    {% else %}
-                    <p>No job applications recorded.</p>
-                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Progress Tabs -->
     <div class="row">
-        <!-- Skill Development -->
         <div class="col-12 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="card-title-purple">Skill Development</h2>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h4 class="subsection-title">Technical Skills</h4>
-                            {% if technical_skills %}
-                            {% for skill in technical_skills %}
-                            <div class="mb-3">
-                                <div class="d-flex justify-content-between">
-                                    <span>{{ skill.name }}</span>
-                                    <span>{{ skill.level }} ({{ skill.percentage }}%)</span>
-                                </div>
-                                <div class="progress">
-                                    <div class="progress-bar progress-bar-info" role="progressbar"
-                                        style="width: {{ skill.percentage }}%" aria-valuenow="{{ skill.percentage }}"
-                                        aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                            </div>
-                            {% endfor %}
-                            {% else %}
-                            <p>No technical skills recorded.</p>
-                            {% endif %}
-
-                        </div>
-
-                        <div class="col-md-6">
-                            <h4 class="subsection-title">Soft Skills</h4>
-                            {% if soft_skills %}
-                            {% for skill in soft_skills %}
-                            <div class="mb-3">
-                                <div class="d-flex justify-content-between">
-                                    <span>{{ skill.name }}</span>
-                                    <span>{{ skill.level }} ({{ skill.percentage }}%)</span>
-                                </div>
-                                <div class="progress">
-                                    <div class="progress-bar progress-bar-success" role="progressbar"
-                                        style="width: {{ skill.percentage }}%" aria-valuenow="{{ skill.percentage }}"
-                                        aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                            </div>
-                            {% endfor %}
-                            {% else %}
-                            <p>No soft skills recorded.</p>
-                            {% endif %}
-
-                        </div>
-                    </div>
-
-                    <div class="text-center mt-3">
-                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSkillModal">
-                            Add/Update Skill
-                        </button>
-                    </div>
-                </div>
-            </div>
+            <ul class="nav nav-tabs" id="progressTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="academic-tab" data-bs-toggle="tab" data-bs-target="#academic" type="button" role="tab" aria-controls="academic" aria-selected="true">
+                        <i class="fas fa-graduation-cap me-2"></i> Academic Progress
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="professional-tab" data-bs-toggle="tab" data-bs-target="#professional" type="button" role="tab" aria-controls="professional" aria-selected="false">
+                        <i class="fas fa-briefcase me-2"></i> Professional Journey
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="skills-tab" data-bs-toggle="tab" data-bs-target="#skills" type="button" role="tab" aria-controls="skills" aria-selected="false">
+                        <i class="fas fa-tools me-2"></i> Skills Development
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="achievements-tab" data-bs-toggle="tab" data-bs-target="#achievements" type="button" role="tab" aria-controls="achievements" aria-selected="false">
+                        <i class="fas fa-trophy me-2"></i> Achievements
+                    </button>
+                </li>
+            </ul>
         </div>
     </div>
 
-    <div class="row">
-        <!-- Achievements and Certificates -->
-        <div class="col-md-6 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="card-title-secondary">Achievements</h2>
-                </div>
-                <div class="card-body">
-                    {% if achievements %}
-                    <div class="list-group">
-                        {% for achievement in achievements %}
-                        <div class="list-group-item bg-transparent border-light">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h5 class="mb-1">{{ achievement.title }}</h5>
-                                    <small>{{ achievement.date }}</small>
+    <!-- Tab Content -->
+    <div class="tab-content" id="progressTabsContent">
+        <!-- Academic Progress Tab -->
+        <div class="tab-pane fade show active" id="academic" role="tabpanel" aria-labelledby="academic-tab">
+            <div class="row">
+                <!-- Academic Stats -->
+                <div class="col-lg-4 mb-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white py-3">
+                            <h3 class="h5 mb-0 fw-bold">Academic Statistics</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-4">
+                                    <div class="text-center">
+                                        <div class="progress-circle mx-auto mb-3">
+                                            <svg width="120" height="120" viewBox="0 0 120 120">
+                                                <circle cx="60" cy="60" r="54" fill="none" stroke="#e9ecef" stroke-width="12"></circle>
+                                                <circle cx="60" cy="60" r="54" fill="none" stroke="#3b82f6" stroke-width="12"
+                                                    stroke-dasharray="339.292" 
+                                                    stroke-dashoffset="{{ 339.292 * (1 - (academic_progress.gpa / 4.0))|float }}">
+                                                </circle>
+                                            </svg>
+                                            <div class="progress-circle-content">
+                                                <div class="h3 mb-0 fw-bold">{{ academic_progress.gpa }}</div>
+                                                <div class="small text-muted">GPA</div>
+                                            </div>
+                                        </div>
+                                        <div class="text-muted">out of 4.0</div>
+                                    </div>
                                 </div>
-                                <span class="badge bg-success rounded-pill">
-                                    <i class="fas fa-trophy"></i>
-                                </span>
+                                
+                                <div class="col-md-6 mb-4">
+                                    <div class="text-center">
+                                        <div class="progress-circle mx-auto mb-3">
+                                            <svg width="120" height="120" viewBox="0 0 120 120">
+                                                <circle cx="60" cy="60" r="54" fill="none" stroke="#e9ecef" stroke-width="12"></circle>
+                                                <circle cx="60" cy="60" r="54" fill="none" stroke="#10b981" stroke-width="12"
+                                                    stroke-dasharray="339.292" 
+                                                    stroke-dashoffset="{{ 339.292 * (1 - (academic_progress.credits / academic_progress.total_credits))|float }}">
+                                                </circle>
+                                            </svg>
+                                            <div class="progress-circle-content">
+                                                <div class="h3 mb-0 fw-bold">{{ academic_progress.credits }}</div>
+                                                <div class="small text-muted">Credits</div>
+                                            </div>
+                                        </div>
+                                        <div class="text-muted">out of {{ academic_progress.total_credits }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-2">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span>Degree Progress</span>
+                                    <span class="fw-bold">{{ academic_progress.progress_percentage|round|int }}%</span>
+                                </div>
+                                <div class="progress mb-4" style="height: 10px;">
+                                    <div class="progress-bar bg-success" role="progressbar" 
+                                        style="width: {{ academic_progress.progress_percentage }}%;" 
+                                        aria-valuenow="{{ academic_progress.progress_percentage }}" 
+                                        aria-valuemin="0" 
+                                        aria-valuemax="100">
+                                    </div>
+                                </div>
+                                
+                                <button class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#updateAcademicModal">
+                                    <i class="fas fa-edit me-2"></i>Update Academic Progress
+                                </button>
                             </div>
                         </div>
-                        {% endfor %}
                     </div>
-                    {% else %}
-                    <p>No achievements recorded yet.</p>
-                    {% endif %}
-
-                    <div class="text-center mt-3">
-                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAchievementModal">
-                            Add Achievement
-                        </button>
+                </div>
+                
+                <!-- Current Courses -->
+                <div class="col-lg-8 mb-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                            <h3 class="h5 mb-0 fw-bold">Current Courses</h3>
+                            <button class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-plus me-1"></i>Add Course
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            {% if current_courses %}
+                                <div class="row">
+                                    {% for course in current_courses %}
+                                        <div class="col-md-6 mb-4">
+                                            <div class="card h-100 border-0 shadow-sm">
+                                                <div class="card-body">
+                                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                                        <h4 class="h6 fw-bold mb-0">{{ course.name }}</h4>
+                                                        <span class="course-grade grade-{{ course.grade.lower() if course.grade else 'a' }}">
+                                                            {{ course.grade if course.grade else 'In Progress' }}
+                                                        </span>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                                        <span class="badge bg-primary">{{ course.category }}</span>
+                                                        <span class="text-muted small">{{ course.credits }} credits</span>
+                                                    </div>
+                                                    <div class="progress mb-2" style="height: 6px;">
+                                                        <div class="progress-bar bg-success" role="progressbar" 
+                                                            style="width: {{ course.progress }}%;" 
+                                                            aria-valuenow="{{ course.progress }}" 
+                                                            aria-valuemin="0" 
+                                                            aria-valuemax="100">
+                                                        </div>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between">
+                                                        <span class="text-muted small">Progress</span>
+                                                        <span class="text-muted small">{{ course.progress }}%</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px;">
+                                        <i class="fas fa-book fa-2x text-muted"></i>
+                                    </div>
+                                    <p class="mb-3">No current courses.</p>
+                                    <button class="btn btn-primary">
+                                        <i class="fas fa-plus me-2"></i>Add Course
+                                    </button>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Semester Timeline -->
+                <div class="col-12 mb-4">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white py-3">
+                            <h3 class="h5 mb-0 fw-bold">Academic Timeline</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="timeline">
+                                <!-- Freshman Year -->
+                                <div class="timeline-item">
+                                    <div class="timeline-marker completed">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <div class="timeline-content">
+                                        <h4 class="h6 fw-bold">Freshman Year</h4>
+                                        <p class="text-muted small">Completed 30 credits with 3.8 GPA</p>
+                                        <div class="progress mb-2" style="height: 6px;">
+                                            <div class="progress-bar bg-success" role="progressbar" style="width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Sophomore Year -->
+                                <div class="timeline-item">
+                                    <div class="timeline-marker completed">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <div class="timeline-content">
+                                        <h4 class="h6 fw-bold">Sophomore Year</h4>
+                                        <p class="text-muted small">Completed 30 credits with 3.7 GPA</p>
+                                        <div class="progress mb-2" style="height: 6px;">
+                                            <div class="progress-bar bg-success" role="progressbar" style="width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Junior Year -->
+                                <div class="timeline-item">
+                                    <div class="timeline-marker active">
+                                        <i class="fas fa-sync-alt fa-spin"></i>
+                                    </div>
+                                    <div class="timeline-content">
+                                        <h4 class="h6 fw-bold">Junior Year</h4>
+                                        <p class="text-muted small">In progress - 15 of 30 credits completed</p>
+                                        <div class="progress mb-2" style="height: 6px;">
+                                            <div class="progress-bar bg-primary" role="progressbar" style="width: 50%;" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Senior Year -->
+                                <div class="timeline-item">
+                                    <div class="timeline-marker upcoming">
+                                        <i class="fas fa-hourglass"></i>
+                                    </div>
+                                    <div class="timeline-content">
+                                        <h4 class="h6 fw-bold">Senior Year</h4>
+                                        <p class="text-muted small">Upcoming - 0 of 30 credits completed</p>
+                                        <div class="progress mb-2" style="height: 6px;">
+                                            <div class="progress-bar bg-secondary" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Graduation -->
+                                <div class="timeline-item">
+                                    <div class="timeline-marker upcoming">
+                                        <i class="fas fa-graduation-cap"></i>
+                                    </div>
+                                    <div class="timeline-content">
+                                        <h4 class="h6 fw-bold">Graduation</h4>
+                                        <p class="text-muted small">Expected: May 2026</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-
-        <div class="col-md-6 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="card-title-primary">Certificates</h2>
-                </div>
-                <div class="card-body">
-                    {% if certificates %}
-                    <div class="list-group">
-                        {% for certificate in certificates %}
-                        <div class="list-group-item bg-transparent border-light">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h5 class="mb-1">{{ certificate.title }}</h5>
-                                    <small>Issued by: {{ certificate.issuer }}</small>
-                                    <p class="mb-0"><small>Valid until: {{ certificate.valid_until }}</small></p>
+        
+        <!-- Professional Journey Tab -->
+        <div class="tab-pane fade" id="professional" role="tabpanel" aria-labelledby="professional-tab">
+            <div class="row">
+                <!-- Internships -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                            <h3 class="h5 mb-0 fw-bold">Internships</h3>
+                            <button class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-plus me-1"></i>Add Internship
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            {% if internships %}
+                                {% for internship in internships %}
+                                    <div class="card mb-3 border-0 shadow-sm">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <div>
+                                                    <h4 class="h6 fw-bold mb-1">{{ internship.position }}</h4>
+                                                    <p class="mb-1">{{ internship.company }}</p>
+                                                    <div class="d-flex align-items-center text-muted small">
+                                                        <i class="fas fa-calendar me-1"></i>
+                                                        <span>{{ internship.start_date }} - {{ internship.end_date }}</span>
+                                                    </div>
+                                                </div>
+                                                <span class="badge bg-success">Completed</span>
+                                            </div>
+                                            
+                                            <div class="mt-3">
+                                                <h5 class="h6 fw-bold mb-2">Skills Gained:</h5>
+                                                <div class="d-flex flex-wrap gap-2">
+                                                    {% for skill in internship.skills %}
+                                                        <span class="badge bg-light text-dark">{{ skill }}</span>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px;">
+                                        <i class="fas fa-briefcase fa-2x text-muted"></i>
+                                    </div>
+                                    <p class="mb-3">No internships recorded.</p>
+                                    <button class="btn btn-primary">
+                                        <i class="fas fa-plus me-2"></i>Add Internship
+                                    </button>
                                 </div>
-                                <span class="status-label status-completed">Verified</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Job Applications -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                            <h3 class="h5 mb-0 fw-bold">Job Applications</h3>
+                            <a href="{{ url_for('jobs.jobs') }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-plus me-1"></i>Add Application
+                            </a>
+                        </div>
+                        <div class="card-body">
+                            {% if job_applications %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Company</th>
+                                                <th>Position</th>
+                                                <th>Status</th>
+                                                <th>Applied Date</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for job in job_applications %}
+                                                <tr>
+                                                    <td class="fw-medium">{{ job.company }}</td>
+                                                    <td>{{ job.position }}</td>
+                                                    <td>
+                                                        <span class="badge 
+                                                            {% if job.status == 'Applied' %}bg-warning text-dark
+                                                            {% elif job.status == 'Interview' %}bg-primary
+                                                            {% elif job.status == 'Offered' %}bg-success
+                                                            {% elif job.status == 'Rejected' %}bg-danger
+                                                            {% else %}bg-secondary{% endif %}">
+                                                            {{ job.status }}
+                                                        </span>
+                                                    </td>
+                                                    <td>{{ job.applied_date.strftime('%b %d, %Y') if job.applied_date is not string else job.applied_date }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px;">
+                                        <i class="fas fa-file-alt fa-2x text-muted"></i>
+                                    </div>
+                                    <p class="mb-3">No job applications recorded.</p>
+                                    <a href="{{ url_for('jobs.jobs') }}" class="btn btn-primary">
+                                        <i class="fas fa-plus me-2"></i>Add Application
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Career Timeline -->
+                <div class="col-12 mb-4">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white py-3">
+                            <h3 class="h5 mb-0 fw-bold">Career Timeline</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="career-timeline">
+                                <div class="timeline-ruler"></div>
+                                
+                                <!-- Education -->
+                                <div class="timeline-event">
+                                    <div class="timeline-dot bg-primary">
+                                        <i class="fas fa-graduation-cap"></i>
+                                    </div>
+                                    <div class="timeline-content">
+                                        <div class="timeline-date">2022 - Present</div>
+                                        <h4 class="h6 fw-bold">{{ current_user.major }}</h4>
+                                        <p class="mb-0">{{ current_user.university }}</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Internships (if any) -->
+                                {% if internships %}
+                                    {% for internship in internships %}
+                                        <div class="timeline-event">
+                                            <div class="timeline-dot bg-success">
+                                                <i class="fas fa-briefcase"></i>
+                                            </div>
+                                            <div class="timeline-content">
+                                                <div class="timeline-date">{{ internship.start_date }} - {{ internship.end_date }}</div>
+                                                <h4 class="h6 fw-bold">{{ internship.position }}</h4>
+                                                <p class="mb-0">{{ internship.company }}</p>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
+                                
+                                <!-- Job Applications (if any) -->
+                                {% if job_applications %}
+                                    {% for job in job_applications %}
+                                        {% if job.status == 'Offered' %}
+                                            <div class="timeline-event">
+                                                <div class="timeline-dot bg-warning">
+                                                    <i class="fas fa-handshake"></i>
+                                                </div>
+                                                <div class="timeline-content">
+                                                    <div class="timeline-date">{{ job.applied_date.strftime('%b %Y') if job.applied_date is not string else job.applied_date }}</div>
+                                                    <h4 class="h6 fw-bold">{{ job.position }}</h4>
+                                                    <p class="mb-0">{{ job.company }} - Job Offer</p>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endif %}
+                                
+                                <!-- Future Career Goal -->
+                                <div class="timeline-event">
+                                    <div class="timeline-dot bg-info">
+                                        <i class="fas fa-flag"></i>
+                                    </div>
+                                    <div class="timeline-content">
+                                        <div class="timeline-date">Future Goal</div>
+                                        <h4 class="h6 fw-bold">Senior Software Engineer</h4>
+                                        <p class="mb-0">Target: 2028</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        {% endfor %}
                     </div>
-                    {% else %}
-                    <p>No certificates recorded yet.</p>
-                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Skills Development Tab -->
+        <div class="tab-pane fade" id="skills" role="tabpanel" aria-labelledby="skills-tab">
+            <div class="row">
+                <!-- Technical Skills -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                            <h3 class="h5 mb-0 fw-bold">Technical Skills</h3>
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addSkillModal">
+                                <i class="fas fa-plus me-1"></i>Add Skill
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            {% if technical_skills %}
+                                <div class="row">
+                                    {% for skill in technical_skills %}
+                                        <div class="col-md-6 mb-4">
+                                            <div class="card h-100 border-0 shadow-sm skill-card">
+                                                <div class="card-body">
+                                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                                        <h4 class="h6 fw-bold mb-0">{{ skill.name }}</h4>
+                                                        <span class="badge bg-primary">{{ skill.level }}</span>
+                                                    </div>
+                                                    <div class="progress mb-2" style="height: 8px;">
+                                                        <div class="progress-bar bg-primary" role="progressbar" 
+                                                            style="width: {{ skill.percentage }}%;" 
+                                                            aria-valuenow="{{ skill.percentage }}" 
+                                                            aria-valuemin="0" 
+                                                            aria-valuemax="100">
+                                                        </div>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between">
+                                                        <span class="text-muted small">Proficiency</span>
+                                                        <span class="text-muted small">{{ skill.percentage }}%</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px;">
+                                        <i class="fas fa-laptop-code fa-2x text-muted"></i>
+                                    </div>
+                                    <p class="mb-3">No technical skills recorded yet.</p>
+                                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSkillModal">
+                                        <i class="fas fa-plus me-2"></i>Add Technical Skill
+                                    </button>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Soft Skills -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                            <h3 class="h5 mb-0 fw-bold">Soft Skills</h3>
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addSkillModal">
+                                <i class="fas fa-plus me-1"></i>Add Skill
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            {% if soft_skills %}
+                                <div class="row">
+                                    {% for skill in soft_skills %}
+                                        <div class="col-md-6 mb-4">
+                                            <div class="card h-100 border-0 shadow-sm skill-card">
+                                                <div class="card-body">
+                                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                                        <h4 class="h6 fw-bold mb-0">{{ skill.name }}</h4>
+                                                        <span class="badge bg-success">{{ skill.level }}</span>
+                                                    </div>
+                                                    <div class="progress mb-2" style="height: 8px;">
+                                                        <div class="progress-bar bg-success" role="progressbar" 
+                                                            style="width: {{ skill.percentage }}%;" 
+                                                            aria-valuenow="{{ skill.percentage }}" 
+                                                            aria-valuemin="0" 
+                                                            aria-valuemax="100">
+                                                        </div>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between">
+                                                        <span class="text-muted small">Proficiency</span>
+                                                        <span class="text-muted small">{{ skill.percentage }}%</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px;">
+                                        <i class="fas fa-comments fa-2x text-muted"></i>
+                                    </div>
+                                    <p class="mb-3">No soft skills recorded yet.</p>
+                                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSkillModal">
+                                        <i class="fas fa-plus me-2"></i>Add Soft Skill
+                                    </button>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Skills Growth Chart -->
+                <div class="col-12 mb-4">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white py-3">
+                            <h3 class="h5 mb-0 fw-bold">Skills Growth Over Time</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container" style="height: 300px;">
+                                <canvas id="skillsGrowthChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Skill Recommendations -->
+                <div class="col-12 mb-4">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white py-3">
+                            <h3 class="h5 mb-0 fw-bold">Recommended Skills to Develop</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 mb-4">
+                                    <div class="card h-100 border-0 shadow-sm">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center mb-3">
+                                                <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                                                    <i class="fab fa-react text-primary"></i>
+                                                </div>
+                                                <div>
+                                                    <h4 class="h6 fw-bold mb-0">React.js</h4>
+                                                    <p class="text-muted small mb-0">Frontend Framework</p>
+                                                </div>
+                                            </div>
+                                            <p class="text-muted small mb-3">High demand in job market with 25% growth in the last year.</p>
+                                            <button class="btn btn-sm btn-outline-primary w-100">
+                                                <i class="fas fa-plus me-1"></i>Add to My Skills
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4 mb-4">
+                                    <div class="card h-100 border-0 shadow-sm">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center mb-3">
+                                                <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
+                                                    <i class="fas fa-database text-success"></i>
+                                                </div>
+                                                <div>
+                                                    <h4 class="h6 fw-bold mb-0">SQL</h4>
+                                                    <p class="text-muted small mb-0">Database Language</p>
+                                                </div>
+                                            </div>
+                                            <p class="text-muted small mb-3">Essential skill for data analysis and backend development.</p>
+                                            <button class="btn btn-sm btn-outline-primary w-100">
+                                                <i class="fas fa-plus me-1"></i>Add to My Skills
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4 mb-4">
+                                    <div class="card h-100 border-0 shadow-sm">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center mb-3">
+                                                <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
+                                                    <i class="fas fa-users text-warning"></i>
+                                                </div>
+                                                <div>
+                                                    <h4 class="h6 fw-bold mb-0">Team Leadership</h4>
+                                                    <p class="text-muted small mb-0">Soft Skill</p>
+                                                </div>
+                                            </div>
+                                            <p class="text-muted small mb-3">Critical for career advancement and management roles.</p>
+                                            <button class="btn btn-sm btn-outline-primary w-100">
+                                                <i class="fas fa-plus me-1"></i>Add to My Skills
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Achievements Tab -->
+        <div class="tab-pane fade" id="achievements" role="tabpanel" aria-labelledby="achievements-tab">
+            <div class="row">
+                <!-- Achievements Overview -->
+                <div class="col-lg-4 mb-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white py-3">
+                            <h3 class="h5 mb-0 fw-bold">Achievements Overview</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="text-center mb-4">
+                                <div class="achievement-count">
+                                    <div class="h1 fw-bold mb-0">{{ achievements|length }}</div>
+                                    <div class="text-muted">Total Achievements</div>
+                                </div>
+                            </div>
+                            
+                            <div class="achievement-categories mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span>Academic</span>
+                                    <span class="badge bg-primary rounded-pill">{{ achievements|selectattr('category', 'equalto', 'academic')|list|length }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span>Professional</span>
+                                    <span class="badge bg-success rounded-pill">{{ achievements|selectattr('category', 'equalto', 'professional')|list|length }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span>Extracurricular</span>
+                                    <span class="badge bg-info rounded-pill">{{ achievements|selectattr('category', 'equalto', 'extracurricular')|list|length }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span>Other</span>
+                                    <span class="badge bg-secondary rounded-pill">{{ achievements|selectattr('category', 'equalto', 'other')|list|length }}</span>
+                                </div>
+                            </div>
+                            
+                            <button class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#addAchievementModal">
+                                <i class="fas fa-plus me-2"></i>Add New Achievement
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Achievements List -->
+                <div class="col-lg-8 mb-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                            <h3 class="h5 mb-0 fw-bold">My Achievements</h3>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="achievementFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-filter me-1"></i>Filter
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="achievementFilterDropdown">
+                                    <li><a class="dropdown-item" href="#">All Achievements</a></li>
+                                    <li><a class="dropdown-item" href="#">Academic</a></li>
+                                    <li><a class="dropdown-item" href="#">Professional</a></li>
+                                    <li><a class="dropdown-item" href="#">Extracurricular</a></li>
+                                    <li><a class="dropdown-item" href="#">Other</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            {% if achievements %}
+                                <div class="row">
+                                    {% for achievement in achievements %}
+                                        <div class="col-md-6 mb-4">
+                                            <div class="card h-100 border-0 shadow-sm achievement-card">
+                                                <div class="card-body">
+                                                    <div class="d-flex align-items-center mb-3">
+                                                        <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                                                            <i class="fas fa-award text-primary"></i>
+                                                        </div>
+                                                        <div>
+                                                            <h4 class="h6 fw-bold mb-0">{{ achievement.title }}</h4>
+                                                            <p class="text-muted small mb-0">
+                                                                {{ achievement.date.strftime('%B %d, %Y') if achievement.date else '' }}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    {% if achievement.description %}
+                                                        <p class="mb-0">{{ achievement.description }}</p>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px;">
+                                        <i class="fas fa-trophy fa-2x text-muted"></i>
+                                    </div>
+                                    <p class="mb-3">No achievements recorded yet.</p>
+                                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAchievementModal">
+                                        <i class="fas fa-plus me-2"></i>Add First Achievement
+                                    </button>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Certificates -->
+                <div class="col-12 mb-4">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                            <h3 class="h5 mb-0 fw-bold">Certificates & Credentials</h3>
+                            <button class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-plus me-1"></i>Add Certificate
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            {% if certificates %}
+                                <div class="row">
+                                    {% for certificate in certificates %}
+                                        <div class="col-md-4 mb-4">
+                                            <div class="card h-100 border-0 shadow-sm certificate-card">
+                                                <div class="card-body">
+                                                    <div class="d-flex align-items-center mb-3">
+                                                        <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                                                            <i class="fas fa-certificate text-primary"></i>
+                                                        </div>
+                                                        <div>
+                                                            <h4 class="h6 fw-bold mb-0">{{ certificate.title }}</h4>
+                                                            <p class="text-muted small mb-0">{{ certificate.issuer }}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between align-items-center text-muted small">
+                                                        <span>Issued: {{ certificate.issue_date }}</span>
+                                                        {% if certificate.valid_until %}
+                                                            <span>Valid until: {{ certificate.valid_until }}</span>
+                                                        {% else %}
+                                                            <span>No expiration</span>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px;">
+                                        <i class="fas fa-certificate fa-2x text-muted"></i>
+                                    </div>
+                                    <p class="mb-3">No certificates recorded yet.</p>
+                                    <button class="btn btn-primary">
+                                        <i class="fas fa-plus me-2"></i>Add Certificate
+                                    </button>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -255,30 +816,30 @@
 </div>
 
 <!-- Update Academic Progress Modal -->
-<div class="modal fade" id="updateAcademicModal" tabindex="-1" aria-labelledby="updateAcademicModalLabel"
-    aria-hidden="true">
+<div class="modal fade" id="updateAcademicModal" tabindex="-1" aria-labelledby="updateAcademicModalLabel" aria-hidden="true">
     <div class="modal-dialog">
-        <div class="modal-content bg-dark text-light">
+        <div class="modal-content border-0 shadow">
             <div class="modal-header">
-                <h5 class="modal-title" id="updateAcademicModalLabel">Update Academic Progress</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                    aria-label="Close"></button>
+                <h5 class="modal-title fw-bold" id="updateAcademicModalLabel">Update Academic Progress</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form method="POST" action="{{ url_for('progress.update_academic') }}">
                     {{ academic_form.hidden_tag() }}
 
                     <div class="mb-3">
-                        {{ academic_form.gpa.label(class="form-label") }}
-                        {{ academic_form.gpa(class="form-control", min="0", max="4.0", step="0.1") }}
+                        <label for="gpa" class="form-label">GPA</label>
+                        {{ academic_form.gpa(class="form-control", type="number", step="0.1", min="0", max="4.0") }}
+                        <div class="form-text">Enter your current GPA on a 4.0 scale</div>
                     </div>
 
                     <div class="mb-3">
-                        {{ academic_form.credits.label(class="form-label") }}
-                        {{ academic_form.credits(class="form-control", min="0") }}
+                        <label for="credits" class="form-label">Credits Completed</label>
+                        {{ academic_form.credits(class="form-control", type="number", min="0") }}
+                        <div class="form-text">Enter the total number of credits you've completed so far</div>
                     </div>
 
-                    <div class="d-grid gap-2">
+                    <div class="d-grid">
                         {{ academic_form.submit(class="btn btn-primary") }}
                     </div>
                 </form>
@@ -288,30 +849,43 @@
 </div>
 
 <!-- Add Achievement Modal -->
-<div class="modal fade" id="addAchievementModal" tabindex="-1" aria-labelledby="addAchievementModalLabel"
-    aria-hidden="true">
+<div class="modal fade" id="addAchievementModal" tabindex="-1" aria-labelledby="addAchievementModalLabel" aria-hidden="true">
     <div class="modal-dialog">
-        <div class="modal-content bg-dark text-light">
+        <div class="modal-content border-0 shadow">
             <div class="modal-header">
-                <h5 class="modal-title" id="addAchievementModalLabel">Add Achievement</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                    aria-label="Close"></button>
+                <h5 class="modal-title fw-bold" id="addAchievementModalLabel">Add New Achievement</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form method="POST" action="{{ url_for('progress.add_achievement_route') }}">
                     {{ achievement_form.hidden_tag() }}
 
                     <div class="mb-3">
-                        {{ achievement_form.title.label(class="form-label") }}
-                        {{ achievement_form.title(class="form-control") }}
+                        <label for="title" class="form-label">Achievement Title</label>
+                        {{ achievement_form.title(class="form-control", placeholder="e.g., Dean's List, Hackathon Winner") }}
                     </div>
 
                     <div class="mb-3">
-                        {{ achievement_form.date.label(class="form-label") }}
+                        <label for="description" class="form-label">Description (Optional)</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" placeholder="Describe your achievement..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="category" class="form-label">Category</label>
+                        <select class="form-select" id="category" name="category">
+                            <option value="academic">Academic</option>
+                            <option value="professional">Professional</option>
+                            <option value="extracurricular">Extracurricular</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="date" class="form-label">Date</label>
                         {{ achievement_form.date(class="form-control", type="date") }}
                     </div>
 
-                    <div class="d-grid gap-2">
+                    <div class="d-grid">
                         {{ achievement_form.submit(class="btn btn-primary") }}
                     </div>
                 </form>
@@ -320,47 +894,52 @@
     </div>
 </div>
 
-<!-- Add/Update Skill Modal -->
+<!-- Add Skill Modal -->
 <div class="modal fade" id="addSkillModal" tabindex="-1" aria-labelledby="addSkillModalLabel" aria-hidden="true">
     <div class="modal-dialog">
-        <div class="modal-content bg-dark text-light">
+        <div class="modal-content border-0 shadow">
             <div class="modal-header">
-                <h5 class="modal-title" id="addSkillModalLabel">Add/Update Skill</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                    aria-label="Close"></button>
+                <h5 class="modal-title fw-bold" id="addSkillModalLabel">Add/Update Skill</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form method="POST" action="{{ url_for('progress.update_skill_route') }}">
                     {{ skill_form.hidden_tag() }}
 
                     <div class="mb-3">
-                        {{ skill_form.name.label(class="form-label") }}
-                        {{ skill_form.name(class="form-control") }}
+                        <label for="name" class="form-label">Skill Name</label>
+                        {{ skill_form.name(class="form-control", placeholder="e.g., Python, Project Management") }}
                     </div>
 
                     <div class="mb-3">
-                        {{ skill_form.skill_type.label(class="form-label") }}
-                        <select name="skill_type" class="form-select" required>
-                            <option value="technical">Technical</option>
-                            <option value="soft">Soft</option>
+                        <label for="skill_type" class="form-label">Skill Type</label>
+                        <select class="form-select" id="skill_type" name="skill_type">
+                            <option value="technical">Technical Skill</option>
+                            <option value="soft">Soft Skill</option>
                         </select>
                     </div>
 
                     <div class="mb-3">
-                        {{ skill_form.level.label(class="form-label") }}
-                        <select name="level" class="form-select" required>
+                        <label for="level" class="form-label">Proficiency Level</label>
+                        <select class="form-select" id="level" name="level">
                             <option value="Beginner">Beginner</option>
                             <option value="Intermediate">Intermediate</option>
                             <option value="Advanced">Advanced</option>
+                            <option value="Expert">Expert</option>
                         </select>
                     </div>
 
                     <div class="mb-3">
-                        {{ skill_form.percentage.label(class="form-label") }}
-                        {{ skill_form.percentage(class="form-control", min="0", max="100") }}
+                        <label for="percentage" class="form-label">Proficiency Percentage</label>
+                        {{ skill_form.percentage(class="form-control", type="range", min="0", max="100", step="5") }}
+                        <div class="d-flex justify-content-between">
+                            <span>0%</span>
+                            <span id="percentageValue">50%</span>
+                            <span>100%</span>
+                        </div>
                     </div>
 
-                    <div class="d-grid gap-2">
+                    <div class="d-grid">
                         {{ skill_form.submit(class="btn btn-primary") }}
                     </div>
                 </form>
@@ -368,4 +947,390 @@
         </div>
     </div>
 </div>
+
+<style>
+/* Modern Progress Tracker Styles */
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #4f46e5, #3b82f6);
+}
+
+.nav-tabs .nav-link {
+    color: #6c757d;
+    border: none;
+    padding: 0.75rem 1rem;
+    font-weight: 500;
+    border-bottom: 3px solid transparent;
+}
+
+.nav-tabs .nav-link:hover {
+    border-color: transparent;
+    color: var(--bs-primary);
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--bs-primary);
+    background-color: transparent;
+    border-bottom: 3px solid var(--bs-primary);
+}
+
+.progress-circle {
+    position: relative;
+    width: 120px;
+    height: 120px;
+}
+
+.progress-circle-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.skill-card, .achievement-card, .certificate-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.skill-card:hover, .achievement-card:hover, .certificate-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+}
+
+/* Timeline Styles */
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 30px;
+}
+
+.timeline-item:last-child {
+    padding-bottom: 0;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -30px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    color: #6c757d;
+}
+
+.timeline-marker.completed {
+    background-color: #10b981;
+    color: white;
+}
+
+.timeline-marker.active {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.timeline-marker.upcoming {
+    background-color: #6c757d;
+    color: white;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -21px;
+    top: 20px;
+    height: calc(100% - 20px);
+    width: 2px;
+    background-color: #e9ecef;
+}
+
+.timeline-item:last-child::before {
+    display: none;
+}
+
+/* Career Timeline Styles */
+.career-timeline {
+    position: relative;
+    padding: 20px 0;
+}
+
+.timeline-ruler {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 20px;
+    width: 4px;
+    background-color: #e9ecef;
+}
+
+.timeline-event {
+    position: relative;
+    padding-left: 60px;
+    margin-bottom: 40px;
+}
+
+.timeline-event:last-child {
+    margin-bottom: 0;
+}
+
+.timeline-dot {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    z-index: 1;
+}
+
+.timeline-date {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-bottom: 5px;
+}
+
+/* Dark Mode Adjustments */
+[data-theme="dark"] .card {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .card-header {
+    background-color: #1e293b !important;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .bg-light {
+    background-color: #334155 !important;
+}
+
+[data-theme="dark"] .text-muted {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .list-group-item {
+    background-color: #1e293b;
+    border-color: #334155;
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .table {
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .table-light {
+    background-color: #334155;
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .table-hover tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .modal-content {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select {
+    background-color: #0f172a;
+    border-color: #334155;
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .timeline-marker {
+    background-color: #334155;
+}
+
+[data-theme="dark"] .timeline-item::before,
+[data-theme="dark"] .timeline-ruler {
+    background-color: #334155;
+}
+
+[data-theme="dark"] .bg-primary.bg-opacity-10 {
+    background-color: rgba(59, 130, 246, 0.2) !important;
+}
+
+[data-theme="dark"] .bg-success.bg-opacity-10 {
+    background-color: rgba(16, 185, 129, 0.2) !important;
+}
+
+[data-theme="dark"] .bg-warning.bg-opacity-10 {
+    background-color: rgba(249, 115, 22, 0.2) !important;
+}
+
+[data-theme="dark"] .bg-info.bg-opacity-10 {
+    background-color: rgba(14, 165, 233, 0.2) !important;
+}
+</style>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+$(document).ready(function() {
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+    
+    // Animate progress bars on page load
+    const progressBars = document.querySelectorAll('.progress-bar');
+    progressBars.forEach(bar => {
+        const width = bar.style.width;
+        bar.style.width = '0%';
+        setTimeout(() => {
+            bar.style.transition = 'width 1s ease';
+            bar.style.width = width;
+        }, 100);
+    });
+    
+    // Animate progress circles on page load
+    const progressCircles = document.querySelectorAll('.progress-circle circle:nth-child(2)');
+    progressCircles.forEach(circle => {
+        const dashOffset = circle.getAttribute('stroke-dashoffset');
+        circle.setAttribute('stroke-dashoffset', '339.292');
+        setTimeout(() => {
+            circle.style.transition = 'stroke-dashoffset 1.5s ease';
+            circle.setAttribute('stroke-dashoffset', dashOffset);
+        }, 100);
+    });
+    
+    // Update percentage value display for skill form
+    const percentageInput = document.getElementById('percentage');
+    const percentageValue = document.getElementById('percentageValue');
+    
+    if (percentageInput && percentageValue) {
+        percentageInput.addEventListener('input', function() {
+            percentageValue.textContent = this.value + '%';
+        });
+        
+        // Set initial value
+        percentageValue.textContent = percentageInput.value + '%';
+    }
+    
+    // Activate tab based on URL hash
+    const hash = window.location.hash;
+    if (hash) {
+        const tab = document.querySelector(`#progressTabs a[data-bs-target="${hash}"]`);
+        if (tab) {
+            const tabInstance = new bootstrap.Tab(tab);
+            tabInstance.show();
+        }
+    }
+    
+    // Update URL hash when tab changes
+    const tabs = document.querySelectorAll('#progressTabs button');
+    tabs.forEach(tab => {
+        tab.addEventListener('shown.bs.tab', function(e) {
+            const target = e.target.getAttribute('data-bs-target');
+            history.replaceState(null, null, target);
+        });
+    });
+    
+    // Skills Growth Chart
+    const ctx = document.getElementById('skillsGrowthChart');
+    if (ctx) {
+        const skillsGrowthChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                datasets: [
+                    {
+                        label: 'Technical Skills',
+                        data: [30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    },
+                    {
+                        label: 'Soft Skills',
+                        data: [40, 42, 45, 48, 52, 55, 58, 62, 65, 68, 72, 75],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: 'Proficiency Level (%)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: '2025'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Update chart colors for dark mode
+        const updateChartColors = () => {
+            const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+            
+            if (isDarkMode) {
+                skillsGrowthChart.options.scales.x.grid.color = 'rgba(255, 255, 255, 0.1)';
+                skillsGrowthChart.options.scales.y.grid.color = 'rgba(255, 255, 255, 0.1)';
+                skillsGrowthChart.options.scales.x.ticks.color = '#94a3b8';
+                skillsGrowthChart.options.scales.y.ticks.color = '#94a3b8';
+                skillsGrowthChart.options.scales.x.title.color = '#94a3b8';
+                skillsGrowthChart.options.scales.y.title.color = '#94a3b8';
+                skillsGrowthChart.options.plugins.legend.labels.color = '#f8fafc';
+            } else {
+                skillsGrowthChart.options.scales.x.grid.color = 'rgba(0, 0, 0, 0.1)';
+                skillsGrowthChart.options.scales.y.grid.color = 'rgba(0, 0, 0, 0.1)';
+                skillsGrowthChart.options.scales.x.ticks.color = '#6c757d';
+                skillsGrowthChart.options.scales.y.ticks.color = '#6c757d';
+                skillsGrowthChart.options.scales.x.title.color = '#6c757d';
+                skillsGrowthChart.options.scales.y.title.color = '#6c757d';
+                skillsGrowthChart.options.plugins.legend.labels.color = '#212529';
+            }
+            
+            skillsGrowthChart.update();
+        };
+        
+        // Initial color setup
+        updateChartColors();
+        
+        // Listen for theme changes
+        const themeToggle = document.getElementById('theme-toggle');
+        if (themeToggle) {
+            themeToggle.addEventListener('change', updateChartColors);
+        }
+    }
+});
+</script>
 {% endblock %}

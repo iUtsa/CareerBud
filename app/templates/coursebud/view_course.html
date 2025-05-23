@@ -1,14 +1,14 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container py-4">
+<div class="container py-5">
     <!-- Course Header -->
-    <div class="row mb-4">
+    <div class="row mb-5">
         <div class="col-12">
-            <nav aria-label="breadcrumb">
+            <nav aria-label="breadcrumb" class="mb-4">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ url_for('coursebud.index') }}">CourseBud</a></li>
-                    <li class="breadcrumb-item"><a href="{{ url_for('coursebud.category_courses', category_id=course.category_id) }}">{{ course.category.name }}</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('coursebud.index') }}" class="text-decoration-none">CourseBud</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('coursebud.category_courses', category_id=course.category_id) }}" class="text-decoration-none">{{ course.category.name }}</a></li>
                     <li class="breadcrumb-item active" aria-current="page">{{ course.title }}</li>
                 </ol>
             </nav>
@@ -16,14 +16,25 @@
     </div>
 
     <!-- Course Details -->
-    <div class="row mb-5">
+    <div class="row">
         <div class="col-lg-8">
             <!-- Course Title and Description -->
-            <div class="card mb-4 shadow-sm">
+            <div class="card border-0 shadow-sm mb-4">
                 <div class="card-body p-4">
-                    <h1 class="card-title mb-3">{{ course.title }}</h1>
+                    <div class="d-flex flex-wrap justify-content-between align-items-start mb-3">
+                        <h1 class="card-title fw-bold mb-3">{{ course.title }}</h1>
+                        <div class="d-flex gap-2">
+                            <span class="badge bg-primary rounded-pill px-3 py-2">{{ course.category.name }}</span>
+                            <span class="badge bg-secondary rounded-pill px-3 py-2">{{ course.level|title }}</span>
+                            {% if course.is_free %}
+                                <span class="badge bg-success rounded-pill px-3 py-2">Free</span>
+                            {% elif course.is_premium %}
+                                <span class="badge bg-warning text-dark rounded-pill px-3 py-2">Premium</span>
+                            {% endif %}
+                        </div>
+                    </div>
                     
-                    <div class="d-flex align-items-center mb-3">
+                    <div class="d-flex align-items-center mb-4">
                         <div class="text-warning me-2">
                             {% set rating = course.average_rating()|round(1, 'floor') %}
                             {% for i in range(5) %}
@@ -36,62 +47,104 @@
                                 {% endif %}
                             {% endfor %}
                         </div>
-                        <span class="me-2">{{ rating }} ({{ reviews|length }} reviews)</span>
-                        <span class="mx-2">•</span>
-                        <span class="me-2">{{ stats.total_students }} students</span>
-                        <span class="mx-2">•</span>
-                        <span>Created by <a href="#">{{ course.creator.full_name() }}</a></span>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <span class="badge bg-primary me-1">{{ course.category.name }}</span>
-                        <span class="badge bg-secondary me-1">{{ course.level|title }}</span>
-                        {% if course.is_free %}
-                            <span class="badge bg-success">Free</span>
-                        {% elif course.is_premium %}
-                            <span class="badge bg-warning text-dark">Premium</span>
-                        {% endif %}
+                        <span class="me-3">{{ rating }} ({{ reviews|length }} reviews)</span>
+                        <span class="me-3">•</span>
+                        <span class="me-3"><i class="fas fa-users me-1"></i> {{ stats.total_students }} students</span>
+                        <span>•</span>
+                        <span class="ms-3">Created by <a href="#" class="text-decoration-none">{{ course.creator.full_name() }}</a></span>
                     </div>
                     
                     {% if course.thumbnail %}
-                        <img src="{{ url_for('static', filename='uploads/' + course.thumbnail) }}" alt="{{ course.title }}" class="img-fluid rounded mb-4">
+                        <img src="{{ url_for('static', filename='uploads/' + course.thumbnail) }}" alt="{{ course.title }}" class="img-fluid rounded-3 mb-4 w-100" style="max-height: 400px; object-fit: cover;">
                     {% endif %}
                     
-                    <div class="course-description mb-3">
+                    <div class="course-description mb-4">
                         {{ course.description|safe }}
+                    </div>
+                    
+                    <div class="d-flex flex-wrap gap-4 mt-4">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                                <i class="fas fa-clock text-primary"></i>
+                            </div>
+                            <div>
+                                <div class="text-muted small">Duration</div>
+                                <div class="fw-bold">{{ course.duration }}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
+                                <i class="fas fa-book text-success"></i>
+                            </div>
+                            <div>
+                                <div class="text-muted small">Lessons</div>
+                                <div class="fw-bold">{{ stats.total_lessons }}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
+                                <i class="fas fa-language text-warning"></i>
+                            </div>
+                            <div>
+                                <div class="text-muted small">Language</div>
+                                <div class="fw-bold">English</div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-info bg-opacity-10 p-3 me-3">
+                                <i class="fas fa-certificate text-info"></i>
+                            </div>
+                            <div>
+                                <div class="text-muted small">Certificate</div>
+                                <div class="fw-bold">Yes</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
             
             <!-- Course Content -->
-            <div class="card mb-4 shadow-sm">
-                <div class="card-header bg-light">
-                    <h3 class="mb-0">Course Content</h3>
-                    <p class="text-muted mb-0">{{ stats.total_lessons }} lessons • {{ course.duration }}</p>
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h3 class="mb-0 fw-bold">Course Content</h3>
+                    <div class="d-flex align-items-center text-muted small mt-2">
+                        <span>{{ stats.total_lessons }} lessons</span>
+                        <span class="mx-2">•</span>
+                        <span>{{ course.duration }}</span>
+                    </div>
                 </div>
                 <div class="card-body p-0">
                     <div class="accordion" id="courseContentAccordion">
                         {% for section in course.sections %}
-                            <div class="accordion-item">
+                            <div class="accordion-item border-0 border-bottom">
                                 <h2 class="accordion-header" id="section{{ section.id }}Header">
-                                    <button class="accordion-button {% if not loop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#section{{ section.id }}Content" aria-expanded="{{ 'true' if loop.first else 'false' }}" aria-controls="section{{ section.id }}Content">
+                                    <button class="accordion-button {% if not loop.first %}collapsed{% endif %} fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#section{{ section.id }}Content" aria-expanded="{{ 'true' if loop.first else 'false' }}" aria-controls="section{{ section.id }}Content">
                                         {{ section.title }}
-                                        <span class="ms-auto badge bg-secondary">{{ section.lessons|length }} lessons</span>
+                                        <span class="ms-auto badge bg-secondary rounded-pill">{{ section.lessons|length }} lessons</span>
                                     </button>
                                 </h2>
                                 <div id="section{{ section.id }}Content" class="accordion-collapse collapse {% if loop.first %}show{% endif %}" aria-labelledby="section{{ section.id }}Header">
                                     <div class="accordion-body p-0">
                                         <ul class="list-group list-group-flush">
                                             {% for lesson in section.lessons %}
-                                                <li class="list-group-item d-flex align-items-center py-3">
-                                                    <i class="fas {% if lesson.content_type == 'video' %}fa-play-circle{% elif lesson.content_type == 'quiz' %}fa-question-circle{% else %}fa-file-alt{% endif %} me-2 text-muted"></i>
-                                                    <div>
-                                                        <div>{{ lesson.title }}</div>
-                                                        <small class="text-muted">{{ lesson.duration }} min</small>
+                                                <li class="list-group-item d-flex align-items-center py-3 px-4 border-0 border-bottom">
+                                                    <i class="fas {% if lesson.content_type == 'video' %}fa-play-circle text-danger{% elif lesson.content_type == 'quiz' %}fa-question-circle text-warning{% else %}fa-file-alt text-primary{% endif %} me-3"></i>
+                                                    <div class="flex-grow-1">
+                                                        <div class="fw-medium">{{ lesson.title }}</div>
+                                                        <div class="text-muted small d-flex align-items-center">
+                                                            <span class="text-capitalize">{{ lesson.content_type }}</span>
+                                                            {% if lesson.duration %} 
+                                                                <span class="mx-2">•</span> 
+                                                                <i class="fas fa-clock me-1"></i> {{ lesson.duration }} min
+                                                            {% endif %}
+                                                        </div>
                                                     </div>
-                                                    <div class="ms-auto">
+                                                    <div>
                                                         {% if lesson.is_free_preview %}
-                                                            <span class="badge bg-success">Free Preview</span>
+                                                            <span class="badge bg-success rounded-pill px-3">Free Preview</span>
                                                         {% elif not is_enrolled %}
                                                             <i class="fas fa-lock text-muted"></i>
                                                         {% endif %}
@@ -108,16 +161,23 @@
             </div>
             
             <!-- Reviews -->
-            <div class="card shadow-sm">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                    <h3 class="mb-0">Student Reviews</h3>
-                    <span class="text-warning fs-4">{{ rating }} <i class="fas fa-star"></i></span>
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0 fw-bold">Student Reviews</h3>
+                    <div class="d-flex align-items-center">
+                        <div class="text-warning me-2">
+                            {% for i in range(5) %}
+                                <i class="fas fa-star"></i>
+                            {% endfor %}
+                        </div>
+                        <span class="fw-bold">{{ rating }}</span>
+                    </div>
                 </div>
                 <div class="card-body">
                     {% if reviews %}
                         {% if review_form %}
-                            <div class="mb-4">
-                                <h5>Write a Review</h5>
+                            <div class="mb-4 p-4 bg-light rounded-3">
+                                <h5 class="fw-bold mb-3">Write a Review</h5>
                                 <form action="{{ url_for('coursebud.add_review', course_id=course.id) }}" method="post">
                                     {{ review_form.hidden_tag() }}
                                     <div class="mb-3">
@@ -126,7 +186,7 @@
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label">{{ review_form.review_text.label }}</label>
-                                        <div>{{ review_form.review_text(class="form-control", rows=3) }}</div>
+                                        <div>{{ review_form.review_text(class="form-control", rows=3, placeholder="Share your experience with this course...") }}</div>
                                     </div>
                                     <button type="submit" class="btn btn-primary">Submit Review</button>
                                 </form>
@@ -137,19 +197,21 @@
                         <!-- Reviews List -->
                         <div class="reviews-list">
                             {% for review in reviews %}
-                                <div class="review-item mb-3">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <div class="review-avatar me-2">
-                                            <i class="fas fa-user-circle fa-2x text-muted"></i>
+                                <div class="review-item mb-4">
+                                    <div class="d-flex mb-3">
+                                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px; font-size: 1.25rem;">
+                                            {{ review.user.first_name[0] }}{{ review.user.last_name[0] }}
                                         </div>
-                                        <div>
-                                            <div class="fw-bold">{{ review.user.full_name() }}</div>
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <h5 class="fw-bold mb-0">{{ review.user.full_name() }}</h5>
+                                                <div class="text-warning">
+                                                    {% for i in range(5) %}
+                                                        <i class="fas {% if i < review.rating %}fa-star{% else %}fa-star-o{% endif %}"></i>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
                                             <div class="text-muted small">{{ review.created_at.strftime('%B %d, %Y') }}</div>
-                                        </div>
-                                        <div class="ms-auto text-warning">
-                                            {% for i in range(5) %}
-                                                <i class="fas fa-star{% if i >= review.rating %}-o{% endif %}"></i>
-                                            {% endfor %}
                                         </div>
                                     </div>
                                     <div class="review-content">
@@ -160,8 +222,10 @@
                             {% endfor %}
                         </div>
                     {% else %}
-                        <div class="text-center py-4">
-                            <p class="mb-0">No reviews yet. Be the first to review this course!</p>
+                        <div class="text-center py-5">
+                            <i class="fas fa-comment-alt fa-3x text-muted mb-3"></i>
+                            <h4 class="h5 mb-3">No reviews yet</h4>
+                            <p class="text-muted mb-0">Be the first to review this course!</p>
                         </div>
                     {% endif %}
                 </div>
@@ -170,37 +234,41 @@
         
         <div class="col-lg-4">
             <!-- Enrollment Card -->
-            <div class="card shadow-sm mb-4 sticky-top sticky-offset">
+            <div class="card border-0 shadow-sm mb-4 position-sticky" style="top: 2rem;">
                 <div class="card-body p-4">
                     {% if is_enrolled %}
-                        <div class="text-center mb-3">
-                            <span class="badge bg-success p-2 mb-2">You are enrolled in this course</span>
+                        <div class="text-center mb-4">
+                            <div class="badge bg-success p-2 px-3 mb-3 fs-6">You are enrolled in this course</div>
                             
-                            <div class="progress mb-2">
+                            <div class="progress mb-3" style="height: 10px;">
                                 <div class="progress-bar bg-success" role="progressbar" style="width: {{ user_progress }}%" aria-valuenow="{{ user_progress }}" aria-valuemin="0" aria-valuemax="100"></div>
                             </div>
-                            <p class="text-muted mb-3">{{ user_progress }}% complete</p>
+                            <p class="text-muted mb-4">{{ user_progress }}% complete</p>
                             
-                            <a href="{{ url_for('coursebud.learn', course_id=course.id) }}" class="btn btn-primary btn-lg w-100">Continue Learning</a>
+                            <a href="{{ url_for('coursebud.learn', course_id=course.id) }}" class="btn btn-primary btn-lg w-100 mb-3">
+                                <i class="fas fa-play-circle me-2"></i>Continue Learning
+                            </a>
                         </div>
                         
                         {% if enrollment.is_completed %}
-                            <a href="{{ url_for('coursebud.view_certificate', course_id=course.id) }}" class="btn btn-outline-success w-100">View Certificate</a>
+                            <a href="{{ url_for('coursebud.view_certificate', course_id=course.id) }}" class="btn btn-outline-success w-100">
+                                <i class="fas fa-certificate me-2"></i>View Certificate
+                            </a>
                         {% endif %}
                     {% else %}
                         <div class="text-center mb-4">
                             {% if course.is_free %}
                                 <div class="price-tag mb-3">
-                                    <span class="h3 text-success fw-bold">Free</span>
+                                    <span class="h2 text-success fw-bold">Free</span>
                                 </div>
                             {% elif course.is_premium %}
                                 <div class="price-tag mb-3">
                                     <span class="badge bg-warning text-dark p-2 fs-5">Premium</span>
-                                    <div class="text-muted small">Included in subscription</div>
+                                    <div class="text-muted small mt-1">Included in subscription</div>
                                 </div>
                             {% else %}
                                 <div class="price-tag mb-3">
-                                    <span class="h3 fw-bold">${{ course.price }}</span>
+                                    <span class="h2 fw-bold">${{ course.price }}</span>
                                 </div>
                             {% endif %}
                             
@@ -208,43 +276,136 @@
                                 <form action="{{ url_for('coursebud.course_enroll', course_id=course.id) }}" method="post">
                                     <button type="submit" class="btn btn-primary btn-lg w-100 mb-3">
                                         {% if course.is_free %}
-                                            Enroll Now - Free
+                                            <i class="fas fa-graduation-cap me-2"></i>Enroll Now - Free
                                         {% elif course.is_premium %}
-                                            Enroll with Premium
+                                            <i class="fas fa-crown me-2"></i>Enroll with Premium
                                         {% else %}
-                                            Buy Now
+                                            <i class="fas fa-shopping-cart me-2"></i>Buy Now
                                         {% endif %}
                                     </button>
                                 </form>
                             {% else %}
-                                <a href="{{ url_for('auth.login', next=url_for('coursebud.view_course', course_id=course.id)) }}" class="btn btn-primary btn-lg w-100 mb-3">Log in to Enroll</a>
+                                <a href="{{ url_for('auth.login', next=url_for('coursebud.view_course', course_id=course.id)) }}" class="btn btn-primary btn-lg w-100 mb-3">
+                                    <i class="fas fa-sign-in-alt me-2"></i>Log in to Enroll
+                                </a>
                             {% endif %}
+                            
+                            <div class="d-flex justify-content-center gap-3 mt-3">
+                                <button class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-share-alt me-1"></i> Share
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-heart me-1"></i> Wishlist
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-gift me-1"></i> Gift
+                                </button>
+                            </div>
                         </div>
                     {% endif %}
                     
                     <!-- Course Details -->
-                    <div class="course-features">
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item px-0">
-                                <i class="fas fa-calendar-alt me-2"></i> Last updated: {{ course.updated_at.strftime('%B %d, %Y') }}
+                    <div class="course-features mt-4">
+                        <h5 class="fw-bold mb-3">This course includes:</h5>
+                        <ul class="list-unstyled mb-0">
+                            <li class="d-flex align-items-center mb-3">
+                                <div class="rounded-circle bg-primary bg-opacity-10 p-2 me-3">
+                                    <i class="fas fa-video text-primary"></i>
+                                </div>
+                                <span>{{ stats.total_lessons }} on-demand lessons</span>
                             </li>
-                            <li class="list-group-item px-0">
-                                <i class="fas fa-signal me-2"></i> Level: {{ course.level|title }}
+                            <li class="d-flex align-items-center mb-3">
+                                <div class="rounded-circle bg-primary bg-opacity-10 p-2 me-3">
+                                    <i class="fas fa-clock text-primary"></i>
+                                </div>
+                                <span>{{ course.duration }} of content</span>
                             </li>
-                            <li class="list-group-item px-0">
-                                <i class="fas fa-film me-2"></i> {{ stats.total_lessons }} lessons
+                            <li class="d-flex align-items-center mb-3">
+                                <div class="rounded-circle bg-primary bg-opacity-10 p-2 me-3">
+                                    <i class="fas fa-infinity text-primary"></i>
+                                </div>
+                                <span>Full lifetime access</span>
                             </li>
-                            <li class="list-group-item px-0">
-                                <i class="fas fa-clock me-2"></i> {{ course.duration }}
+                            <li class="d-flex align-items-center mb-3">
+                                <div class="rounded-circle bg-primary bg-opacity-10 p-2 me-3">
+                                    <i class="fas fa-mobile-alt text-primary"></i>
+                                </div>
+                                <span>Access on mobile and desktop</span>
                             </li>
-                            <li class="list-group-item px-0">
-                                <i class="fas fa-language me-2"></i> Language: English
-                            </li>
-                            <li class="list-group-item px-0">
-                                <i class="fas fa-certificate me-2"></i> Certificate of completion
+                            <li class="d-flex align-items-center">
+                                <div class="rounded-circle bg-primary bg-opacity-10 p-2 me-3">
+                                    <i class="fas fa-certificate text-primary"></i>
+                                </div>
+                                <span>Certificate of completion</span>
                             </li>
                         </ul>
                     </div>
+                    
+                    <!-- Money Back Guarantee -->
+                    {% if not course.is_free and not course.is_premium %}
+                        <div class="mt-4 p-3 bg-light rounded-3 text-center">
+                            <i class="fas fa-shield-alt text-success mb-2"></i>
+                            <p class="mb-0 small">30-Day Money-Back Guarantee</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Instructor Card -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h3 class="h5 mb-0 fw-bold">About the Instructor</h3>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 64px; height: 64px; font-size: 1.5rem;">
+                            {{ course.creator.first_name[0] }}{{ course.creator.last_name[0] }}
+                        </div>
+                        <div>
+                            <h4 class="h5 mb-1">{{ course.creator.full_name() }}</h4>
+                            <p class="text-muted small mb-0">{{ course.creator.major }} at {{ course.creator.university }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between text-center mb-3">
+                        <div>
+                            <div class="fw-bold">{{ course.creator.created_courses|length }}</div>
+                            <div class="text-muted small">Courses</div>
+                        </div>
+                        <div>
+                            <div class="fw-bold">
+                                {% set total_students = 0 %}
+                                {% for c in course.creator.created_courses %}
+                                    {% set total_students = total_students + c.total_students() %}
+                                {% endfor %}
+                                {{ total_students }}
+                            </div>
+                            <div class="text-muted small">Students</div>
+                        </div>
+                        <div>
+                            <div class="fw-bold text-warning">
+                                {% set total_rating = 0 %}
+                                {% set courses_with_ratings = 0 %}
+                                {% for c in course.creator.created_courses %}
+                                    {% if c.reviews|length > 0 %}
+                                        {% set total_rating = total_rating + c.average_rating() %}
+                                        {% set courses_with_ratings = courses_with_ratings + 1 %}
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if courses_with_ratings > 0 %}
+                                    {{ (total_rating / courses_with_ratings)|round(1) }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </div>
+                            <div class="text-muted small">Avg. Rating</div>
+                        </div>
+                    </div>
+                    
+                    <a href="#" class="btn btn-outline-primary btn-sm w-100">
+                        <i class="fas fa-user me-1"></i> View Profile
+                    </a>
                 </div>
             </div>
         </div>
@@ -252,8 +413,86 @@
 </div>
 
 <style>
-.sticky-offset {
-    top: 20px;
+/* Modern Styles for Course View */
+.course-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-radius: 1rem;
+    overflow: hidden;
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: rgba(var(--bs-primary-rgb), 0.05);
+    color: var(--bs-primary);
+}
+
+.accordion-button:focus {
+    box-shadow: none;
+    border-color: rgba(var(--bs-primary-rgb), 0.25);
+}
+
+.accordion-button::after {
+    background-size: 1rem;
+}
+
+.list-group-item {
+    transition: background-color 0.2s ease;
+}
+
+.list-group-item:hover {
+    background-color: rgba(var(--bs-primary-rgb), 0.05);
+}
+
+.review-item {
+    transition: transform 0.3s ease;
+}
+
+.review-item:hover {
+    transform: translateX(5px);
+}
+
+/* Dark Mode Adjustments */
+[data-theme="dark"] .card {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .card-header,
+[data-theme="dark"] .card-footer {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .accordion-item {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .accordion-button {
+    background-color: #1e293b;
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .accordion-button:not(.collapsed) {
+    background-color: rgba(var(--bs-primary-rgb), 0.2);
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .list-group-item {
+    background-color: #1e293b;
+    border-color: #334155;
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .bg-light {
+    background-color: #334155 !important;
+}
+
+[data-theme="dark"] .text-muted {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .bg-primary.bg-opacity-10 {
+    background-color: rgba(var(--bs-primary-rgb), 0.2) !important;
 }
 </style>
 {% endblock %}

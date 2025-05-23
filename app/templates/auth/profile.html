@@ -1,304 +1,682 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="profile-container">
-    <h1 class="section-title">My Profile</h1>
-
-    <div class="row">
-        <!-- Profile Information -->
-        <div class="col-lg-8 mb-4">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h2 class="card-title-primary mb-0">Profile Information</h2>
-                    <span
-                        class="badge {% if current_user.is_premium %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
-                        {{ 'Premium' if current_user.is_premium else 'Free Tier' }}
-                    </span>
-                </div>
-                <div class="card-body">
-                    <form method="POST" enctype="multipart/form-data" action="{{ url_for('auth.profile') }}">
-                        {{ form.hidden_tag() }}
-                        
-                        <div class="mb-4 text-center">
-                            {% if current_user.profile_picture %}
-                                <img src="{{ url_for('static', filename='uploads/profiles/' ~ current_user.profile_picture) }}" 
-                                    class="rounded-circle mb-2" width="120" height="120" alt="Profile Picture">
-                            {% else %}
-                                <!-- <img src="{{ url_for('static', filename='uploads/profiles/default_profile.jpg') }}" 
-                                    class="rounded-circle mb-2" width="120" height="120" alt="Default Avatar"> -->
-                                <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center"
-                                                    style="width: 120px; height: 120px; margin: 0 auto; font-size: 80px;">
-                                                    {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
-                                                </div>
-                            {% endif %}
-
-                            <div class="mt-2">
-                                {{ form.profile_picture.label(class="form-label") }}
-                                {{ form.profile_picture(class="form-control") }}
-                            </div>
+<div class="container py-4">
+    <!-- Profile Header with Cover Photo -->
+    <div class="card border-0 shadow-sm overflow-hidden mb-4">
+        <!-- Cover Photo -->
+        <div class="profile-cover bg-gradient-primary" style="height: 200px;"></div>
+        
+        <!-- Profile Info Section -->
+        <div class="card-body position-relative px-4 pt-0 pb-4">
+            <!-- Profile Picture -->
+            <div class="profile-picture-wrapper">
+                <div class="profile-picture">
+                    {% if current_user.profile_picture %}
+                        <img src="{{ url_for('static', filename='uploads/profiles/' ~ current_user.profile_picture) }}"
+                            alt="Profile Picture"
+                            class="img-fluid rounded-circle border border-3 border-white shadow">
+                    {% else %}
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center border border-3 border-white shadow"
+                            style="width: 150px; height: 150px; font-size: 3rem;">
+                            {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
                         </div>
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                {{ form.first_name.label(class="form-label") }}
-                                {% if form.first_name.errors %}
-                                {{ form.first_name(class="form-control is-invalid") }}
-                                <div class="invalid-feedback">
-                                    {% for error in form.first_name.errors %}
-                                    {{ error }}
-                                    {% endfor %}
-                                </div>
-                                {% else %}
-                                {{ form.first_name(class="form-control") }}
-                                {% endif %}
-                            </div>
-                            <div class="col-md-6">
-                                {{ form.last_name.label(class="form-label") }}
-                                {% if form.last_name.errors %}
-                                {{ form.last_name(class="form-control is-invalid") }}
-                                <div class="invalid-feedback">
-                                    {% for error in form.last_name.errors %}
-                                    {{ error }}
-                                    {% endfor %}
-                                </div>
-                                {% else %}
-                                {{ form.last_name(class="form-control") }}
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Email</label>
-                            <input type="text" class="form-control" value="{{ current_user.email }}" disabled>
-                            <div class="form-text text-light">Email cannot be changed</div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                {{ form.university.label(class="form-label") }}
-                                {% if form.university.errors %}
-                                {{ form.university(class="form-control is-invalid") }}
-                                <div class="invalid-feedback">
-                                    {% for error in form.university.errors %}
-                                    {{ error }}
-                                    {% endfor %}
-                                </div>
-                                {% else %}
-                                {{ form.university(class="form-control") }}
-                                {% endif %}
-                            </div>
-                            <div class="col-md-6">
-                                {{ form.major.label(class="form-label") }}
-                                {% if form.major.errors %}
-                                {{ form.major(class="form-control is-invalid") }}
-                                <div class="invalid-feedback">
-                                    {% for error in form.major.errors %}
-                                    {{ error }}
-                                    {% endfor %}
-                                </div>
-                                {% else %}
-                                {{ form.major(class="form-control") }}
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                {{ form.gpa.label(class="form-label") }}
-                                {% if form.gpa.errors %}
-                                {{ form.gpa(class="form-control is-invalid", type="number", step="0.1", min="0",
-                                max="4.0") }}
-                                <div class="invalid-feedback">
-                                    {% for error in form.gpa.errors %}
-                                    {{ error }}
-                                    {% endfor %}
-                                </div>
-                                {% else %}
-                                {{ form.gpa(class="form-control", type="number", step="0.1", min="0", max="4.0") }}
-                                {% endif %}
-                            </div>
-                            <div class="col-md-6">
-                                {{ form.credits.label(class="form-label") }}
-                                {% if form.credits.errors %}
-                                {{ form.credits(class="form-control is-invalid", type="number", min="0") }}
-                                <div class="invalid-feedback">
-                                    {% for error in form.credits.errors %}
-                                    {{ error }}
-                                    {% endfor %}
-                                </div>
-                                {% else %}
-                                {{ form.credits(class="form-control", type="number", min="0") }}
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <div class="d-grid gap-2">
-                            {{ form.submit(class="btn btn-primary") }}
-                        </div>
-                    </form>
+                    {% endif %}
+                    
+                    <!-- Edit Profile Picture Button -->
+                    <div class="edit-profile-picture">
+                        <label for="{{ form.profile_picture.id }}" class="btn btn-sm btn-light rounded-circle shadow-sm">
+                            <i class="fas fa-camera"></i>
+                        </label>
+                        {{ form.profile_picture(class="d-none", accept="image/*") }}
+                    </div>
                 </div>
             </div>
-
-            <div class="card mt-4">
-                <div class="card-header">
-                    <h2 class="card-title-secondary">Account Security</h2>
-                </div>
-                <div class="card-body">
-                    <div class="mb-4">
-                        <h5>Change Password</h5>
-                        <p>To change your password, fill out the form below:</p>
-
-                        <form method="POST" action="{{ url_for('auth.change_password') }}">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
-                            <div class="mb-3">
-                                <label for="current_password" class="form-label">Current Password</label>
-                                <input type="password" class="form-control" id="current_password"
-                                    name="current_password" required>
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="new_password" class="form-label">New Password</label>
-                                <input type="password" class="form-control" id="new_password" name="new_password"
-                                    required>
-                                <div class="form-text text-light">Must be at least 6 characters long</div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="confirm_password" class="form-label">Confirm New Password</label>
-                                <input type="password" class="form-control" id="confirm_password"
-                                    name="confirm_password" required>
-                            </div>
-
-                            <div class="d-grid gap-2">
-                                <button type="submit" class="btn btn-outline-primary">Change Password</button>
-                            </div>
-                        </form>
+            
+            <!-- Profile Info -->
+            <div class="row mt-5">
+                <div class="col-lg-8">
+                    <h1 class="display-6 fw-bold mb-1">{{ current_user.first_name }} {{ current_user.last_name }}</h1>
+                    <p class="lead text-muted mb-2">{{ current_user.major }} Student at {{ current_user.university }}</p>
+                    
+                    <!-- Subscription Badge -->
+                    <div class="mt-2">
+                        <span class="badge {% if current_user.is_premium %}bg-warning text-dark{% else %}bg-secondary{% endif %} px-3 py-2">
+                            {{ 'Premium' if current_user.is_premium else 'Free Tier' }}
+                        </span>
                     </div>
-
-                    <div class="mt-4">
-                        <h5>Account Created</h5>
-                        <p>Your account was created on 
-                            {% if current_user.created_at is not none %}
-                                {{ current_user.created_at.strftime('%B %d, %Y') }}
-                            {% else %}
-                                {{ current_user.created_at }}
-                            {% endif %}
-                            </p>
+                </div>
+                
+                <div class="col-lg-4 mt-3 mt-lg-0">
+                    <div class="d-flex flex-column gap-2">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-light d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                <i class="fas fa-graduation-cap text-primary"></i>
+                            </div>
+                            <div>
+                                <div class="text-muted small">University</div>
+                                <div class="fw-medium">{{ current_user.university }}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-light d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                <i class="fas fa-book text-primary"></i>
+                            </div>
+                            <div>
+                                <div class="text-muted small">Major</div>
+                                <div class="fw-medium">{{ current_user.major }}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-light d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                <i class="fas fa-envelope text-primary"></i>
+                            </div>
+                            <div>
+                                <div class="text-muted small">Email</div>
+                                <div class="fw-medium">{{ current_user.email }}</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
+    
+    <!-- Profile Content Tabs -->
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Tabs Navigation -->
+            <ul class="nav nav-tabs mb-4" id="profileTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="edit-profile-tab" data-bs-toggle="tab" data-bs-target="#edit-profile" type="button" role="tab" aria-controls="edit-profile" aria-selected="true">
+                        <i class="fas fa-user-edit me-2"></i> Edit Profile
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="security-tab" data-bs-toggle="tab" data-bs-target="#security" type="button" role="tab" aria-controls="security" aria-selected="false">
+                        <i class="fas fa-shield-alt me-2"></i> Security
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="achievements-tab" data-bs-toggle="tab" data-bs-target="#achievements" type="button" role="tab" aria-controls="achievements" aria-selected="false">
+                        <i class="fas fa-trophy me-2"></i> Achievements
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="account-tab" data-bs-toggle="tab" data-bs-target="#account" type="button" role="tab" aria-controls="account" aria-selected="false">
+                        <i class="fas fa-cog me-2"></i> Account
+                    </button>
+                </li>
+            </ul>
+            
+            <!-- Tabs Content -->
+            <div class="tab-content" id="profileTabsContent">
+                <!-- Edit Profile Tab -->
+                <div class="tab-pane fade show active" id="edit-profile" role="tabpanel" aria-labelledby="edit-profile-tab">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white py-3">
+                            <h3 class="card-title h5 mb-0 fw-bold">
+                                <i class="fas fa-user-edit me-2 text-primary"></i> Edit Profile Information
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" enctype="multipart/form-data" action="{{ url_for('auth.profile') }}">
+                                {{ form.hidden_tag() }}
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6 mb-3 mb-md-0">
+                                        <label for="{{ form.first_name.id }}" class="form-label">First Name</label>
+                                        {{ form.first_name(class="form-control") }}
+                                        {% if form.first_name.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {% for error in form.first_name.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="{{ form.last_name.id }}" class="form-label">Last Name</label>
+                                        {{ form.last_name(class="form-control") }}
+                                        {% if form.last_name.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {% for error in form.last_name.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
 
-        <!-- Subscription Information -->
-        <div class="col-lg-4 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="card-title-primary">Subscription</h2>
+                                <div class="mb-3">
+                                    <label class="form-label">Email</label>
+                                    <input type="text" class="form-control" value="{{ current_user.email }}" disabled>
+                                    <div class="form-text">Email cannot be changed</div>
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-md-6 mb-3 mb-md-0">
+                                        <label for="{{ form.university.id }}" class="form-label">University</label>
+                                        {{ form.university(class="form-control") }}
+                                        {% if form.university.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {% for error in form.university.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="{{ form.major.id }}" class="form-label">Major</label>
+                                        {{ form.major(class="form-control") }}
+                                        {% if form.major.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {% for error in form.major.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-md-6 mb-3 mb-md-0">
+                                        <label for="{{ form.gpa.id }}" class="form-label">GPA</label>
+                                        {{ form.gpa(class="form-control", type="number", step="0.1", min="0", max="4.0") }}
+                                        {% if form.gpa.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {% for error in form.gpa.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="{{ form.credits.id }}" class="form-label">Credits</label>
+                                        {{ form.credits(class="form-control", type="number", min="0") }}
+                                        {% if form.credits.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {% for error in form.credits.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <div class="d-grid mt-4">
+                                    {{ form.submit(class="btn btn-primary") }}
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="text-center mb-4">
-                        <div class="display-6 mb-2">
-                            {% if current_user.is_premium %}
-                            Premium
+                
+                <!-- Security Tab -->
+                <div class="tab-pane fade" id="security" role="tabpanel" aria-labelledby="security-tab">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white py-3">
+                            <h3 class="card-title h5 mb-0 fw-bold">
+                                <i class="fas fa-lock me-2 text-primary"></i> Change Password
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" action="{{ url_for('auth.change_password') }}" id="passwordForm">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                                <div class="mb-3">
+                                    <label for="current_password" class="form-label">Current Password</label>
+                                    <input type="password" class="form-control" id="current_password" name="current_password" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="new_password" class="form-label">New Password</label>
+                                    <input type="password" class="form-control" id="new_password" name="new_password" required>
+                                    <div class="form-text">Must be at least 6 characters long</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="confirm_password" class="form-label">Confirm New Password</label>
+                                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                                </div>
+
+                                <div class="d-grid mt-4">
+                                    <button type="submit" class="btn btn-primary">Change Password</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div class="card border-0 shadow-sm mt-4">
+                        <div class="card-header bg-white py-3">
+                            <h3 class="card-title h5 mb-0 fw-bold">
+                                <i class="fas fa-shield-alt me-2 text-primary"></i> Security Settings
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="loginNotifications" checked>
+                                    <label class="form-check-label" for="loginNotifications">Email notifications for new logins</label>
+                                </div>
+                                <div class="form-text">Receive an email when your account is accessed from a new device</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="twoFactorAuth">
+                                    <label class="form-check-label" for="twoFactorAuth">Two-factor authentication</label>
+                                </div>
+                                <div class="form-text">Add an extra layer of security to your account (Coming soon)</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="sessionTimeout" checked>
+                                    <label class="form-check-label" for="sessionTimeout">Automatic session timeout</label>
+                                </div>
+                                <div class="form-text">Automatically log out after 24 hours of inactivity</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Achievements Tab -->
+                <div class="tab-pane fade" id="achievements" role="tabpanel" aria-labelledby="achievements-tab">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                            <h3 class="card-title h5 mb-0 fw-bold">
+                                <i class="fas fa-trophy me-2 text-primary"></i> My Achievements
+                            </h3>
+                            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addAchievementModal">
+                                <i class="fas fa-plus me-1"></i> Add Achievement
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            {% if current_user.achievements %}
+                                <div class="row">
+                                    {% for achievement in current_user.achievements %}
+                                        <div class="col-md-6 mb-4">
+                                            <div class="card h-100 border-0 shadow-sm achievement-card">
+                                                <div class="card-body">
+                                                    <div class="d-flex align-items-center mb-3">
+                                                        <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                                                            <i class="fas fa-award text-primary"></i>
+                                                        </div>
+                                                        <div>
+                                                            <h4 class="h5 mb-0">{{ achievement.title }}</h4>
+                                                            <p class="text-muted small mb-0">
+                                                                {{ achievement.date.strftime('%B %d, %Y') if achievement.date else '' }}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    {% if achievement.description %}
+                                                        <p class="mb-0">{{ achievement.description }}</p>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
                             {% else %}
-                            Free Tier
+                                <div class="text-center py-5">
+                                    <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                                        <i class="fas fa-trophy fa-2x text-muted"></i>
+                                    </div>
+                                    <h4 class="h5 mb-2">No achievements yet</h4>
+                                    <p class="text-muted mb-4">Add your achievements to showcase your accomplishments</p>
+                                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAchievementModal">
+                                        <i class="fas fa-plus me-2"></i> Add First Achievement
+                                    </button>
+                                </div>
                             {% endif %}
                         </div>
-
+                    </div>
+                </div>
+                
+                <!-- Account Tab -->
+                <div class="tab-pane fade" id="account" role="tabpanel" aria-labelledby="account-tab">
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-white py-3">
+                            <h3 class="card-title h5 mb-0 fw-bold">
+                                <i class="fas fa-info-circle me-2 text-primary"></i> Account Information
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-4 text-muted">Account Created:</div>
+                                <div class="col-md-8">
+                                    {% if current_user.created_at is not none %}
+                                        {{ current_user.created_at.strftime('%B %d, %Y') }}
+                                    {% else %}
+                                        {{ current_user.created_at }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-4 text-muted">Account Status:</div>
+                                <div class="col-md-8">
+                                    <span class="badge bg-success">Active</span>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-4 text-muted">Subscription:</div>
+                                <div class="col-md-8">
+                                    <span class="badge {% if current_user.is_premium %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                                        {{ 'Premium' if current_user.is_premium else 'Free Tier' }}
+                                    </span>
+                                    
+                                    {% if current_user.is_premium and current_user.subscription_end_date %}
+                                        <span class="ms-2 text-muted">
+                                            Renews: {{ current_user.subscription_end_date.strftime('%B %d, %Y') if not isinstance(current_user.subscription_end_date, str) else current_user.subscription_end_date }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4">
+                                <h5 class="fw-bold mb-3">Account Actions</h5>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <a href="{{ url_for('subscription.plans') }}" class="btn btn-outline-primary">
+                                        <i class="fas fa-crown me-1"></i> Manage Subscription
+                                    </a>
+                                    <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">
+                                        <i class="fas fa-trash-alt me-1"></i> Delete Account
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white py-3">
+                            <h3 class="card-title h5 mb-0 fw-bold">
+                                <i class="fas fa-chart-bar me-2 text-primary"></i> Account Statistics
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3 col-6 mb-4 text-center">
+                                    <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 60px; height: 60px;">
+                                        <i class="fas fa-book fa-lg text-primary"></i>
+                                    </div>
+                                    <h5 class="h6 mb-0">{{ current_user.current_courses|length }}</h5>
+                                    <p class="text-muted small mb-0">Courses</p>
+                                </div>
+                                
+                                <div class="col-md-3 col-6 mb-4 text-center">
+                                    <div class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 60px; height: 60px;">
+                                        <i class="fas fa-briefcase fa-lg text-success"></i>
+                                    </div>
+                                    <h5 class="h6 mb-0">{{ current_user.job_applications|length }}</h5>
+                                    <p class="text-muted small mb-0">Applications</p>
+                                </div>
+                                
+                                <div class="col-md-3 col-6 mb-4 text-center">
+                                    <div class="rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 60px; height: 60px;">
+                                        <i class="fas fa-trophy fa-lg text-warning"></i>
+                                    </div>
+                                    <h5 class="h6 mb-0">{{ current_user.achievements|length }}</h5>
+                                    <p class="text-muted small mb-0">Achievements</p>
+                                </div>
+                                
+                                <div class="col-md-3 col-6 mb-4 text-center">
+                                    <div class="rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 60px; height: 60px;">
+                                        <i class="fas fa-tasks fa-lg text-info"></i>
+                                    </div>
+                                    <h5 class="h6 mb-0">{{ current_user.todos|selectattr('completed', 'equalto', false)|list|length }}</h5>
+                                    <p class="text-muted small mb-0">Active Tasks</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Subscription Card -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h3 class="card-title h5 mb-0 fw-bold">
+                        <i class="fas fa-crown me-2 text-warning"></i> Subscription
+                    </h3>
+                </div>
+                <div class="card-body text-center">
+                    <div class="display-6 mb-2">
                         {% if current_user.is_premium %}
-                        <p>Your premium subscription is active.</p>
-                        {% if current_user.subscription_end_date %}
-                        <p>Next billing date: {{ current_user.subscription_end_date.strftime('%B %d, %Y') if not
-                            isinstance(current_user.subscription_end_date, str) else current_user.subscription_end_date
-                            }}</p>
-                        {% endif %}
+                            Premium
                         {% else %}
-                        <p>You are currently on the free plan.</p>
-                        <p>Upgrade to Premium to unlock all features.</p>
+                            Free Tier
                         {% endif %}
                     </div>
 
-                    <div class="d-grid gap-2">
-                        {% if current_user.is_premium %}
+                    {% if current_user.is_premium %}
+                        <p class="mb-3">Your premium subscription is active.</p>
+                        {% if current_user.subscription_end_date %}
+                            <p class="mb-4">Next billing date: {{ current_user.subscription_end_date.strftime('%B %d, %Y') if not isinstance(current_user.subscription_end_date, str) else current_user.subscription_end_date }}</p>
+                        {% endif %}
+                        
                         <form method="POST" action="{{ url_for('subscription.cancel') }}">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <div class="d-grid">
-                                <button type="submit" class="btn btn-outline-danger">Cancel Subscription</button>
+                                <button type="submit" class="btn btn-outline-danger">
+                                    <i class="fas fa-times-circle me-1"></i> Cancel Subscription
+                                </button>
                             </div>
                         </form>
-                        {% else %}
-                        <a href="{{ url_for('subscription.plans') }}" class="btn btn-warning">Upgrade to Premium</a>
-                        {% endif %}
+                    {% else %}
+                        <p class="mb-4">Upgrade to Premium to unlock all features including:</p>
+                        <ul class="list-unstyled text-start mb-4">
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Advanced Resume Builder</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Unlimited Job Applications</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> AI-Powered Task Management</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Premium Courses Access</li>
+                            <li><i class="fas fa-check text-success me-2"></i> Passive Income Tools</li>
+                        </ul>
+                        <a href="{{ url_for('subscription.plans') }}" class="btn btn-warning">
+                            <i class="fas fa-crown me-1"></i> Upgrade to Premium
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Profile Completion Card -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h3 class="card-title h5 mb-0 fw-bold">
+                        <i class="fas fa-tasks me-2 text-primary"></i> Profile Completion
+                    </h3>
+                </div>
+                <div class="card-body">
+                    {% set completion_score = 60 %}
+                    {% if current_user.profile_picture %}
+                        {% set completion_score = completion_score + 10 %}
+                    {% endif %}
+                    {% if current_user.gpa %}
+                        {% set completion_score = completion_score + 10 %}
+                    {% endif %}
+                    {% if current_user.credits %}
+                        {% set completion_score = completion_score + 10 %}
+                    {% endif %}
+                    {% if current_user.achievements|length > 0 %}
+                        {% set completion_score = completion_score + 10 %}
+                    {% endif %}
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Profile Completion</span>
+                        <span class="fw-bold">{{ completion_score }}%</span>
+                    </div>
+                    <div class="progress mb-4" style="height: 8px;">
+                        <div class="progress-bar 
+                            {% if completion_score < 50 %}bg-danger
+                            {% elif completion_score < 80 %}bg-warning
+                            {% else %}bg-success{% endif %}" 
+                            role="progressbar" 
+                            style="width: {{ completion_score }}%;" 
+                            aria-valuenow="{{ completion_score }}" 
+                            aria-valuemin="0" 
+                            aria-valuemax="100">
+                        </div>
+                    </div>
+                    
+                    <div class="profile-completion-tasks">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="flex-shrink-0 me-2">
+                                <i class="fas {% if current_user.profile_picture %}fa-check-circle text-success{% else %}fa-circle text-muted{% endif %}"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <span class="{% if not current_user.profile_picture %}text-muted{% endif %}">Add profile picture</span>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="flex-shrink-0 me-2">
+                                <i class="fas {% if current_user.gpa %}fa-check-circle text-success{% else %}fa-circle text-muted{% endif %}"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <span class="{% if not current_user.gpa %}text-muted{% endif %}">Add your GPA</span>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="flex-shrink-0 me-2">
+                                <i class="fas {% if current_user.credits %}fa-check-circle text-success{% else %}fa-circle text-muted{% endif %}"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <span class="{% if not current_user.credits %}text-muted{% endif %}">Add your credits</span>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="flex-shrink-0 me-2">
+                                <i class="fas {% if current_user.achievements|length > 0 %}fa-check-circle text-success{% else %}fa-circle text-muted{% endif %}"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <span class="{% if not current_user.achievements|length > 0 %}text-muted{% endif %}">Add achievements</span>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0 me-2">
+                                <i class="fas {% if current_user.is_premium %}fa-check-circle text-success{% else %}fa-circle text-muted{% endif %}"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <span class="{% if not current_user.is_premium %}text-muted{% endif %}">Upgrade to premium</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-
-            <div class="card mt-4">
-                <div class="card-header">
-                    <h2 class="card-title-secondary">Account Statistics</h2>
+            
+            <!-- Connected Accounts Card -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h3 class="card-title h5 mb-0 fw-bold">
+                        <i class="fas fa-link me-2 text-primary"></i> Connected Accounts
+                    </h3>
                 </div>
                 <div class="card-body">
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between">
-                            <span>Total Courses</span>
-                            <span>{{ current_user.current_courses|length }}</span>
+                    <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-light d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                <i class="fab fa-linkedin text-primary"></i>
+                            </div>
+                            <div>
+                                <div class="fw-medium">LinkedIn</div>
+                                <div class="text-muted small">Import your professional experience</div>
+                            </div>
                         </div>
+                        <button class="btn btn-sm btn-outline-primary">Connect</button>
                     </div>
-
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between">
-                            <span>Job Applications</span>
-                            <span>{{ current_user.job_applications|length }}</span>
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-light d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                <i class="fab fa-github text-dark"></i>
+                            </div>
+                            <div>
+                                <div class="fw-medium">GitHub</div>
+                                <div class="text-muted small">Showcase your projects and contributions</div>
+                            </div>
                         </div>
+                        <button class="btn btn-sm btn-outline-primary">Connect</button>
                     </div>
-
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between">
-                            <span>Achievements</span>
-                            <span>{{ current_user.achievements|length }}</span>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-light d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                <i class="fab fa-google text-danger"></i>
+                            </div>
+                            <div>
+                                <div class="fw-medium">Google</div>
+                                <div class="text-muted small">Sync your calendar and contacts</div>
+                            </div>
                         </div>
+                        <button class="btn btn-sm btn-outline-primary">Connect</button>
                     </div>
-
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between">
-                            <span>Active Tasks</span>
-                            <span>{{ current_user.todos|selectattr('completed', 'equalto', false)|list|length }}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card mt-4">
-                <div class="card-header">
-                    <h2 class="card-title-danger">Danger Zone</h2>
-                </div>
-                <div class="card-body">
-                    <p>Want to delete your account? This action cannot be undone.</p>
-                    <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">
-                        Delete Account
-                    </button>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Delete Account Modal -->
-<div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-labelledby="deleteAccountModalLabel"
-    aria-hidden="true">
+<!-- Add Achievement Modal -->
+<div class="modal fade" id="addAchievementModal" tabindex="-1" aria-labelledby="addAchievementModalLabel" aria-hidden="true">
     <div class="modal-dialog">
-        <div class="modal-content bg-dark text-light">
+        <div class="modal-content border-0 shadow">
             <div class="modal-header">
-                <h5 class="modal-title" id="deleteAccountModalLabel">Confirm Account Deletion</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                    aria-label="Close"></button>
+                <h5 class="modal-title fw-bold" id="addAchievementModalLabel">Add New Achievement</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('auth.add_achievement') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Achievement Title</label>
+                        <input type="text" class="form-control" id="title" name="title" required>
+                        <div class="form-text">E.g., "Dean's List", "Hackathon Winner", "Certification"</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description (Optional)</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="date" class="form-label">Date</label>
+                        <input type="date" class="form-control" id="date" name="date" required>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Achievement</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Account Modal -->
+<div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-labelledby="deleteAccountModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger text-white border-0">
+                <h5 class="modal-title fw-bold" id="deleteAccountModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i> Delete Account
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-danger">
-                    <i class="fas fa-exclamation-triangle"></i> Warning
+                    <i class="fas fa-exclamation-triangle me-2"></i> Warning
                 </div>
-                <p>Are you absolutely sure you want to delete your account? This action <strong>cannot be
-                        undone</strong>.</p>
+                <p>Are you absolutely sure you want to delete your account? This action <strong>cannot be undone</strong>.</p>
                 <p>All your data will be permanently removed, including:</p>
                 <ul>
                     <li>Profile information</li>
@@ -312,51 +690,219 @@
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="mb-3">
                         <label for="confirm_email" class="form-label">Please type your email to confirm deletion</label>
-                        <input type="email" class="form-control" id="confirm_email" name="confirm_email"
-                            placeholder="{{ current_user.email }}" required>
+                        <input type="email" class="form-control" id="confirm_email" name="confirm_email" placeholder="{{ current_user.email }}" required>
                     </div>
                 </form>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="submit" form="deleteAccountForm" class="btn btn-danger">Permanently Delete
-                    Account</button>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" form="deleteAccountForm" class="btn btn-danger" id="confirmDeleteBtn" disabled>
+                    <i class="fas fa-trash-alt me-1"></i> Permanently Delete Account
+                </button>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+/* LinkedIn-style Profile Styles */
+.profile-cover {
+    background: linear-gradient(135deg, #4f46e5, #3b82f6);
+    position: relative;
+}
+
+.profile-picture-wrapper {
+    position: absolute;
+    top: -75px;
+    left: 30px;
+}
+
+.profile-picture {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    overflow: hidden;
+    position: relative;
+}
+
+.profile-picture img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.edit-profile-picture {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+}
+
+.achievement-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.achievement-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+}
+
+.nav-tabs .nav-link {
+    color: #6c757d;
+    border: none;
+    padding: 0.75rem 1rem;
+    font-weight: 500;
+    border-bottom: 3px solid transparent;
+}
+
+.nav-tabs .nav-link:hover {
+    border-color: transparent;
+    color: var(--bs-primary);
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--bs-primary);
+    background-color: transparent;
+    border-bottom: 3px solid var(--bs-primary);
+}
+
+/* Dark Mode Adjustments */
+[data-theme="dark"] .card {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .card-header {
+    background-color: #1e293b !important;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .bg-white {
+    background-color: #1e293b !important;
+}
+
+[data-theme="dark"] .bg-light {
+    background-color: #334155 !important;
+}
+
+[data-theme="dark"] .text-muted {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select {
+    background-color: #0f172a;
+    border-color: #334155;
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .form-control:disabled {
+    background-color: #1e293b;
+}
+
+[data-theme="dark"] .form-text {
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .nav-tabs .nav-link {
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .nav-tabs .nav-link:hover,
+[data-theme="dark"] .nav-tabs .nav-link.active {
+    color: var(--bs-primary);
+}
+
+[data-theme="dark"] .modal-content {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .bg-primary.bg-opacity-10 {
+    background-color: rgba(var(--bs-primary-rgb), 0.2) !important;
+}
+
+[data-theme="dark"] .bg-success.bg-opacity-10 {
+    background-color: rgba(var(--bs-success-rgb), 0.2) !important;
+}
+
+[data-theme="dark"] .bg-warning.bg-opacity-10 {
+    background-color: rgba(var(--bs-warning-rgb), 0.2) !important;
+}
+
+[data-theme="dark"] .bg-info.bg-opacity-10 {
+    background-color: rgba(var(--bs-info-rgb), 0.2) !important;
+}
+</style>
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
-    $(document).ready(function () {
-        // Password match validation
-        $('#confirm_password').on('keyup', function () {
-            if ($(this).val() != $('#new_password').val()) {
-                $(this).addClass('is-invalid');
-                $(this).removeClass('is-valid');
-            } else {
-                $(this).removeClass('is-invalid');
-                $(this).addClass('is-valid');
-            }
-        });
-
-        // Delete account email validation
-        $('#confirm_email').on('keyup', function () {
-            const submitBtn = $('#deleteAccountForm').next('.modal-footer').find('button[type="submit"]');
-            if ($(this).val() === '{{ current_user.email }}') {
-                $(this).removeClass('is-invalid');
-                $(this).addClass('is-valid');
-                submitBtn.prop('disabled', false);
-            } else {
-                $(this).addClass('is-invalid');
-                $(this).removeClass('is-valid');
-                submitBtn.prop('disabled', true);
-            }
-        });
-
-        // Disable delete button initially
-        $('#deleteAccountForm').next('.modal-footer').find('button[type="submit"]').prop('disabled', true);
+$(document).ready(function() {
+    // Profile picture preview
+    $('#{{ form.profile_picture.id }}').on('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // If there's an existing image, update it
+                const existingImg = $('.profile-picture img');
+                if (existingImg.length) {
+                    existingImg.attr('src', e.target.result);
+                } else {
+                    // Otherwise, replace the placeholder with an image
+                    $('.profile-picture div').replaceWith(`
+                        <img src="${e.target.result}" alt="Profile Picture Preview" 
+                             class="img-fluid rounded-circle border border-3 border-white shadow">
+                    `);
+                }
+            };
+            reader.readAsDataURL(file);
+        }
     });
+    
+    // Password match validation
+    $('#confirm_password').on('keyup', function() {
+        if ($(this).val() != $('#new_password').val()) {
+            $(this).addClass('is-invalid');
+            $(this).removeClass('is-valid');
+        } else {
+            $(this).removeClass('is-invalid');
+            $(this).addClass('is-valid');
+        }
+    });
+
+    // Delete account email validation
+    $('#confirm_email').on('keyup', function() {
+        const submitBtn = $('#confirmDeleteBtn');
+        if ($(this).val() === '{{ current_user.email }}') {
+            $(this).removeClass('is-invalid');
+            $(this).addClass('is-valid');
+            submitBtn.prop('disabled', false);
+        } else {
+            $(this).addClass('is-invalid');
+            $(this).removeClass('is-valid');
+            submitBtn.prop('disabled', true);
+        }
+    });
+    
+    // Activate tab based on URL hash
+    const hash = window.location.hash;
+    if (hash) {
+        const tab = document.querySelector(`#profileTabs a[data-bs-target="${hash}"]`);
+        if (tab) {
+            const tabInstance = new bootstrap.Tab(tab);
+            tabInstance.show();
+        }
+    }
+    
+    // Update URL hash when tab changes
+    const tabs = document.querySelectorAll('#profileTabs button');
+    tabs.forEach(tab => {
+        tab.addEventListener('shown.bs.tab', function(e) {
+            const target = e.target.getAttribute('data-bs-target');
+            history.replaceState(null, null, target);
+        });
+    });
+});
 </script>
 {% endblock %}

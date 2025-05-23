@@ -1,5 +1,4 @@
 # app/forms.py
-# app/forms.py
 from flask_wtf import FlaskForm
 from wtforms import PasswordField, StringField, TextAreaField, FloatField, IntegerField, SelectField, SelectMultipleField, DateField, SubmitField, BooleanField
 from wtforms.validators import DataRequired, Optional, Length, NumberRange
@@ -38,6 +37,7 @@ class ProfileForm(FlaskForm):
 
 class AchievementForm(FlaskForm):
     title = StringField('Achievement Title', validators=[DataRequired()])
+    description = TextAreaField('Description', validators=[Optional()])
     date = DateField('Date', validators=[Optional()], format='%Y-%m-%d')
     submit = SubmitField('Add Achievement')
 
@@ -147,3 +147,15 @@ class AdminLoginForm(FlaskForm):
     password = StringField('Password', validators=[DataRequired()])
     code = StringField('Admin Code', validators=[DataRequired()])
     submit = SubmitField('Login')
+
+# Add TodoForm class
+class TodoForm(FlaskForm):
+    title = StringField('Task', validators=[DataRequired()])
+    due_date = DateField('Due Date', validators=[Optional()], format='%Y-%m-%d')
+    priority = SelectField('Priority', choices=[
+        ('low', 'Low'),
+        ('medium', 'Medium'),
+        ('high', 'High')
+    ], validators=[DataRequired()])
+    description = TextAreaField('Description', validators=[Optional()])
+    submit = SubmitField('Add Task')

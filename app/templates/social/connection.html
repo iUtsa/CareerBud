@@ -1,69 +1,209 @@
-<!-- In templates/social/connections.html -->
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container">
-    <h1 class="mb-4">My Connections</h1>
-    
+<div class="container py-4">
     <div class="row">
-        <div class="col-md-6">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h3>Pending Requests</h3>
+        <div class="col-12 mb-4">
+            <h1 class="fw-bold border-start border-4 border-primary ps-3">My Connections</h1>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h3 class="h5 mb-0 fw-bold">Pending Requests</h3>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-0">
                     {% if pending_requests %}
-                        {% for connection in pending_requests %}
-                        <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded">
-                            <div>
-                                <strong>{{ connection.requester.first_name }} {{ connection.requester.last_name }}</strong>
-                                <div class="text-muted">{{ connection.requester.university }}</div>
+                        <div class="list-group list-group-flush">
+                            {% for connection in pending_requests %}
+                            <div class="list-group-item border-0 border-bottom p-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center">
+                                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px; font-size: 1.25rem;">
+                                            {{ connection.requester.first_name[0] }}{{ connection.requester.last_name[0] }}
+                                        </div>
+                                        <div>
+                                            <h5 class="mb-1 fw-bold">{{ connection.requester.first_name }} {{ connection.requester.last_name }}</h5>
+                                            <div class="text-muted small">{{ connection.requester.university }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <form action="{{ url_for('social.accept_connection', connection_id=connection.id) }}" method="post">
+                                            {{ form.hidden_tag() }}
+                                            <button type="submit" class="btn btn-success btn-sm">Accept</button>
+                                        </form>
+                                        <form action="{{ url_for('social.reject_connection', connection_id=connection.id) }}" method="post">
+                                            {{ form.hidden_tag() }}
+                                            <button type="submit" class="btn btn-outline-danger btn-sm">Reject</button>
+                                        </form>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="d-flex">
-                                <form action="{{ url_for('social.accept_connection', connection_id=connection.id) }}" method="post" class="me-2">
-                                    {{ form.hidden_tag() }}
-                                    <button type="submit" class="btn btn-success btn-sm">Accept</button>
-                                </form>
-                                <form action="{{ url_for('social.reject_connection', connection_id=connection.id) }}" method="post">
-                                    {{ form.hidden_tag() }}
-                                    <button type="submit" class="btn btn-outline-danger btn-sm">Reject</button>
-                                </form>
-                            </div>
+                            {% endfor %}
                         </div>
-                        {% endfor %}
                     {% else %}
-                        <p class="text-muted">No pending connection requests.</p>
+                        <div class="text-center py-5">
+                            <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                                <i class="fas fa-user-clock fa-2x text-muted"></i>
+                            </div>
+                            <h4 class="h5 mb-2">No pending requests</h4>
+                            <p class="text-muted mb-0">When someone sends you a connection request, it will appear here</p>
+                        </div>
                     {% endif %}
                 </div>
             </div>
         </div>
         
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h3>My Connections</h3>
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h3 class="h5 mb-0 fw-bold">My Connections</h3>
+                    <a href="{{ url_for('social.search') }}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-search me-1"></i> Find More
+                    </a>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-0">
                     {% if connections %}
-                        {% for user in connections %}
-                        <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded">
-                            <div>
-                                <a href="{{ url_for('social.view_profile', user_id=user.id) }}">
-                                    <strong>{{ user.first_name }} {{ user.last_name }}</strong>
-                                </a>
-                                <div class="text-muted">{{ user.university }}</div>
+                        <div class="list-group list-group-flush">
+                            {% for user in connections %}
+                            <div class="list-group-item border-0 border-bottom p-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center">
+                                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px; font-size: 1.25rem;">
+                                            {{ user.first_name[0] }}{{ user.last_name[0] }}
+                                        </div>
+                                        <div>
+                                            <h5 class="mb-1 fw-bold">
+                                                <a href="{{ url_for('social.view_profile', user_id=user.id) }}" class="text-reset text-decoration-none">
+                                                    {{ user.first_name }} {{ user.last_name }}
+                                                </a>
+                                            </h5>
+                                            <div class="text-muted small">{{ user.university }}</div>
+                                        </div>
+                                    </div>
+                                    <a href="{{ url_for('social.new_conversation', user_id=user.id) }}" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-comment me-1"></i> Message
+                                    </a>
+                                </div>
                             </div>
-                            <a href="{{ url_for('social.new_conversation', user_id=user.id) }}" class="btn btn-primary btn-sm">
-                                <i class="fas fa-comment"></i> Message
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                                <i class="fas fa-user-friends fa-2x text-muted"></i>
+                            </div>
+                            <h4 class="h5 mb-2">No connections yet</h4>
+                            <p class="text-muted mb-4">Connect with other students to grow your network</p>
+                            <a href="{{ url_for('social.search') }}" class="btn btn-primary">
+                                <i class="fas fa-search me-2"></i> Find Students
                             </a>
                         </div>
-                        {% endfor %}
-                    {% else %}
-                        <p class="text-muted">You don't have any connections yet.</p>
                     {% endif %}
                 </div>
             </div>
         </div>
     </div>
+    
+    <!-- Connection Stats -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h3 class="h5 mb-0 fw-bold">Network Statistics</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                                    <i class="fas fa-user-friends text-primary fa-lg"></i>
+                                </div>
+                                <div>
+                                    <div class="text-muted small">Total Connections</div>
+                                    <h3 class="fw-bold mb-0">{{ connections|length }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
+                                    <i class="fas fa-user-plus text-success fa-lg"></i>
+                                </div>
+                                <div>
+                                    <div class="text-muted small">Pending Requests</div>
+                                    <h3 class="fw-bold mb-0">{{ pending_requests|length }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle bg-info bg-opacity-10 p-3 me-3">
+                                    <i class="fas fa-comments text-info fa-lg"></i>
+                                </div>
+                                <div>
+                                    <div class="text-muted small">Active Conversations</div>
+                                    <h3 class="fw-bold mb-0">{{ connections|length }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<style>
+/* Modern Connection Page Styles */
+.list-group-item {
+    transition: all 0.2s ease;
+}
+
+.list-group-item:hover {
+    background-color: rgba(var(--bs-primary-rgb), 0.05);
+    transform: translateX(5px);
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .card {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .card-header {
+    background-color: #1e293b !important;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .list-group-item {
+    background-color: #1e293b;
+    border-color: #334155;
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .list-group-item:hover {
+    background-color: #334155;
+}
+
+[data-theme="dark"] .bg-light {
+    background-color: #334155 !important;
+}
+
+[data-theme="dark"] .text-muted {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .bg-primary.bg-opacity-10 {
+    background-color: rgba(var(--bs-primary-rgb), 0.2) !important;
+}
+
+[data-theme="dark"] .bg-success.bg-opacity-10 {
+    background-color: rgba(var(--bs-success-rgb), 0.2) !important;
+}
+
+[data-theme="dark"] .bg-info.bg-opacity-10 {
+    background-color: rgba(var(--bs-info-rgb), 0.2) !important;
+}
+</style>
 {% endblock %}

@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from app.models import get_jobs, get_courses
 from datetime import datetime
+from app.forms import TodoForm
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
@@ -55,6 +56,9 @@ def dashboard():
     todos = sorted([todo for todo in current_user.todos if not todo.completed], 
                    key=lambda x: x.due_date or datetime.max)[:5]
     
+    # Create a form instance for the todo modal
+    form = TodoForm()
+    
     return render_template(
         'dashboard.html',
         title='Dashboard',
@@ -64,5 +68,6 @@ def dashboard():
         academic_progress=academic_progress,
         current_courses=current_courses,
         upcoming_interviews=upcoming_interviews,
-        todos=todos
+        todos=todos,
+        form=form
     )

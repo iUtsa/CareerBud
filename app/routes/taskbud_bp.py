@@ -31,7 +31,7 @@ def index():
     ).first()
     
     if not daily_plan:
-        daily_plan = generate_daily_plan(current_user.id)
+        daily_plan = enhanced_generate_daily_plan(current_user.id)
     
     # Get upcoming tasks
     upcoming_tasks = get_upcoming_tasks(current_user.id, days=7)
@@ -482,7 +482,7 @@ def daily_plan():
     ).first()
     
     if not plan:
-        plan = generate_daily_plan(current_user.id, date)
+        plan = enhanced_generate_daily_plan(current_user.id, date)
     
     # Get previous and next dates for navigation
     prev_date = date - timedelta(days=1)
@@ -493,7 +493,8 @@ def daily_plan():
         plan=plan,
         date=date,
         prev_date=prev_date,
-        next_date=next_date
+        next_date=next_date,
+        today=datetime.utcnow().date()
     )
 
 @taskbud_bp.route('/taskbud/daily-plan/regenerate', methods=['POST'])
@@ -520,8 +521,8 @@ def regenerate_daily_plan():
         db.session.delete(existing_plan)
         db.session.commit()
     
-    # Generate new plan
-    generate_daily_plan(current_user.id, date)
+    # Generate new plan using enhanced AI function
+    enhanced_generate_daily_plan(current_user.id, date)
     
     flash('Daily plan regenerated successfully', 'success')
     return redirect(url_for('taskbud.daily_plan', date=date.strftime('%Y-%m-%d')))
@@ -614,7 +615,13 @@ def statistics():
 @login_required
 def api_generate_tasks():
     """API endpoint to generate tasks for a goal using AI."""
+    if not request.is_json:
+        return jsonify({'success': False, 'error': 'Invalid request format'})
+    
     goal_id = request.json.get('goal_id')
+    
+    if not goal_id:
+        return jsonify({'success': False, 'error': 'Goal ID is required'})
     
     # Use the enhanced AI function instead of the original implementation
     result = enhanced_generate_tasks(goal_id, current_user.id)
@@ -634,6 +641,12 @@ def api_create_suggested_tasks():
         
     goal_id = request.json.get('goal_id')
     tasks = request.json.get('tasks', [])
+    
+    if not goal_id:
+        return jsonify({'success': False, 'error': 'Goal ID is required'})
+    
+    if not tasks:
+        return jsonify({'success': False, 'error': 'No tasks provided'})
     
     goal = Goal.query.filter_by(
         id=goal_id,

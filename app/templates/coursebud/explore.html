@@ -1,93 +1,306 @@
-<!-- /workspaces/Studbud/app/templates/coursebud/explore.html -->
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container mt-5">
-    <h1 class="mb-4">Explore Courses</h1>
-    
-    <!-- Search Form -->
-    <form action="{{ url_for('coursebud.explore') }}" method="get" class="card p-4 shadow-sm mb-4">
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                {{ search_form.query(class="form-control", placeholder="Search for courses...", value=request.args.get('query', '')) }}
-            </div>
-            <div class="col-md-2 mb-3">
-                {{ search_form.category(class="form-select") }}
-            </div>
-            <div class="col-md-2 mb-3">
-                {{ search_form.level(class="form-select") }}
-            </div>
-            <div class="col-md-2 mb-3">
-                {{ search_form.price(class="form-select") }}
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-12">
-                <button type="submit" class="btn btn-primary">Search</button>
-                <a href="{{ url_for('coursebud.explore') }}" class="btn btn-outline-secondary ms-2">Clear Filters</a>
-            </div>
-        </div>
-    </form>
-    
-    <!-- Results -->
-    <div class="row">
-        <div class="col-md-3">
-            <!-- Categories Sidebar -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">Categories</h5>
+<div class="container py-5">
+    <div class="row mb-5">
+        <div class="col-lg-8">
+            <h1 class="fw-bold mb-4">Explore Courses</h1>
+            
+            <!-- Search Form -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <form action="{{ url_for('coursebud.explore') }}" method="get" class="row g-3">
+                        <div class="col-md-6 mb-3">
+                            <div class="input-group">
+                                <span class="input-group-text bg-transparent border-end-0">
+                                    <i class="fas fa-search text-primary"></i>
+                                </span>
+                                {{ search_form.query(class="form-control border-start-0", placeholder="Search for courses...", value=request.args.get('query', '')) }}
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="input-group">
+                                <span class="input-group-text bg-transparent border-end-0">
+                                    <i class="fas fa-folder text-primary"></i>
+                                </span>
+                                {{ search_form.category(class="form-select border-start-0") }}
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="input-group">
+                                <span class="input-group-text bg-transparent border-end-0">
+                                    <i class="fas fa-signal text-primary"></i>
+                                </span>
+                                {{ search_form.level(class="form-select border-start-0") }}
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="input-group">
+                                <span class="input-group-text bg-transparent border-end-0">
+                                    <i class="fas fa-tag text-primary"></i>
+                                </span>
+                                {{ search_form.price(class="form-select border-start-0") }}
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary px-4">
+                                    <i class="fas fa-search me-2"></i>Search
+                                </button>
+                                <a href="{{ url_for('coursebud.explore') }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-redo me-2"></i>Reset
+                                </a>
+                            </div>
+                        </div>
+                    </form>
                 </div>
-                <div class="card-body">
-                    <ul class="list-group list-group-flush">
-                        {% for category in categories %}
-                        <li class="list-group-item">
-                            <a href="{{ url_for('coursebud.explore', category=category.id) }}" class="text-decoration-none">
-                                {{ category.name }}
-                            </a>
-                        </li>
+            </div>
+            
+            <!-- Results -->
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="fw-bold h4 mb-0">
+                        {% if request.args.get('query') %}
+                            Search Results for "{{ request.args.get('query') }}"
+                        {% else %}
+                            Available Courses
+                        {% endif %}
+                    </h2>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-sort me-1"></i> Sort By
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="sortDropdown">
+                            <li><a class="dropdown-item" href="#">Newest First</a></li>
+                            <li><a class="dropdown-item" href="#">Most Popular</a></li>
+                            <li><a class="dropdown-item" href="#">Highest Rated</a></li>
+                            <li><a class="dropdown-item" href="#">Price: Low to High</a></li>
+                            <li><a class="dropdown-item" href="#">Price: High to Low</a></li>
+                        </ul>
+                    </div>
+                </div>
+                
+                {% if courses %}
+                    <div class="row g-4">
+                        {% for course in courses %}
+                            <div class="col-md-6 col-xl-4">
+                                <div class="card h-100 border-0 shadow-sm course-card">
+                                    {% if course.thumbnail %}
+                                        <img src="{{ url_for('static', filename='uploads/' + course.thumbnail) }}" class="card-img-top" alt="{{ course.title }}" style="height: 180px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="bg-light text-center py-5">
+                                            <i class="fas fa-book fa-3x text-muted"></i>
+                                        </div>
+                                    {% endif %}
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span class="badge bg-primary rounded-pill px-3">{{ course.category.name }}</span>
+                                            <span class="badge bg-secondary rounded-pill px-3">{{ course.level|title }}</span>
+                                        </div>
+                                        <h5 class="card-title fw-bold">{{ course.title }}</h5>
+                                        <p class="card-text text-muted small">{{ course.description|truncate(100) }}</p>
+                                        
+                                        <div class="d-flex justify-content-between align-items-center mt-3">
+                                            <div class="text-warning">
+                                                {% set rating = course.average_rating()|round(1, 'floor') %}
+                                                {% for i in range(5) %}
+                                                    {% if i < rating|int %}
+                                                        <i class="fas fa-star"></i>
+                                                    {% elif (i + 0.5)|round == rating|round %}
+                                                        <i class="fas fa-star-half-alt"></i>
+                                                    {% else %}
+                                                        <i class="far fa-star"></i>
+                                                    {% endif %}
+                                                {% endfor %}
+                                                <small class="text-muted ms-1">({{ course.reviews|length }})</small>
+                                            </div>
+                                            <div>
+                                                {% if course.is_free %}
+                                                    <span class="badge bg-success">Free</span>
+                                                {% elif course.is_premium %}
+                                                    <span class="badge bg-warning text-dark">Premium</span>
+                                                {% else %}
+                                                    <span class="fw-bold">${{ course.price }}</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer bg-white border-top-0">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <small class="text-muted">
+                                                <i class="fas fa-users me-1"></i> {{ course.total_students() }} students
+                                            </small>
+                                            <a href="{{ url_for('coursebud.view_course', course_id=course.id) }}" class="btn btn-sm btn-primary">View Course</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         {% endfor %}
-                    </ul>
-                </div>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    <nav class="mt-5" aria-label="Course pagination">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                            </li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
+                {% else %}
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-5 text-center">
+                            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                            <h3 class="h4 mb-3">No courses found</h3>
+                            <p class="text-muted mb-4">We couldn't find any courses matching your search criteria.</p>
+                            <a href="{{ url_for('coursebud.explore') }}" class="btn btn-primary">
+                                <i class="fas fa-redo me-2"></i>Clear Filters
+                            </a>
+                        </div>
+                    </div>
+                {% endif %}
             </div>
         </div>
         
-        <div class="col-md-9">
-            <!-- Courses Grid -->
-            {% if courses %}
-                <div class="row">
-                    {% for course in courses %}
-                        <div class="col-md-4 mb-4">
-                            <div class="card h-100">
-                                {% if course.thumbnail %}
-                                <img src="{{ url_for('static', filename='uploads/' + course.thumbnail) }}" class="card-img-top" alt="{{ course.title }}">
-                                {% else %}
-                                <div class="card-img-top bg-light text-center py-4">
-                                    <i class="fas fa-book fa-2x text-muted"></i>
-                                </div>
-                                {% endif %}
-                                <div class="card-body">
-                                    <h5 class="card-title">{{ course.title }}</h5>
-                                    <p class="card-text">{{ course.description|truncate(80) }}</p>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="badge {% if course.is_free %}bg-success{% elif course.is_premium %}bg-warning{% else %}bg-primary{% endif %}">
-                                            {% if course.is_free %}Free{% elif course.is_premium %}Premium{% else %}${{ course.price }}{% endif %}
-                                        </span>
-                                        <small class="text-muted">{{ course.level|capitalize }}</small>
-                                    </div>
-                                </div>
-                                <div class="card-footer">
-                                    <a href="{{ url_for('coursebud.view_course', course_id=course.id) }}" class="btn btn-outline-primary btn-sm">View Course</a>
-                                </div>
-                            </div>
-                        </div>
-                    {% endfor %}
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Categories Sidebar -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h3 class="h5 mb-0 fw-bold">Categories</h3>
                 </div>
-            {% else %}
-                <div class="alert alert-info">
-                    No courses found matching your search criteria. Try broadening your search.
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for category in categories %}
+                            <a href="{{ url_for('coursebud.explore', category=category.id) }}" 
+                               class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                {{ category.name }}
+                                <span class="badge bg-primary rounded-pill">{{ category.courses|length }}</span>
+                            </a>
+                        {% endfor %}
+                    </div>
                 </div>
-            {% endif %}
+            </div>
+            
+            <!-- Featured Instructor -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h3 class="h5 mb-0 fw-bold">Featured Instructor</h3>
+                </div>
+                <div class="card-body text-center">
+                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 80px; height: 80px; font-size: 2rem;">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <h4 class="h5 mb-1">Dr. Jane Smith</h4>
+                    <p class="text-muted small mb-3">Data Science & AI Expert</p>
+                    <p class="small mb-3">Award-winning instructor with over 10 years of industry experience in machine learning and artificial intelligence.</p>
+                    <div class="d-flex justify-content-center gap-2 mb-2">
+                        <span class="badge bg-light text-dark">15 Courses</span>
+                        <span class="badge bg-light text-dark">4.9 Rating</span>
+                        <span class="badge bg-light text-dark">12K+ Students</span>
+                    </div>
+                    <a href="#" class="btn btn-sm btn-outline-primary">View Profile</a>
+                </div>
+            </div>
+            
+            <!-- Become an Instructor -->
+            <div class="card border-0 shadow-sm bg-gradient-primary text-white">
+                <div class="card-body p-4 text-center">
+                    <i class="fas fa-chalkboard-teacher fa-3x mb-3 text-white-50"></i>
+                    <h4 class="mb-3">Become an Instructor</h4>
+                    <p class="mb-4">Share your knowledge and expertise with students around the world.</p>
+                    <a href="{{ url_for('coursebud.teach') }}" class="btn btn-light">Start Teaching</a>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
+<style>
+/* Modern Styles for Explore Page */
+.course-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-radius: 1rem;
+    overflow: hidden;
+}
+
+.course-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #4f46e5, #3b82f6);
+}
+
+.badge {
+    font-weight: 500;
+}
+
+.list-group-item {
+    padding: 0.75rem 1.25rem;
+    transition: all 0.2s ease;
+}
+
+.list-group-item:hover {
+    background-color: rgba(var(--bs-primary-rgb), 0.05);
+}
+
+.page-link {
+    border-radius: 0.5rem;
+    margin: 0 0.25rem;
+    border: none;
+    color: var(--bs-primary);
+}
+
+.page-item.active .page-link {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+}
+
+.page-link:hover {
+    background-color: rgba(var(--bs-primary-rgb), 0.1);
+    color: var(--bs-primary);
+}
+
+/* Dark Mode Adjustments */
+[data-theme="dark"] .card {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .card-header,
+[data-theme="dark"] .card-footer {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .list-group-item {
+    background-color: #1e293b;
+    border-color: #334155;
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .list-group-item:hover {
+    background-color: #334155;
+}
+
+[data-theme="dark"] .bg-light {
+    background-color: #1e293b !important;
+}
+
+[data-theme="dark"] .text-muted {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .badge.bg-light {
+    background-color: #334155 !important;
+    color: #f8fafc !important;
+}
+</style>
 {% endblock %}

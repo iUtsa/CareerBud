@@ -2,1117 +2,1271 @@
 
 {% block title %}{{ goal.title }} | TaskBud{% endblock %}
 
-{% block additional_styles %}
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/taskbud.css') }}">
 <style>
-    /* =============== VARIABLES =============== */
-    :root {
-        --priority-high: var(--bs-danger);
-        --priority-medium: var(--bs-warning);
-        --priority-low: var(--bs-primary);
-        --ai-color: #6f42c1;
-        --ai-light: rgba(111, 66, 193, 0.1);
-        --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        --card-hover-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-        --transition-standard: all 0.3s ease;
+    /* TaskBud Breadcrumb Navigation Styles */
+    .taskbud-breadcrumb {
+        margin-bottom: 1.5rem;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 0.9rem;
     }
 
-    [data-theme="dark"] {
-        --card-bg: rgba(30, 41, 59, 0.5);
-        --card-hover-bg: rgba(30, 41, 59, 0.7);
+    .taskbud-breadcrumb .breadcrumb {
+        margin-bottom: 0;
+        padding: 0;
+        background: transparent;
     }
 
-    /* =============== LAYOUT =============== */
-    .container {
-        max-width: 1200px;
-    }
-
-    /* =============== PROGRESS CIRCLE =============== */
-    .progress-circle {
-        position: relative;
-        width: 140px;
-        height: 140px;
-        margin: 0 auto;
-        filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.1));
-    }
-
-    .progress-circle svg {
-        width: 100%;
-        height: 100%;
-    }
-
-    .progress-circle .circle {
-        stroke: #dee2e6;
-        stroke-width: 5px;
-        fill: none;
-    }
-
-    .progress-circle .progress {
-        stroke-width: 5px;
-        stroke-linecap: round;
-        fill: none;
-        transform: rotate(-90deg);
-        transform-origin: 50% 50%;
-        transition: stroke-dashoffset 1s ease;
-    }
-
-    .progress-circle .percentage {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        font-size: 1.75rem;
-        font-weight: bold;
-        display: flex;
-        flex-direction: column;
+    .taskbud-breadcrumb .breadcrumb-item a {
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: all 0.2s ease;
+        display: inline-flex;
         align-items: center;
     }
-    
-    .progress-circle .percentage small {
-        font-size: 0.825rem;
-        opacity: 0.7;
-        font-weight: normal;
-        margin-top: 0.25rem;
+
+    .taskbud-breadcrumb .breadcrumb-item a:hover {
+        color: var(--taskbud-primary);
+        transform: translateY(-1px);
     }
 
-    /* =============== PRIORITY INDICATORS =============== */
-    .priority-1 { border-left: 4px solid var(--priority-high); }
-    .priority-2 { border-left: 4px solid var(--priority-medium); }
-    .priority-3 { border-left: 4px solid var(--priority-low); }
-
-    /* =============== TASK ITEMS =============== */
-    .task-item {
-        transition: var(--transition-standard);
-        border-radius: 10px;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .task-item:hover {
-        background-color: rgba(13, 110, 253, 0.05);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        transform: translateY(-2px);
-    }
-
-    .task-completed, .completed {
-        opacity: 0.75;
-        text-decoration: line-through;
-    }
-
-    /* =============== BADGES & TAGS =============== */
-    .badge-pill {
-        padding: 0.35em 0.75em;
-        border-radius: 50rem;
+    .taskbud-breadcrumb .breadcrumb-item.active {
+        color: var(--text-primary);
         font-weight: 500;
     }
 
-    .tag {
-        display: inline-block;
-        padding: 0.25em 0.65em;
-        border-radius: 50rem;
-        margin: 0.25rem 0.5rem 0.25rem 0;
+    .taskbud-breadcrumb .breadcrumb-item + .breadcrumb-item::before {
+        content: "/";
+        color: var(--border-color);
+    }
+
+    /* Context info styles */
+    .breadcrumb-context {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    /* Quick nav menu */
+    .quick-nav-menu {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .quick-nav-link {
+        display: inline-flex;
+        align-items: center;
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
+    }
+
+    .quick-nav-link:hover {
+        color: var(--taskbud-primary);
+        transform: translateY(-1px);
+    }
+
+    .quick-nav-link i {
+        margin-right: 0.25rem;
+    }
+
+    /* Mobile responsive adjustments */
+    @media (max-width: 768px) {
+        .breadcrumb-context {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .quick-nav-menu {
+            margin-top: 0.5rem;
+            flex-wrap: wrap;
+        }
+    }
+
+    /* Goal View Specific Styles */
+    .goal-header {
+        background: var(--card-bg);
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    [data-theme="dark"] .goal-header {
+        background: var(--card-gradient);
+    }
+
+    .goal-title-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+
+    .goal-title-wrapper {
+        display: flex;
+        align-items: flex-start;
+    }
+
+    .goal-title {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .goal-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+
+    .goal-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
         font-size: 0.75rem;
         font-weight: 500;
-        background-color: var(--bs-gray-200);
-        color: var(--bs-gray-700);
-        transition: var(--transition-standard);
-    }
-    
-    .tag:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
-    /* =============== GOAL DESCRIPTION =============== */
     .goal-description {
-        white-space: pre-line;
-        line-height: 1.6;
+        margin-top: 1rem;
+        color: var(--text-secondary);
     }
 
-    /* =============== BUTTONS =============== */
-    .btn-hover-translate {
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    .goal-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        margin-top: 1.5rem;
     }
 
-    .btn-hover-translate:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-    
-    .btn-ai {
-        background-color: var(--ai-color);
-        color: white;
-        border: none;
-    }
-    
-    .btn-ai:hover {
-        background-color: #5e35b1;
-        color: white;
-        box-shadow: 0 4px 10px rgba(111, 66, 193, 0.3);
-    }
-
-    .action-btn {
-        transition: transform 0.2s ease;
-        width: 32px;
-        height: 32px;
+    .goal-meta-item {
         display: flex;
         align-items: center;
-        justify-content: center;
-        border-radius: 6px;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+
+    .goal-meta-item i {
+        margin-right: 0.5rem;
+    }
+
+    .goal-progress-section {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .progress-details {
+        flex-grow: 1;
+    }
+
+    .progress-bar-wrapper {
+        height: 8px;
+        background-color: var(--border-color);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 0.5rem;
+    }
+
+    .progress-bar {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 1s ease;
+    }
+
+    .progress-stats {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+    }
+
+    .progress-percentage {
+        font-weight: 600;
+    }
+
+    .tasks-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .tasks-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .task-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .tasks-container {
+        background: var(--card-bg);
+        border-radius: 0.75rem;
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    [data-theme="dark"] .tasks-container {
+        background: var(--card-gradient);
+    }
+
+    .task-list {
+        list-style: none;
+        margin: 0;
         padding: 0;
     }
 
-    .action-btn:hover {
-        transform: scale(1.1);
-        background-color: rgba(0, 0, 0, 0.05);
+    .task-item {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        transition: all 0.3s ease;
     }
 
-    /* =============== CARDS =============== */
-    .card {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.18);
-        box-shadow: var(--card-shadow);
-        transition: var(--transition-standard);
-        border-radius: 12px;
-    }
-    
-    .card:hover {
-        box-shadow: var(--card-hover-shadow);
-    }
-
-    .sub-goal-card {
-        transition: var(--transition-standard);
-        height: 100%;
-    }
-
-    .sub-goal-card:hover {
-        transform: translateY(-4px);
-        box-shadow: var(--card-hover-shadow);
-    }
-
-    /* =============== FORM ELEMENTS =============== */
-    .form-check-input {
-        width: 1.2em;
-        height: 1.2em;
-        cursor: pointer;
-        border-color: rgba(0, 0, 0, 0.2);
-    }
-    
-    .form-check-input:checked {
-        background-color: var(--bs-success);
-        border-color: var(--bs-success);
-    }
-    
-    .form-check-label {
-        cursor: pointer;
-    }
-
-    /* =============== ANIMATIONS =============== */
-    .fade-in { animation: fadeIn 0.5s ease-in-out; }
-    .slide-in { animation: slideIn 0.5s ease-in-out; }
-    .pulse { animation: pulse 2s infinite; }
-
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-
-    @keyframes slideIn {
-        from { transform: translateY(20px); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
-    }
-
-    @keyframes pulse {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.05); }
-    }
-
-    .task-complete-animation {
-        animation: completeTask 0.5s forwards;
-    }
-
-    @keyframes completeTask {
-        0% { background-color: transparent; }
-        50% { background-color: rgba(25, 135, 84, 0.1); }
-        100% { background-color: transparent; }
-    }
-
-    /* =============== MODAL STYLING =============== */
-    .modal-content {
-        border-radius: 12px;
-        border: none;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    }
-    
-    .ai-modal .modal-header {
-        background: linear-gradient(135deg, var(--ai-color), #5e35b1);
-        color: white;
+    .task-item:last-child {
         border-bottom: none;
     }
-    
-    .ai-modal .modal-title i {
-        margin-right: 0.5rem;
-    }
-    
-    .modal-body::-webkit-scrollbar {
-        width: 8px;
+
+    .task-item:hover {
+        background-color: var(--hover-overlay);
     }
 
-    .modal-body::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 10px;
+    .task-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
     }
 
-    .modal-body::-webkit-scrollbar-thumb {
-        background: #b8b8b8;
-        border-radius: 10px;
+    .task-title-wrapper {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
     }
 
-    .modal-body::-webkit-scrollbar-thumb:hover {
-        background: #888;
+    .task-title {
+        margin: 0;
+        font-weight: 500;
     }
-    
-    /* =============== AI TASK GENERATION =============== */
-    .ai-suggestion-wrapper {
-        border: 1px solid rgba(111, 66, 193, 0.2);
-        border-radius: 10px;
-        transition: var(--transition-standard);
+
+    .task-completed .task-title {
+        text-decoration: line-through;
+        color: var(--text-secondary);
+    }
+
+    .task-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-top: 0.5rem;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+
+    .task-meta-item {
+        display: flex;
+        align-items: center;
+    }
+
+    .task-meta-item i {
+        margin-right: 0.35rem;
+    }
+
+    .task-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .task-action-btn {
+        padding: 0.25rem;
+        border-radius: 0.25rem;
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .task-action-btn:hover {
+        background-color: var(--hover-overlay);
+        color: var(--primary);
+    }
+
+    .task-description {
+        margin-top: 0.75rem;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+    }
+
+    .task-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+    }
+
+    .task-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.15rem 0.5rem;
+        background-color: var(--hover-overlay);
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+    }
+
+    .empty-tasks {
+        padding: 3rem 2rem;
+        text-align: center;
+    }
+
+    .empty-tasks-icon {
+        font-size: 3rem;
+        color: var(--border-color);
         margin-bottom: 1rem;
-        background-color: rgba(111, 66, 193, 0.03);
     }
-    
-    .ai-suggestion-wrapper:hover {
-        border-color: var(--ai-color);
-        box-shadow: 0 4px 12px rgba(111, 66, 193, 0.15);
+
+    .empty-tasks-title {
+        font-size: 1.25rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-primary);
+    }
+
+    .empty-tasks-description {
+        color: var(--text-secondary);
+        margin-bottom: 1.5rem;
+    }
+
+    .ai-suggestions-container {
+        margin-top: 2rem;
+        background: var(--card-bg);
+        border-radius: 0.75rem;
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    [data-theme="dark"] .ai-suggestions-container {
+        background: var(--card-gradient);
+    }
+
+    .ai-suggestions-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .ai-suggestions-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+    }
+
+    .ai-suggestions-title i {
+        margin-right: 0.5rem;
+        color: var(--accent);
+    }
+
+    .ai-suggestions-body {
+        padding: 1.5rem;
+    }
+
+    .suggested-task {
+        padding: 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .suggested-task:hover {
         transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
     }
-    
-    .ai-badge {
-        background-color: var(--ai-light);
-        color: var(--ai-color);
+
+    .suggested-task-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.5rem;
     }
-    
-    /* =============== RESPONSIVE ADJUSTMENTS =============== */
+
+    .suggested-task-title {
+        font-weight: 500;
+        margin: 0;
+    }
+
+    .suggested-task-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-top: 0.5rem;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+
+    .suggested-task-actions {
+        margin-top: 1rem;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    /* Responsive adjustments */
     @media (max-width: 768px) {
-        .progress-circle {
-            width: 120px;
-            height: 120px;
+        .goal-title-row {
+            flex-direction: column;
         }
         
-        .goal-action-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            justify-content: center;
+        .goal-actions {
             margin-top: 1rem;
+            align-self: flex-end;
         }
         
-        .goal-meta-line {
+        .goal-progress-section {
             flex-direction: column;
             align-items: flex-start;
-            gap: 0.5rem;
+        }
+        
+        .progress-circle {
+            margin-bottom: 1rem;
+        }
+        
+        .progress-details {
+            width: 100%;
+        }
+        
+        .tasks-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+        
+        .task-actions {
+            align-self: flex-end;
         }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <!-- Back Navigation -->
-    <div class="mb-4">
-        <a href="{{ url_for('taskbud.goals') }}" class="text-decoration-none text-primary d-flex align-items-center">
-            <i class="bi bi-arrow-left me-2"></i> Back to Goals
-        </a>
+<div class="taskbud-container fade-in">
+    <!-- Breadcrumb Navigation -->
+    <div class="taskbud-breadcrumb slide-in">
+        <div class="breadcrumb-context">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="{{ url_for('taskbud.index') }}">
+                            <i class="fas fa-home me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="{{ url_for('taskbud.goals') }}">
+                            <i class="fas fa-flag me-1"></i> Goals
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">
+                        {{ goal.title }}
+                    </li>
+                </ol>
+            </nav>
+            
+            <div class="quick-nav-menu">
+                <a href="{{ url_for('taskbud.edit_goal', goal_id=goal.id) }}" class="quick-nav-link">
+                    <i class="fas fa-edit"></i> Edit Goal
+                </a>
+                <a href="{{ url_for('taskbud.goals') }}" class="quick-nav-link">
+                    <i class="fas fa-th-large"></i> All Goals
+                </a>
+                <a href="{{ url_for('taskbud.daily_plan') }}" class="quick-nav-link">
+                    <i class="fas fa-calendar-day"></i> Daily Plan
+                </a>
+            </div>
+        </div>
     </div>
-
-    <!-- Goal Header Card -->
-    <div class="card shadow-sm mb-4 fade-in">
-        <div class="card-body p-4">
-            <div class="row align-items-start">
-                <div class="col-lg-8">
-                    <div class="d-flex align-items-center mb-3">
-                        <h1 class="fs-2 fw-bold me-3 mb-0">{{ goal.title }}</h1>
-                        <span class="badge badge-pill {% if goal.status == 'active' %}bg-primary{% elif goal.status == 'completed' %}bg-success{% elif goal.status == 'on_hold' %}bg-warning{% else %}bg-secondary{% endif %}">
-                            {{ goal.status|title }}
-                        </span>
-                    </div>
-
-                    <div class="d-flex flex-wrap gap-3 mb-3 goal-meta-line">
-                        <span class="d-flex align-items-center text-secondary">
-                            <i class="bi bi-graph-up me-1"></i>
+    
+    <!-- Goal Header -->
+    <div class="goal-header slide-in">
+        <div class="goal-title-row">
+            <div class="goal-title-wrapper">
+                <span class="priority-indicator priority-{{ goal.priority }}" title="Priority: {{ {1: 'High', 2: 'Medium', 3: 'Low'}[goal.priority] }}"></span>
+                <div>
+                    <h1 class="goal-title">{{ goal.title }}</h1>
+                    <div class="goal-badges">
+                        <span class="goal-badge 
+                            {% if goal.goal_type == 'long_term' %}bg-primary text-white
+                            {% else %}bg-success text-white{% endif %}">
                             {{ goal.goal_type|replace('_', ' ')|title }}
                         </span>
-                        <span class="d-flex align-items-center {% if goal.priority == 1 %}text-danger{% elif goal.priority == 2 %}text-warning{% else %}text-primary{% endif %}">
-                            <i class="bi bi-star-fill me-1"></i>
-                            {{ {1: 'High', 2: 'Medium', 3: 'Low'}[goal.priority] }} Priority
+                        <span class="goal-badge 
+                            {% if goal.status == 'active' %}bg-primary text-white
+                            {% elif goal.status == 'completed' %}bg-success text-white
+                            {% elif goal.status == 'on_hold' %}bg-warning text-dark
+                            {% else %}bg-secondary text-white{% endif %}">
+                            {{ goal.status|title }}
                         </span>
-                        {% if goal.target_date %}
-                        <span class="d-flex align-items-center {% if goal.is_overdue() %}text-danger{% else %}text-secondary{% endif %}">
-                            <i class="bi {% if goal.is_overdue() %}bi-calendar-x{% else %}bi-calendar-event{% endif %} me-1"></i>
-                            {% if goal.is_overdue() %}
-                                Overdue: {{ goal.target_date.strftime('%b %d, %Y') }}
-                            {% else %}
-                                Target: {{ goal.target_date.strftime('%b %d, %Y') }}
-                            {% endif %}
-                        </span>
-                        {% endif %}
-                        {% if goal.created_at %}
-                        <span class="d-flex align-items-center text-secondary">
-                            <i class="bi bi-clock-history me-1"></i>
-                            Created: {{ goal.created_at.strftime('%b %d, %Y') }}
-                        </span>
-                        {% endif %}
-                    </div>
-
-                    <!-- Description -->
-                    <div class="mb-3">
-                        <h5 class="fw-semibold text-dark mb-2">
-                            <i class="bi bi-file-text me-2 text-primary"></i>Description
-                        </h5>
-                        <p class="text-secondary goal-description">{{ goal.description or 'No description provided.' }}</p>
-                        {% if goal.parent_goal %}
-                        <div class="p-3 bg-light rounded-3 mt-3">
-                            <h6 class="fw-semibold text-dark mb-1">
-                                <i class="bi bi-diagram-3 me-2 text-primary"></i>Part of goal:
-                            </h6>
-                            <a href="{{ url_for('taskbud.view_goal', goal_id=goal.parent_goal.id) }}" class="text-decoration-none text-primary">
-                                {{ goal.parent_goal.title }}
-                            </a>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <!-- Progress Circle and Stats -->
-                <div class="col-lg-4 d-flex flex-column align-items-center">
-                    <div class="progress-circle mb-3">
-                        <svg viewBox="0 0 140 140">
-                            <circle cx="70" cy="70" r="60" class="circle"/>
-                            <circle cx="70" cy="70" r="60" class="progress"
-                                    style="stroke: {% if goal.progress < 25 %}var(--bs-danger){% elif goal.progress < 50 %}var(--bs-warning){% elif goal.progress < 75 %}var(--bs-primary){% else %}var(--bs-success){% endif %};"
-                                    stroke-dasharray="376.99"
-                                    stroke-dashoffset="{{ 376.99 * (1 - goal.progress/100)|float }}"/>
-                        </svg>
-                        <div class="percentage">
-                            {{ goal.progress|round|int }}%
-                            <small>complete</small>
-                        </div>
-                    </div>
-
-                    <div class="text-center goal-progress-section mb-3">
-                        <p class="text-secondary mb-2">
-                            <i class="bi bi-check2-square me-1"></i>
-                            {{ goal.tasks|selectattr('completed')|list|length }}/{{ goal.tasks|length }} tasks completed
-                        </p>
-                        {% if goal.days_remaining() is not none %}
-                        <p class="{% if goal.is_overdue() %}text-danger{% else %}text-secondary{% endif %} d-flex align-items-center justify-content-center">
-                            <i class="bi {% if goal.is_overdue() %}bi-exclamation-triangle{% else %}bi-calendar-check{% endif %} me-1"></i>
-                            {% if goal.is_overdue() %}
-                                Overdue by {{ (goal.days_remaining() * -1) }} days
-                            {% else %}
-                                {{ goal.days_remaining() }} days remaining
-                            {% endif %}
-                        </p>
-                        {% endif %}
-                    </div>
-
-                    <!-- Action Buttons -->
-                    <div class="d-flex gap-2 mt-2 goal-action-buttons">
-                        <a href="{{ url_for('taskbud.edit_goal', goal_id=goal.id) }}" class="btn btn-outline-primary btn-hover-translate">
-                            <i class="bi bi-pencil me-1"></i> Edit
-                        </a>
-                        {% if goal.status != 'completed' %}
-                        <form method="POST" action="{{ url_for('taskbud.complete_goal', goal_id=goal.id) }}" class="complete-goal-form">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                            <button type="submit" class="btn btn-outline-success btn-hover-translate">
-                                <i class="bi bi-check-lg me-1"></i> Complete
-                            </button>
-                        </form>
-                        {% endif %}
-                        <button type="button" class="delete-goal-btn btn btn-outline-danger btn-hover-translate">
-                            <i class="bi bi-trash me-1"></i> Delete
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Sub-goals Section -->
-    {% if sub_goals %}
-    <div class="mb-4 slide-in">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2 class="fs-4 fw-bold mb-0">
-                <i class="bi bi-diagram-3 me-2 text-primary"></i>Sub-Goals
-            </h2>
-            <a href="{{ url_for('taskbud.new_goal') }}?parent_id={{ goal.id }}" class="btn btn-outline-primary btn-sm btn-hover-translate">
-                <i class="bi bi-plus-lg me-1"></i> Add Sub-Goal
-            </a>
-        </div>
-        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">
-            {% for sub_goal in sub_goals %}
-            <div class="col">
-                <div class="card h-100 shadow-sm sub-goal-card priority-{{ sub_goal.priority }}">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <a href="{{ url_for('taskbud.view_goal', goal_id=sub_goal.id) }}" class="fs-5 fw-semibold text-decoration-none text-dark stretched-link">
-                                {{ sub_goal.title }}
-                            </a>
-                            <span class="badge badge-pill {% if sub_goal.status == 'active' %}bg-primary{% elif sub_goal.status == 'completed' %}bg-success{% elif sub_goal.status == 'on_hold' %}bg-warning{% else %}bg-secondary{% endif %}">
-                                {{ sub_goal.status|title }}
+                        {% if goal.is_overdue() %}
+                            <span class="goal-badge bg-danger text-white">
+                                <i class="fas fa-exclamation-circle me-1"></i> Overdue
                             </span>
-                        </div>
-                        <div class="progress" style="height: 8px;">
-                            <div class="progress-bar
-                                {% if sub_goal.progress < 25 %}bg-danger{% elif sub_goal.progress < 50 %}bg-warning{% elif sub_goal.progress < 75 %}bg-primary{% else %}bg-success{% endif %}"
-                                role="progressbar"
-                                style="width: {{ sub_goal.progress }}%;"
-                                aria-valuenow="{{ sub_goal.progress|round|int }}"
-                                aria-valuemin="0"
-                                aria-valuemax="100">
-                            </div>
-                        </div>
-                        <div class="d-flex justify-content-between mt-2">
-                            <small class="text-secondary">
-                                <i class="bi bi-check2-square"></i> {{ sub_goal.tasks|selectattr('completed')|list|length }}/{{ sub_goal.tasks|length }} tasks
-                            </small>
-                            <small class="text-secondary">{{ sub_goal.progress|round|int }}% complete</small>
-                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
-            {% endfor %}
+            
+            <div class="goal-actions">
+                <a href="{{ url_for('taskbud.edit_goal', goal_id=goal.id) }}" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-edit me-1"></i> Edit
+                </a>
+                {% if goal.status != 'completed' %}
+                    <form method="POST" action="{{ url_for('taskbud.complete_goal', goal_id=goal.id) }}" class="d-inline">
+                        <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Mark this goal as complete?')">
+                            <i class="fas fa-check me-1"></i> Complete
+                        </button>
+                    </form>
+                {% endif %}
+                {% if goal.tasks|length == 0 %}
+                    <form method="POST" action="{{ url_for('taskbud.delete_goal', goal_id=goal.id) }}" class="d-inline">
+                        <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure you want to delete this goal?')">
+                            <i class="fas fa-trash me-1"></i> Delete
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if goal.description %}
+            <div class="goal-description">
+                {{ goal.description }}
+            </div>
+        {% endif %}
+        
+        <div class="goal-meta">
+            {% if goal.target_date %}
+                <div class="goal-meta-item">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>
+                        {% if goal.is_overdue() %}
+                            <span class="text-danger">Overdue: {{ goal.target_date.strftime('%b %d, %Y') }}</span>
+                        {% else %}
+                            Due: {{ goal.target_date.strftime('%b %d, %Y') }}
+                        {% endif %}
+                    </span>
+                </div>
+            {% endif %}
+            
+            {% if goal.parent_goal %}
+                <div class="goal-meta-item">
+                    <i class="fas fa-sitemap"></i>
+                    <span>Parent Goal: <a href="{{ url_for('taskbud.view_goal', goal_id=goal.parent_goal.id) }}">{{ goal.parent_goal.title }}</a></span>
+                </div>
+            {% endif %}
+            
+            <div class="goal-meta-item">
+                <i class="fas fa-clock"></i>
+                <span>Created: {{ goal.created_at.strftime('%b %d, %Y') }}</span>
+            </div>
+            
+            {% if goal.completed_at %}
+                <div class="goal-meta-item">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Completed: {{ goal.completed_at.strftime('%b %d, %Y') }}</span>
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="goal-progress-section">
+            <div class="progress-circle">
+                <svg width="120" height="120" viewBox="0 0 120 120">
+                    <circle cx="60" cy="60" r="54" fill="none" class="circle"></circle>
+                    <circle cx="60" cy="60" r="54" fill="none" class="progress" 
+                            stroke-dasharray="339.292" 
+                            stroke-dashoffset="{{ 339.292 * (1 - goal.progress/100)|float }}"
+                            {% if goal.progress < 25 %}stroke="var(--danger)"
+                            {% elif goal.progress < 50 %}stroke="var(--warning)"
+                            {% elif goal.progress < 75 %}stroke="var(--primary)"
+                            {% else %}stroke="var(--success)"{% endif %}>
+                    </circle>
+                </svg>
+                <div class="percentage">{{ goal.progress|round|int }}%</div>
+            </div>
+            
+            <div class="progress-details">
+                <div class="progress-bar-wrapper">
+                    <div class="progress-bar
+                        {% if goal.progress < 25 %}bg-danger
+                        {% elif goal.progress < 50 %}bg-warning
+                        {% elif goal.progress < 75 %}bg-primary
+                        {% else %}bg-success{% endif %}"
+                        style="width: {{ goal.progress }}%;">
+                    </div>
+                </div>
+                <div class="progress-stats">
+                    <span class="progress-percentage
+                        {% if goal.progress < 25 %}text-danger
+                        {% elif goal.progress < 50 %}text-warning
+                        {% elif goal.progress < 75 %}text-primary
+                        {% else %}text-success{% endif %}">
+                        {{ goal.progress|round|int }}% complete
+                    </span>
+                    <span>
+                        {{ goal.completed_tasks_count }} of {{ goal.tasks|length }} tasks completed
+                    </span>
+                </div>
+            </div>
         </div>
     </div>
-    {% endif %}
-
+    
     <!-- Tasks Section -->
-    <div class="mb-4 fade-in" id="tasks">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2 class="fs-4 fw-bold">
-                <i class="bi bi-check2-square me-2 text-primary"></i>Tasks
-            </h2>
-            <div class="d-flex gap-2">
-                <a href="{{ url_for('taskbud.new_task', goal_id=goal.id) }}" class="btn btn-primary btn-hover-translate">
-                    <i class="bi bi-plus-lg me-1"></i> Add Task
+    <div id="tasks" class="tasks-section slide-in" style="animation-delay: 0.1s;">
+        <div class="tasks-header">
+            <h2 class="tasks-title">Tasks</h2>
+            <div class="task-actions">
+                <a href="{{ url_for('taskbud.new_task', goal_id=goal.id) }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus me-1"></i> Add Task
                 </a>
-                <button id="generateTasksBtn" class="btn btn-ai btn-hover-translate">
-                    <i class="bi bi-magic me-1"></i> Generate AI Tasks
-                </button>
+                {% if goal.tasks|length > 0 and goal.status != 'completed' %}
+                    <button id="generate-tasks-btn" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-magic me-1"></i> AI Suggestions
+                    </button>
+                {% endif %}
             </div>
         </div>
-
-        <div class="card shadow-sm" id="tasks-container">
+        
+        <div class="tasks-container">
             {% if tasks %}
-            <div class="list-group list-group-flush">
-                {% for task in tasks %}
-                <div class="list-group-item task-item task-card p-3 {% if task.completed %}completed{% endif %} priority-{{ task.priority }}" id="task-{{ task.id }}">
-                    <div class="d-flex">
-                        <div class="me-3 pt-1">
-                            <form class="complete-task-form" action="{{ url_for('taskbud.complete_task', task_id=task.id) }}" method="POST">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                                <input type="checkbox" class="form-check-input task-checkbox"
-                                    data-task-id="{{ task.id }}"
-                                    id="task-check-{{ task.id }}"
-                                    {% if task.completed %}checked disabled{% endif %}>
-                            </form>
-                        </div>
-                        <div class="flex-grow-1">
-                            <div class="d-flex justify-content-between">
-                                <div>
-                                    <label for="task-check-{{ task.id }}" class="form-check-label fw-medium mb-1 {% if task.completed %}text-decoration-line-through{% endif %}">
-                                        {{ task.title }}
-                                        {% if task.is_ai_generated %}
-                                        <span class="badge rounded-pill ai-badge ms-2" title="AI Generated">
-                                            <i class="bi bi-robot"></i>
-                                        </span>
-                                        {% endif %}
-                                    </label>
-                                    {% if task.description %}
-                                    <p class="text-secondary small mb-1">{{ task.description }}</p>
-                                    {% endif %}
-                                    {% if task.tags %}
-                                    <div class="mt-1">
-                                        {% for tag in task.get_tags_list() %}
-                                        <span class="tag">{{ tag }}</span>
-                                        {% endfor %}
+                <ul class="task-list">
+                    {% for task in tasks %}
+                        <li class="task-item {% if task.completed %}task-completed{% endif %}" id="task-{{ task.id }}">
+                            <div class="task-header">
+                                <div class="task-title-wrapper">
+                                    <div class="form-check">
+                                        <input type="checkbox" 
+                                               class="form-check-input task-checkbox"
+                                               data-task-id="{{ task.id }}"
+                                               {% if task.completed %}checked{% endif %}>
                                     </div>
-                                    {% endif %}
+                                    <div>
+                                        <h3 class="task-title">{{ task.title }}</h3>
+                                        <div class="task-meta">
+                                            {% if task.due_date %}
+                                                <div class="task-meta-item">
+                                                    <i class="fas fa-calendar-alt"></i>
+                                                    <span>
+                                                        {% if task.is_overdue() %}
+                                                            <span class="text-danger">Overdue: {{ task.due_date.strftime('%b %d, %Y') }}</span>
+                                                        {% else %}
+                                                            Due: {{ task.due_date.strftime('%b %d, %Y') }}
+                                                        {% endif %}
+                                                    </span>
+                                                </div>
+                                            {% endif %}
+                                            
+                                            {% if task.estimated_hours %}
+                                                <div class="task-meta-item">
+                                                    <i class="fas fa-clock"></i>
+                                                    <span>{{ task.estimated_hours }} hour{% if task.estimated_hours != 1 %}s{% endif %}</span>
+                                                </div>
+                                            {% endif %}
+                                            
+                                            <div class="task-meta-item">
+                                                <i class="fas fa-signal"></i>
+                                                <span>
+                                                    Priority: 
+                                                    <span class="
+                                                        {% if task.priority == 1 %}text-danger
+                                                        {% elif task.priority == 2 %}text-warning
+                                                        {% else %}text-primary{% endif %}">
+                                                        {{ {1: 'High', 2: 'Medium', 3: 'Low'}[task.priority] }}
+                                                    </span>
+                                                </span>
+                                            </div>
+                                            
+                                            {% if task.difficulty %}
+                                                <div class="task-meta-item">
+                                                    <i class="fas fa-mountain"></i>
+                                                    <span>
+                                                        Difficulty: 
+                                                        {{ {1: 'Easy', 2: 'Medium', 3: 'Hard'}[task.difficulty] }}
+                                                    </span>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="d-flex flex-column align-items-end">
-                                    <span class="badge badge-pill bg-{% if task.priority == 1 %}danger{% elif task.priority == 2 %}warning{% else %}primary{% endif %}-subtle text-{% if task.priority == 1 %}danger{% elif task.priority == 2 %}warning{% else %}primary{% endif %} mb-1">
-                                        {{ {1: 'High', 2: 'Medium', 3: 'Low'}[task.priority] }}
-                                    </span>
-                                    {% if task.due_date %}
-                                    <small class="{% if task.is_overdue() %}text-danger{% else %}text-secondary{% endif %} mb-1">
-                                        <i class="bi bi-calendar-date me-1"></i>
-                                        {{ task.due_date.strftime('%b %d, %Y') }}
-                                    </small>
-                                    {% endif %}
-                                    {% if task.estimated_hours %}
-                                    <small class="text-secondary">
-                                        <i class="bi bi-clock me-1"></i>
-                                        {{ task.estimated_hours }} hours
-                                    </small>
-                                    {% endif %}
+                                
+                                <div class="task-actions">
+                                    <a href="{{ url_for('taskbud.edit_task', task_id=task.id) }}" class="task-action-btn">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <form method="POST" action="{{ url_for('taskbud.delete_task', task_id=task.id) }}" class="d-inline">
+                                        <button type="submit" class="task-action-btn delete-task-btn" data-task-id="{{ task.id }}" onclick="return confirm('Are you sure you want to delete this task?')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
-                            <div class="d-flex justify-content-end mt-2 gap-2">
-                                <a href="{{ url_for('taskbud.edit_task', task_id=task.id) }}" class="btn btn-sm btn-link text-secondary action-btn">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-                                <button class="delete-task-btn btn btn-sm btn-link text-danger action-btn" data-task-id="{{ task.id }}">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
+                            
+                            {% if task.description %}
+                                <div class="task-description">
+                                    {{ task.description }}
+                                </div>
+                            {% endif %}
+                            
+                            {% if task.tags %}
+                                <div class="task-tags">
+                                    {% for tag in task.tags.split(',') %}
+                                        <span class="task-tag">{{ tag.strip() }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
             {% else %}
-            <div class="card-body p-5 text-center">
-                <i class="bi bi-clipboard2 fs-1 text-secondary mb-3"></i>
-                <h3 class="fs-5 fw-semibold mb-2">No tasks yet</h3>
-                <p class="text-secondary mb-4">Break down your goal into manageable tasks</p>
-                <div class="d-flex justify-content-center gap-2">
-                    <a href="{{ url_for('taskbud.new_task', goal_id=goal.id) }}" class="btn btn-primary btn-hover-translate">
-                        <i class="bi bi-plus-lg me-1"></i> Add Task
+                <div class="empty-tasks">
+                    <div class="empty-tasks-icon">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    <h3 class="empty-tasks-title">No Tasks Yet</h3>
+                    <p class="empty-tasks-description">Add tasks to track your progress towards this goal</p>
+                    <a href="{{ url_for('taskbud.new_task', goal_id=goal.id) }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i> Add First Task
                     </a>
-                    <button id="emptyStateGenerateBtn" class="btn btn-ai btn-hover-translate">
-                        <i class="bi bi-magic me-1"></i> Generate AI Tasks
-                    </button>
                 </div>
-            </div>
             {% endif %}
         </div>
     </div>
-</div>
-
-<!-- Delete Goal Modal -->
-<div class="modal fade" id="delete-goal-modal" tabindex="-1" aria-labelledby="deleteGoalModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title" id="deleteGoalModalLabel">
-                    <i class="bi bi-exclamation-triangle me-2"></i> Delete Goal
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to delete the goal "<strong>{{ goal.title }}</strong>"?</p>
-                <div class="alert alert-danger">
-                    <i class="bi bi-exclamation-triangle-fill me-2"></i> This action cannot be undone and will permanently delete this goal and all associated tasks.
+    
+    <!-- AI Task Suggestions Section (initially hidden) -->
+    <div id="ai-suggestions" class="ai-suggestions-container slide-in" style="display: none; animation-delay: 0.2s;">
+        <div class="ai-suggestions-header">
+            <h2 class="ai-suggestions-title">
+                <i class="fas fa-robot"></i> AI Task Suggestions
+            </h2>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="close-suggestions-btn">
+                <i class="fas fa-times"></i> Close
+            </button>
+        </div>
+        <div class="ai-suggestions-body">
+            <div id="suggestions-loading" class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
                 </div>
+                <p class="mt-2">Generating intelligent task suggestions...</p>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form method="POST" action="{{ url_for('taskbud.delete_goal', goal_id=goal.id) }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                    <button type="submit" class="btn btn-danger">Delete Goal</button>
-                </form>
+            <div id="suggestions-content" style="display: none;">
+                <!-- Suggestions will be loaded here -->
             </div>
         </div>
     </div>
-</div>
-
-<!-- Delete Task Modal -->
-<div class="modal fade" id="delete-task-modal" tabindex="-1" aria-labelledby="deleteTaskModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title" id="deleteTaskModalLabel">
-                    <i class="bi bi-exclamation-triangle me-2"></i> Delete Task
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to delete this task? This action cannot be undone.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form id="delete-task-form" method="POST" action="">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                    <button type="submit" class="btn btn-danger">Delete Task</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- AI Task Generation Modal -->
-<div class="modal fade ai-modal" id="aiTaskModal" tabindex="-1" aria-labelledby="aiTasksModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="aiTasksModalLabel">
-                    <i class="bi bi-robot"></i> AI Task Generation
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
-                <div id="aiLoading" class="text-center py-5">
-                    <div class="spinner-border text-primary mb-3" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <p class="text-secondary mb-0">Generating intelligent task suggestions for "{{ goal.title }}"...</p>
-                    <p class="text-secondary small mt-2">This may take a few seconds as we analyze your goal and personalize tasks to your needs.</p>
-                </div>
-                <div id="aiTaskResults" class="d-none">
-                    <div class="alert alert-primary d-flex align-items-start mb-4">
-                        <i class="bi bi-info-circle-fill me-2 mt-1"></i>
-                        <div>
-                            <p class="mb-1">I've analyzed your goal "<strong>{{ goal.title }}</strong>" and generated these personalized task suggestions.</p>
-                            <p class="mb-0 small">Select the tasks you'd like to add to your goal and click "Add Selected Tasks".</p>
+    
+    <!-- Sub-goals Section (if any) -->
+    {% if sub_goals %}
+        <div class="sub-goals-section mt-4 slide-in" style="animation-delay: 0.3s;">
+            <h2 class="tasks-title mb-3">Sub-Goals</h2>
+            <div class="row">
+                {% for sub_goal in sub_goals %}
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="goal-card {{ sub_goal.status }}">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div class="goal-title-wrapper">
+                                        <span class="priority-indicator priority-{{ sub_goal.priority }}"></span>
+                                        <h3 class="h5 mb-0">{{ sub_goal.title }}</h3>
+                                    </div>
+                                    <span class="badge 
+                                        {% if sub_goal.status == 'active' %}bg-primary
+                                        {% elif sub_goal.status == 'completed' %}bg-success
+                                        {% elif sub_goal.status == 'on_hold' %}bg-warning text-dark
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ sub_goal.status|title }}
+                                    </span>
+                                </div>
+                                
+                                <div class="goal-progress mb-2">
+                                    <div class="goal-progress-bar 
+                                        {% if sub_goal.progress < 25 %}progress-0-25
+                                        {% elif sub_goal.progress < 50 %}progress-25-50
+                                        {% elif sub_goal.progress < 75 %}progress-50-75
+                                        {% else %}progress-75-100{% endif %}" 
+                                        style="width: {{ sub_goal.progress }}%;">
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="small 
+                                        {% if sub_goal.progress < 25 %}text-danger
+                                        {% elif sub_goal.progress < 50 %}text-warning
+                                        {% elif sub_goal.progress < 75 %}text-primary
+                                        {% else %}text-success{% endif %}">
+                                        {{ sub_goal.progress|round|int }}% complete
+                                    </span>
+                                    <a href="{{ url_for('taskbud.view_goal', goal_id=sub_goal.id) }}" class="btn btn-sm btn-outline-primary">
+                                        View
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <p class="text-secondary mb-3">Select tasks to add to your goal:</p>
-                    <div id="suggestedTasksList" class="mb-3"></div>
-                </div>
-                <div id="aiError" class="d-none text-center py-5">
-                    <i class="bi bi-exclamation-triangle text-danger fs-1 mb-3"></i>
-                    <p class="text-danger" id="aiErrorMessage">Error generating tasks. Please try again.</p>
-                    <button id="retryGenerateBtn" class="btn btn-primary btn-hover-translate mt-3">
-                        <i class="bi bi-arrow-clockwise me-2"></i> Try Again
-                    </button>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button id="addAllTasksBtn" type="button" class="btn btn-ai d-none">
-                    <i class="bi bi-plus-lg me-1"></i> Add Selected Tasks
-                </button>
+                {% endfor %}
             </div>
         </div>
-    </div>
+    {% endif %}
 </div>
+
+<!-- Task Suggestion Template (hidden) -->
+<template id="suggested-task-template">
+    <div class="suggested-task">
+        <div class="suggested-task-header">
+            <h3 class="suggested-task-title">{title}</h3>
+            <span class="badge 
+                {priority-class}">
+                {priority-text}
+            </span>
+        </div>
+        <div class="suggested-task-meta">
+            <div class="task-meta-item">
+                <i class="fas fa-clock"></i>
+                <span>{estimated-hours} hour{hours-plural}</span>
+            </div>
+            <div class="task-meta-item">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Due: {due-date}</span>
+            </div>
+            <div class="task-meta-item">
+                <i class="fas fa-mountain"></i>
+                <span>Difficulty: {difficulty}</span>
+            </div>
+        </div>
+        <div class="task-tags">
+            {tags}
+        </div>
+        <div class="suggested-task-actions">
+            <button type="button" class="btn btn-sm btn-outline-secondary me-2 skip-task-btn">
+                Skip
+            </button>
+            <button type="button" class="btn btn-sm btn-primary add-task-btn" data-task-index="{index}">
+                <i class="fas fa-plus me-1"></i> Add Task
+            </button>
+        </div>
+    </div>
+</template>
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/taskbud.js') }}"></script>
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-    // Initialize Bootstrap Components
-    const deleteGoalModal = new bootstrap.Modal(document.getElementById('delete-goal-modal'));
-    const deleteTaskModal = new bootstrap.Modal(document.getElementById('delete-task-modal'));
-    const aiTaskModal = new bootstrap.Modal(document.getElementById('aiTaskModal'));
-    
-    // Initialize any tooltips
-    const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-    if (tooltips.length) {
-        tooltips.forEach(el => new bootstrap.Tooltip(el));
-    }
-
-    // Progress Circle Animation
-    const progressCircle = document.querySelector('.progress-circle .progress');
-    const percentage = parseInt(document.querySelector('.percentage').textContent);
-    const circumference = 2 * Math.PI * 60;
-    
-    if (progressCircle) {
-        progressCircle.style.strokeDasharray = circumference;
-        progressCircle.style.strokeDashoffset = circumference * (1 - percentage / 100);
-        
-        // Add animation on page load
-        setTimeout(() => {
-            progressCircle.style.transition = 'stroke-dashoffset 1.5s ease-in-out';
-        }, 100);
-    }
-
-    // Toast Notification System
-    const showToast = (message, type = 'success') => {
-        const toastContainer = document.querySelector('.toast-container') || 
-            Object.assign(document.createElement('div'), {
-                className: 'toast-container position-fixed bottom-0 end-0 p-3'
-            });
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize progress circles
+        const circles = document.querySelectorAll('.progress-circle');
+        circles.forEach(function(circle) {
+            const progressCircle = circle.querySelector('.progress');
+            const percentage = circle.querySelector('.percentage').textContent;
+            const percentageValue = parseInt(percentage);
             
-        if (!document.body.contains(toastContainer)) {
-            document.body.appendChild(toastContainer);
-        }
-
-        const toastEl = Object.assign(document.createElement('div'), {
-            className: `toast align-items-center text-white bg-${type} border-0`,
-            role: 'alert',
-            'aria-live': 'assertive',
-            'aria-atomic': 'true',
-            innerHTML: `
-                <div class="d-flex">
-                    <div class="toast-body">
-                        <i class="bi bi-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-circle' : 'info-circle'} me-2"></i>
-                        ${message}
-                    </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-                </div>
-            `
-        });
-
-        toastContainer.appendChild(toastEl);
-        const toast = new bootstrap.Toast(toastEl, { autohide: true, delay: 5000 });
-        toast.show();
-        
-        // Clean up after hiding
-        toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
-    };
-
-    // Display Flash Messages
-    {% for category, message in get_flashed_messages(with_categories=true) %}
-        showToast('{{ message }}', '{{ category }}');
-    {% endfor %}
-
-    // Task Completion Handling
-    document.querySelectorAll('.complete-task-form').forEach(form => {
-        const checkbox = form.querySelector('.task-checkbox');
-        
-        if (checkbox && !checkbox.disabled) {
-            checkbox.addEventListener('change', async (e) => {
-                if (checkbox.checked) {
-                    // Submit the form via AJAX
-                    try {
-                        const formAction = form.getAttribute('action');
-                        const formData = new FormData(form);
-                        const taskCard = form.closest('.task-card');
-                        
-                        // Add completion animation
-                        taskCard.classList.add('task-complete-animation');
-                        
-                        const response = await fetch(formAction, {
-                            method: 'POST',
-                            body: formData,
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest'
-                            }
-                        });
-                        
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok');
-                        }
-                        
-                        const data = await response.json();
-                        
-                        if (data.success) {
-                            // Mark task as completed in UI
-                            taskCard.classList.add('completed');
-                            checkbox.disabled = true;
-                            
-                            // Update goal progress
-                            const percentageEl = document.querySelector('.percentage');
-                            if (percentageEl) {
-                                percentageEl.innerHTML = `${Math.round(data.goal_progress)}%<small>complete</small>`;
-                            }
-                            
-                            // Update progress circle
-                            if (progressCircle) {
-                                progressCircle.style.strokeDashoffset = circumference * (1 - data.goal_progress / 100);
-                                
-                                // Update color based on new progress
-                                if (data.goal_progress < 25) {
-                                    progressCircle.style.stroke = 'var(--bs-danger)';
-                                } else if (data.goal_progress < 50) {
-                                    progressCircle.style.stroke = 'var(--bs-warning)';
-                                } else if (data.goal_progress < 75) {
-                                    progressCircle.style.stroke = 'var(--bs-primary)';
-                                } else {
-                                    progressCircle.style.stroke = 'var(--bs-success)';
-                                }
-                                
-                                // Add pulse effect
-                                document.querySelector('.progress-circle').classList.add('pulse');
-                                setTimeout(() => {
-                                    document.querySelector('.progress-circle').classList.remove('pulse');
-                                }, 2000);
-                            }
-                            
-                            // Show success message
-                            showToast('Task completed successfully!');
-                            
-                            // Update task counter
-                            const taskCounter = document.querySelector('.goal-progress-section p:first-child');
-                            if (taskCounter) {
-                                const parts = taskCounter.textContent.split('/');
-                                if (parts.length === 2) {
-                                    const completed = parseInt(parts[0]) + 1;
-                                    const total = parseInt(parts[1]);
-                                    taskCounter.innerHTML = `<i class="bi bi-check2-square me-1"></i> ${completed}/${total} tasks completed`;
-                                }
-                            }
-                        } else {
-                            throw new Error('Failed to complete task');
-                        }
-                    } catch (error) {
-                        console.error('Error completing task:', error);
-                        showToast('Error completing task', 'danger');
-                        
-                        // Reset checkbox state
-                        checkbox.checked = false;
-                    }
-                }
-            });
-        }
-    });
-
-    // Delete Goal Button
-    const deleteGoalBtn = document.querySelector('.delete-goal-btn');
-    if (deleteGoalBtn) {
-        deleteGoalBtn.addEventListener('click', () => deleteGoalModal.show());
-    }
-
-    // Delete Task Buttons
-    document.querySelectorAll('.delete-task-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const taskId = btn.dataset.taskId;
-            document.getElementById('delete-task-form').action = 
-                `{{ url_for('taskbud.delete_task', task_id=0) }}`.replace('0', taskId);
-            deleteTaskModal.show();
-        });
-    });
-
-    // ============= AI Task Generation System =============
-    const generateTasksBtn = document.getElementById('generateTasksBtn');
-    const emptyStateGenerateBtn = document.getElementById('emptyStateGenerateBtn');
-    const aiLoading = document.getElementById('aiLoading');
-    const aiTaskResults = document.getElementById('aiTaskResults');
-    const aiError = document.getElementById('aiError');
-    const suggestedTasksList = document.getElementById('suggestedTasksList');
-    const addAllTasksBtn = document.getElementById('addAllTasksBtn');
-    const retryGenerateBtn = document.getElementById('retryGenerateBtn');
-    
-    // Store generated tasks
-    let aiGeneratedTasks = [];
-
-    // Function to generate AI tasks
-    const generateTasks = async () => {
-        // Show modal and loading state
-        aiTaskModal.show();
-        aiLoading.classList.remove('d-none');
-        aiTaskResults.classList.add('d-none');
-        aiError.classList.add('d-none');
-        addAllTasksBtn.classList.add('d-none');
-        
-        // Clear previous results
-        suggestedTasksList.innerHTML = '';
-        
-        try {
-            // Make API request to generate tasks
-            const response = await fetch('{{ url_for("taskbud.api_generate_tasks") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': '{{ csrf_token }}'
-                },
-                body: JSON.stringify({ goal_id: {{ goal.id }} })
-            });
+            // Calculate stroke-dashoffset
+            const radius = 54;
+            const circumference = 2 * Math.PI * radius;
+            const offset = circumference * (1 - percentageValue / 100);
             
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
+            progressCircle.style.strokeDasharray = circumference;
+            progressCircle.style.strokeDashoffset = offset;
             
-            const data = await response.json();
-            
-            if (data.success) {
-                // Store generated tasks for later use
-                aiGeneratedTasks = data.tasks;
-                
-                // Switch to results view
-                aiLoading.classList.add('d-none');
-                aiTaskResults.classList.remove('d-none');
-                addAllTasksBtn.classList.remove('d-none');
-                
-                // Create selection controls for multiple tasks
-                if (data.tasks.length > 1) {
-                    const selectionControls = document.createElement('div');
-                    selectionControls.className = 'mb-3 d-flex justify-content-end gap-2';
-                    selectionControls.innerHTML = `
-                        <button type="button" class="btn btn-sm btn-outline-secondary" id="select-all-tasks">
-                            <i class="bi bi-check-all me-1"></i> Select All
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" id="deselect-all-tasks">
-                            <i class="bi bi-x me-1"></i> Deselect All
-                        </button>
-                    `;
-                    suggestedTasksList.appendChild(selectionControls);
-                    
-                    // Add event listeners to selection buttons
-                    document.getElementById('select-all-tasks').addEventListener('click', () => {
-                        document.querySelectorAll('.task-select').forEach(cb => cb.checked = true);
-                    });
-                    
-                    document.getElementById('deselect-all-tasks').addEventListener('click', () => {
-                        document.querySelectorAll('.task-select').forEach(cb => cb.checked = false);
-                    });
-                }
-                
-                // Render task suggestions
-                data.tasks.forEach((task, index) => {
-                    // Create task suggestion card
-                    const taskItem = document.createElement('div');
-                    taskItem.className = 'ai-suggestion-wrapper p-3';
-                    
-                    // Get priority and difficulty labels
-                    const priorityLabel = task.priority === 1 ? 'High' : task.priority === 2 ? 'Medium' : 'Low';
-                    const priorityClass = task.priority === 1 ? 'danger' : task.priority === 2 ? 'warning' : 'primary';
-                    const difficultyLabel = task.difficulty === 1 ? 'Easy' : task.difficulty === 2 ? 'Medium' : 'Hard';
-                    
-                    // Build task item HTML
-                    taskItem.innerHTML = `
-                        <div class="d-flex align-items-start">
-                            <div class="form-check mt-1 me-2">
-                                <input class="form-check-input task-select" type="checkbox" 
-                                    id="task-select-${index}" data-index="${index}" checked>
-                            </div>
-                            <div class="flex-grow-1">
-                                <label class="form-check-label fw-semibold mb-2" for="task-select-${index}">
-                                    ${task.title}
-                                    <span class="badge rounded-pill ai-badge ms-1" title="AI Generated">
-                                        <i class="bi bi-robot"></i>
-                                    </span>
-                                </label>
-                                
-                                <div class="d-flex flex-wrap gap-2 mb-2">
-                                    <span class="badge badge-pill bg-${priorityClass}-subtle text-${priorityClass}">
-                                        <i class="bi bi-flag-fill me-1"></i> ${priorityLabel} Priority
-                                    </span>
-                                    ${task.due_date ? `
-                                        <span class="badge badge-pill bg-secondary-subtle text-secondary">
-                                            <i class="bi bi-calendar me-1"></i> Due: ${task.due_date}
-                                        </span>
-                                    ` : ''}
-                                    ${task.estimated_hours ? `
-                                        <span class="badge badge-pill bg-info-subtle text-info">
-                                            <i class="bi bi-clock me-1"></i> ${task.estimated_hours} hours
-                                        </span>
-                                    ` : ''}
-                                    ${task.difficulty ? `
-                                        <span class="badge badge-pill bg-dark-subtle text-dark">
-                                            <i class="bi bi-lightning-charge me-1"></i> ${difficultyLabel}
-                                        </span>
-                                    ` : ''}
-                                </div>
-                                
-                                ${task.tags ? `
-                                    <div class="small text-muted">
-                                        <i class="bi bi-tags me-1"></i> Tags: ${task.tags.split(',').map(tag => 
-                                            `<span class="tag small">${tag.trim()}</span>`
-                                        ).join('')}
-                                    </div>
-                                ` : ''}
-                            </div>
-                        </div>
-                    `;
-                    
-                    // Add to DOM
-                    suggestedTasksList.appendChild(taskItem);
-                });
+            // Set color based on progress
+            if (percentageValue < 25) {
+                progressCircle.style.stroke = '#EF4444'; // Red
+            } else if (percentageValue < 50) {
+                progressCircle.style.stroke = '#F97316'; // Orange
+            } else if (percentageValue < 75) {
+                progressCircle.style.stroke = '#3B82F6'; // Blue
             } else {
-                throw new Error(data.error || 'Failed to generate tasks');
+                progressCircle.style.stroke = '#10B981'; // Green
             }
-        } catch (error) {
-            console.error('Error generating tasks:', error);
+        });
+        
+        // Handle task completion
+        const taskCheckboxes = document.querySelectorAll('.task-checkbox');
+        taskCheckboxes.forEach(function(checkbox) {
+            checkbox.addEventListener('change', function() {
+                const taskId = this.dataset.taskId;
+                const taskItem = document.getElementById(`task-${taskId}`);
+                
+                if (this.checked) {
+                    // Add completed class and animation
+                    taskItem.classList.add('task-completed');
+                    taskItem.classList.add('task-complete-animation');
+                    
+                    // AJAX request to mark task as complete
+                    fetch('{{ url_for("taskbud.complete_task", task_id=0) }}'.replace('0', taskId), {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Update goal progress
+                            updateGoalProgress(data.goal_progress);
+                            
+                            // After animation completes, refresh the page to update all elements
+                            setTimeout(() => {
+                                location.reload();
+                            }, 1000);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error completing task:', error);
+                        
+                        // Revert UI change on error
+                        checkbox.checked = false;
+                        taskItem.classList.remove('task-completed', 'task-complete-animation');
+                    });
+                }
+            });
+        });
+        
+        // Update goal progress UI
+        function updateGoalProgress(progress) {
+            // Update progress bar
+            const progressBar = document.querySelector('.progress-bar');
+            progressBar.style.width = `${progress}%`;
             
-            // Show error state
-            aiLoading.classList.add('d-none');
-            aiError.classList.remove('d-none');
-            document.getElementById('aiErrorMessage').textContent = error.message || 'Error connecting to the server. Please try again.';
+            // Update progress text
+            const progressPercentage = document.querySelector('.progress-percentage');
+            progressPercentage.textContent = `${Math.round(progress)}% complete`;
+            
+            // Update progress circle
+            const progressCircle = document.querySelector('.progress-circle .progress');
+            const radius = 54;
+            const circumference = 2 * Math.PI * radius;
+            const offset = circumference * (1 - (progress / 100));
+            
+            progressCircle.style.strokeDashoffset = offset;
+            
+            // Update progress circle color
+            if (progress < 25) {
+                progressCircle.style.stroke = '#EF4444'; // Red
+                progressBar.className = 'progress-bar bg-danger';
+                progressPercentage.className = 'progress-percentage text-danger';
+            } else if (progress < 50) {
+                progressCircle.style.stroke = '#F97316'; // Orange
+                progressBar.className = 'progress-bar bg-warning';
+                progressPercentage.className = 'progress-percentage text-warning';
+            } else if (progress < 75) {
+                progressCircle.style.stroke = '#3B82F6'; // Blue
+                progressBar.className = 'progress-bar bg-primary';
+                progressPercentage.className = 'progress-percentage text-primary';
+            } else {
+                progressCircle.style.stroke = '#10B981'; // Green
+                progressBar.className = 'progress-bar bg-success';
+                progressPercentage.className = 'progress-percentage text-success';
+            }
+            
+            // Update percentage text
+            document.querySelector('.progress-circle .percentage').textContent = `${Math.round(progress)}%`;
+            
+            // Update completed tasks count
+            const completedTasksCount = document.querySelectorAll('.task-checkbox:checked').length;
+            const totalTasksCount = document.querySelectorAll('.task-checkbox').length;
+            document.querySelector('.progress-stats span:last-child').textContent = 
+                `${completedTasksCount} of ${totalTasksCount} tasks completed`;
         }
-    };
-
-    // Add Selected Tasks Handler
-    if (addAllTasksBtn) {
-        addAllTasksBtn.addEventListener('click', async () => {
-            // Get selected tasks
-            const selectedCheckboxes = document.querySelectorAll('.task-select:checked');
-            const selectedIndices = Array.from(selectedCheckboxes).map(cb => parseInt(cb.dataset.index));
-            
-            // Validate selection
-            if (!selectedIndices.length) {
-                // Show error message if no tasks selected
-                const errorAlert = document.createElement('div');
-                errorAlert.className = 'alert alert-warning mt-3';
-                errorAlert.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i> Please select at least one task.';
+        
+        // AI Task Generation
+        const generateTasksBtn = document.getElementById('generate-tasks-btn');
+        const aiSuggestionsContainer = document.getElementById('ai-suggestions');
+        const suggestionsLoading = document.getElementById('suggestions-loading');
+        const suggestionsContent = document.getElementById('suggestions-content');
+        const closeSuggestionsBtn = document.getElementById('close-suggestions-btn');
+        
+        if (generateTasksBtn) {
+            generateTasksBtn.addEventListener('click', function() {
+                // Show suggestions container
+                aiSuggestionsContainer.style.display = 'block';
+                suggestionsLoading.style.display = 'block';
+                suggestionsContent.style.display = 'none';
                 
-                aiTaskResults.appendChild(errorAlert);
+                // Scroll to suggestions
+                aiSuggestionsContainer.scrollIntoView({ behavior: 'smooth' });
                 
-                // Remove alert after delay
-                setTimeout(() => errorAlert.remove(), 3000);
-                return;
-            }
-            
-            // Disable button and show loading state
-            addAllTasksBtn.disabled = true;
-            addAllTasksBtn.innerHTML = `
-                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                Adding tasks...
-            `;
-            
-            try {
-                // Create array of selected tasks
-                const selectedTasks = selectedIndices.map(index => aiGeneratedTasks[index]);
-                
-                // Send request to create tasks
-                const response = await fetch('{{ url_for("taskbud.api_create_suggested_tasks") }}', {
+                // Make API request to generate tasks
+                fetch('{{ url_for("taskbud.api_generate_tasks") }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-Requested-With': 'XMLHttpRequest'
                     },
                     body: JSON.stringify({
-                        goal_id: {{ goal.id }},
-                        tasks: selectedTasks,
-                        csrf_token: '{{ csrf_token }}'
+                        goal_id: '{{ goal.id }}'
                     })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Hide loading, show content
+                        suggestionsLoading.style.display = 'none';
+                        suggestionsContent.style.display = 'block';
+                        
+                        // Render suggested tasks
+                        renderSuggestedTasks(data.tasks);
+                    } else {
+                        // Show error
+                        suggestionsContent.innerHTML = `
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-circle me-2"></i>
+                                ${data.error || 'Failed to generate task suggestions. Please try again.'}
+                            </div>
+                        `;
+                        suggestionsLoading.style.display = 'none';
+                        suggestionsContent.style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error generating tasks:', error);
+                    
+                    // Show error
+                    suggestionsContent.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            An error occurred while generating task suggestions. Please try again.
+                        </div>
+                    `;
+                    suggestionsLoading.style.display = 'none';
+                    suggestionsContent.style.display = 'block';
                 });
+            });
+        }
+        
+        // Close suggestions
+        if (closeSuggestionsBtn) {
+            closeSuggestionsBtn.addEventListener('click', function() {
+                aiSuggestionsContainer.style.display = 'none';
+            });
+        }
+        
+        // Render suggested tasks
+        function renderSuggestedTasks(tasks) {
+            const template = document.getElementById('suggested-task-template');
+            const container = document.getElementById('suggestions-content');
+            
+            // Clear container
+            container.innerHTML = '';
+            
+            if (tasks.length === 0) {
+                container.innerHTML = `
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        No task suggestions available for this goal.
+                    </div>
+                `;
+                return;
+            }
+            
+            // Add intro text
+            container.innerHTML = `
+                <div class="alert alert-info mb-4">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    <strong>AI Suggestions:</strong> Here are some task suggestions based on your goal. 
+                    You can add them to your goal or skip them.
+                </div>
+            `;
+            
+            // Create task elements
+            tasks.forEach((task, index) => {
+                const taskHtml = template.innerHTML
+                    .replace('{title}', task.title)
+                    .replace('{priority-class}', getPriorityClass(task.priority))
+                    .replace('{priority-text}', getPriorityText(task.priority))
+                    .replace('{estimated-hours}', task.estimated_hours)
+                    .replace('{hours-plural}', task.estimated_hours !== 1 ? 's' : '')
+                    .replace('{due-date}', task.due_date || 'Not set')
+                    .replace('{difficulty}', getDifficultyText(task.difficulty))
+                    .replace('{tags}', renderTags(task.tags))
+                    .replace('{index}', index);
                 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
+                const taskElement = document.createElement('div');
+                taskElement.innerHTML = taskHtml;
+                container.appendChild(taskElement.firstElementChild);
+            });
+            
+            // Add "Add All" button
+            const addAllButton = document.createElement('div');
+            addAllButton.className = 'text-center mt-4';
+            addAllButton.innerHTML = `
+                <button type="button" class="btn btn-primary" id="add-all-tasks-btn">
+                    <i class="fas fa-plus-circle me-1"></i> Add All Tasks
+                </button>
+            `;
+            container.appendChild(addAllButton);
+            
+            // Add event listeners for task buttons
+            container.querySelectorAll('.add-task-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const taskIndex = parseInt(this.dataset.taskIndex);
+                    addSuggestedTask(tasks[taskIndex]);
+                    this.disabled = true;
+                    this.innerHTML = '<i class="fas fa-check me-1"></i> Added';
+                    this.closest('.suggested-task').style.opacity = '0.6';
+                });
+            });
+            
+            container.querySelectorAll('.skip-task-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    this.closest('.suggested-task').style.display = 'none';
+                });
+            });
+            
+            // Add all tasks button
+            const addAllBtn = document.getElementById('add-all-tasks-btn');
+            if (addAllBtn) {
+                addAllBtn.addEventListener('click', function() {
+                    addAllSuggestedTasks(tasks);
+                    this.disabled = true;
+                    this.innerHTML = '<i class="fas fa-check me-1"></i> All Tasks Added';
+                });
+            }
+        }
+        
+        // Helper functions for rendering tasks
+        function getPriorityClass(priority) {
+            switch(priority) {
+                case 1: return 'bg-danger text-white';
+                case 2: return 'bg-warning text-dark';
+                case 3: return 'bg-primary text-white';
+                default: return 'bg-secondary text-white';
+            }
+        }
+        
+        function getPriorityText(priority) {
+            switch(priority) {
+                case 1: return 'High Priority';
+                case 2: return 'Medium Priority';
+                case 3: return 'Low Priority';
+                default: return 'Medium Priority';
+            }
+        }
+        
+        function getDifficultyText(difficulty) {
+            switch(difficulty) {
+                case 1: return 'Easy';
+                case 2: return 'Medium';
+                case 3: return 'Hard';
+                default: return 'Medium';
+            }
+        }
+        
+        function renderTags(tags) {
+            if (!tags) return '';
+            
+            const tagArray = tags.split(',');
+            return tagArray.map(tag => `<span class="task-tag">${tag.trim()}</span>`).join('');
+        }
+        
+        // Add a suggested task
+        function addSuggestedTask(task) {
+            fetch('{{ url_for("taskbud.api_create_suggested_tasks") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    goal_id: '{{ goal.id }}',
+                    tasks: [task],
+                    csrf_token: '{{ csrf_token() }}'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('Task added successfully');
                 }
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    // Hide modal
-                    aiTaskModal.hide();
+            })
+            .catch(error => {
+                console.error('Error adding task:', error);
+            });
+        }
+        
+        // Add all suggested tasks
+        function addAllSuggestedTasks(tasks) {
+            fetch('{{ url_for("taskbud.api_create_suggested_tasks") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    goal_id: '{{ goal.id }}',
+                    tasks: tasks,
+                    csrf_token: '{{ csrf_token() }}'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('All tasks added successfully');
+                    
+                    // Disable all add buttons
+                    document.querySelectorAll('.add-task-btn').forEach(button => {
+                        button.disabled = true;
+                        button.innerHTML = '<i class="fas fa-check me-1"></i> Added';
+                    });
+                    
+                    // Fade out all task cards
+                    document.querySelectorAll('.suggested-task').forEach(task => {
+                        task.style.opacity = '0.6';
+                    });
                     
                     // Show success message
-                    showToast(`Successfully added ${result.count} task${result.count !== 1 ? 's' : ''}!`);
+                    const successMessage = document.createElement('div');
+                    successMessage.className = 'alert alert-success mt-3';
+                    successMessage.innerHTML = `
+                        <i class="fas fa-check-circle me-2"></i>
+                        Successfully added ${data.count} tasks to your goal. 
+                        <a href="{{ url_for('taskbud.view_goal', goal_id=goal.id) }}" class="alert-link">Refresh</a> to see them.
+                    `;
+                    document.getElementById('suggestions-content').appendChild(successMessage);
                     
-                    // Reload page to show new tasks
-                    window.location.href = result.redirect;
-                } else {
-                    throw new Error(result.error || 'Failed to create tasks');
+                    // Redirect after a delay
+                    setTimeout(() => {
+                        window.location.href = data.redirect;
+                    }, 2000);
                 }
-            } catch (error) {
-                console.error('Error creating tasks:', error);
+            })
+            .catch(error => {
+                console.error('Error adding tasks:', error);
                 
-                // Show error state
-                aiTaskResults.classList.add('d-none');
-                aiError.classList.remove('d-none');
-                document.getElementById('aiErrorMessage').textContent = error.message || 'Error creating tasks. Please try again.';
-                
-                // Reset button
-                addAllTasksBtn.innerHTML = `<i class="bi bi-plus-lg me-1"></i> Add Selected Tasks`;
-                addAllTasksBtn.disabled = false;
-            }
-        });
-    }
-
-    // Attach event listeners to generate buttons
-    if (generateTasksBtn) generateTasksBtn.addEventListener('click', generateTasks);
-    if (emptyStateGenerateBtn) emptyStateGenerateBtn.addEventListener('click', generateTasks);
-    if (retryGenerateBtn) retryGenerateBtn.addEventListener('click', generateTasks);
-
-    // Add animation to task items on page load
-    document.querySelectorAll('.task-item').forEach((item, index) => {
-        item.style.opacity = '0';
-        item.style.transform = 'translateY(20px)';
-        
-        // Stagger animations
-        setTimeout(() => {
-            item.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-            item.style.opacity = '1';
-            item.style.transform = 'translateY(0)';
-        }, 100 + (index * 50));
+                // Show error message
+                const errorMessage = document.createElement('div');
+                errorMessage.className = 'alert alert-danger mt-3';
+                errorMessage.innerHTML = `
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    An error occurred while adding tasks. Please try again.
+                `;
+                document.getElementById('suggestions-content').appendChild(errorMessage);
+            });
+        }
     });
-});
 </script>
 {% endblock %}

@@ -2,74 +2,125 @@
 
 {% block title %}{{ 'Edit Task' if task else 'New Task' }} | TaskBud{% endblock %}
 
-{% block additional_styles %}
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/taskbud.css') }}">
 <style>
-    /* ================ VARIABLES ================ */
-    :root {
-        --taskbud-primary: #3b82f6;
-        --taskbud-success: #10b981;
-        --taskbud-warning: #f97316;
-        --taskbud-danger: #ef4444;
-        --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        --input-bg: #F9FAFB;
-        --input-border: #e2e8f0;
-        --input-focus: #3b82f6;
-        --border-color: #e5e7eb;
-        --text-primary: #1f2937;
-        --text-secondary: #6b7280;
-        --hover-overlay: rgba(0, 0, 0, 0.02);
+    /* TaskBud Breadcrumb Navigation Styles */
+    .taskbud-breadcrumb {
+        margin-bottom: 1.5rem;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 0.9rem;
     }
 
-    [data-theme="dark"] {
-        --input-bg: rgba(30, 41, 59, 0.5);
-        --card-bg: #1e293b;
-        --card-gradient: linear-gradient(145deg, #1e293b, #0f172a);
-        --border-color: #334155;
-        --text-primary: #f8fafc;
-        --text-secondary: #cbd5e1;
-        --hover-overlay: rgba(255, 255, 255, 0.05);
+    .taskbud-breadcrumb .breadcrumb {
+        margin-bottom: 0;
+        padding: 0;
+        background: transparent;
     }
-    
-    /* ================ LAYOUT ================ */
+
+    .taskbud-breadcrumb .breadcrumb-item a {
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .taskbud-breadcrumb .breadcrumb-item a:hover {
+        color: var(--taskbud-primary);
+        transform: translateY(-1px);
+    }
+
+    .taskbud-breadcrumb .breadcrumb-item.active {
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+
+    .taskbud-breadcrumb .breadcrumb-item + .breadcrumb-item::before {
+        content: "/";
+        color: var(--border-color);
+    }
+
+    /* Context info styles */
+    .breadcrumb-context {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    /* Quick nav menu */
+    .quick-nav-menu {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .quick-nav-link {
+        display: inline-flex;
+        align-items: center;
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
+    }
+
+    .quick-nav-link:hover {
+        color: var(--taskbud-primary);
+        transform: translateY(-1px);
+    }
+
+    .quick-nav-link i {
+        margin-right: 0.25rem;
+    }
+
+    /* Mobile responsive adjustments */
+    @media (max-width: 768px) {
+        .breadcrumb-context {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .quick-nav-menu {
+            margin-top: 0.5rem;
+            flex-wrap: wrap;
+        }
+    }
+
+    /* Task Form Specific Styles */
     .task-form-container {
         max-width: 800px;
         margin: 0 auto;
     }
     
-    /* ================ CARDS ================ */
-    .form-card {
-        background: var(--card-bg, white);
+    .taskbud-form-card {
+        background: var(--card-bg);
         border-radius: 0.75rem;
         overflow: hidden;
         transition: transform 0.3s ease, box-shadow 0.3s ease;
-        box-shadow: var(--card-shadow);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         border: 1px solid var(--border-color);
-        margin-bottom: 2rem;
     }
 
-    [data-theme="dark"] .form-card {
+    [data-theme="dark"] .taskbud-form-card {
         background: var(--card-gradient);
     }
     
-    .form-card:hover {
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-    }
-    
-    .form-header {
+    .taskbud-form-header {
         padding: 1.5rem;
         border-bottom: 1px solid var(--border-color);
         background: rgba(0, 0, 0, 0.05);
     }
 
-    [data-theme="dark"] .form-header {
+    [data-theme="dark"] .taskbud-form-header {
         background: rgba(0, 0, 0, 0.15);
     }
     
-    .form-body {
+    .taskbud-form-body {
         padding: 1.5rem;
     }
     
-    /* ================ FORM ELEMENTS ================ */
     .form-grid {
         display: grid;
         grid-template-columns: 1fr;
@@ -87,7 +138,7 @@
     }
     
     .form-group {
-        margin-bottom: 1rem;
+        margin-bottom: 0.5rem;
     }
     
     .form-label {
@@ -100,7 +151,7 @@
     .form-control {
         width: 100%;
         padding: 0.75rem;
-        border: 1px solid var(--input-border);
+        border: 1px solid var(--border-color);
         border-radius: 0.5rem;
         background-color: var(--input-bg);
         color: var(--text-primary);
@@ -108,7 +159,7 @@
     }
     
     .form-control:focus {
-        border-color: var(--input-focus);
+        border-color: var(--primary-color);
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
         outline: none;
     }
@@ -116,7 +167,7 @@
     .form-select {
         width: 100%;
         padding: 0.75rem;
-        border: 1px solid var(--input-border);
+        border: 1px solid var(--border-color);
         border-radius: 0.5rem;
         background-color: var(--input-bg);
         color: var(--text-primary);
@@ -129,12 +180,12 @@
     }
     
     .form-select:focus {
-        border-color: var(--input-focus);
+        border-color: var(--primary-color);
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
         outline: none;
     }
     
-    /* ================ PRIORITY SELECTOR ================ */
+    /* Priority Selector */
     .priority-selector {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -176,7 +227,7 @@
     }
     
     .priority-1 {
-        border-color: var(--taskbud-danger);
+        border-color: var(--danger-color);
         background-color: rgba(239, 68, 68, 0.05);
     }
     
@@ -185,7 +236,7 @@
     }
     
     .priority-2 {
-        border-color: var(--taskbud-warning);
+        border-color: var(--warning-color);
         background-color: rgba(249, 115, 22, 0.05);
     }
     
@@ -194,7 +245,7 @@
     }
     
     .priority-3 {
-        border-color: var(--taskbud-primary);
+        border-color: var(--primary-color);
         background-color: rgba(59, 130, 246, 0.05);
     }
     
@@ -202,7 +253,25 @@
         background-color: rgba(59, 130, 246, 0.15);
     }
     
-    /* ================ GOAL INFO CARD ================ */
+    .priority-indicator {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+    }
+    
+    .priority-indicator.priority-1 {
+        background-color: var(--danger-color);
+    }
+    
+    .priority-indicator.priority-2 {
+        background-color: var(--warning-color);
+    }
+    
+    .priority-indicator.priority-3 {
+        background-color: var(--primary-color);
+    }
+    
+    /* Goal Info Card */
     .goal-info-card {
         background-color: rgba(59, 130, 246, 0.05);
         border: 1px solid rgba(59, 130, 246, 0.1);
@@ -232,7 +301,7 @@
         transition: width 1s ease;
     }
     
-    /* ================ TAGS SYSTEM ================ */
+    /* Tags System */
     .tags-input-wrapper {
         position: relative;
     }
@@ -270,46 +339,7 @@
         background-color: rgba(0, 0, 0, 0.2);
     }
     
-    /* ================ ANIMATIONS ================ */
-    @keyframes fadeIn {
-        0% { opacity: 0; }
-        100% { opacity: 1; }
-    }
-    
-    @keyframes slideIn {
-        0% { transform: translateY(20px); opacity: 0; }
-        100% { transform: translateY(0); opacity: 1; }
-    }
-    
-    .fade-in {
-        animation: fadeIn 0.5s ease-in-out;
-    }
-    
-    .slide-in {
-        animation: slideIn 0.5s ease-in-out;
-    }
-    
-    /* ================ HELPER CLASSES ================ */
-    .form-help-text {
-        font-size: 0.8rem;
-        color: var(--text-secondary);
-        margin-top: 0.25rem;
-    }
-    
-    .section-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-    }
-    
-    .section-title {
-        font-size: 1.75rem;
-        font-weight: 700;
-        color: var(--text-primary);
-        margin-bottom: 0;
-    }
-    
+    /* Form action buttons */
     .form-actions {
         display: flex;
         justify-content: space-between;
@@ -318,51 +348,15 @@
         border-top: 1px solid var(--border-color);
     }
     
-    /* ================ BUTTONS ================ */
-    .taskbud-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0.5rem 1rem;
-        border-radius: 0.5rem;
-        font-weight: 500;
-        transition: all 0.3s ease;
-        cursor: pointer;
-        border: none;
+    /* Help text for fields */
+    .form-help-text {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-top: 0.25rem;
     }
     
-    .taskbud-btn-primary {
-        background-color: var(--taskbud-primary);
-        color: white;
-    }
-    
-    .taskbud-btn-primary:hover {
-        background-color: #2563eb;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(37, 99, 235, 0.2);
-    }
-    
-    .taskbud-btn-outline {
-        background-color: transparent;
-        border: 1px solid var(--border-color);
-        color: var(--text-primary);
-    }
-    
-    .taskbud-btn-outline:hover {
-        border-color: var(--taskbud-primary);
-        color: var(--taskbud-primary);
-        transform: translateY(-2px);
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-    }
-    
-    /* ================ RESPONSIVE ADJUSTMENTS ================ */
+    /* Mobile adjustments */
     @media (max-width: 768px) {
-        .section-header {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 1rem;
-        }
-        
         .priority-selector {
             grid-template-columns: 1fr;
         }
@@ -383,17 +377,52 @@
 {% endblock %}
 
 {% block content %}
-<div class="container py-4 task-form-container fade-in">
-    <!-- Page Header -->
-    <div class="section-header mb-4">
+<div class="taskbud-container fade-in">
+    <!-- Breadcrumb Navigation -->
+    <div class="taskbud-breadcrumb slide-in">
+        <div class="breadcrumb-context">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="{{ url_for('taskbud.index') }}">
+                            <i class="fas fa-home me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="{{ url_for('taskbud.goals') }}">
+                            <i class="fas fa-flag me-1"></i> Goals
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="{{ url_for('taskbud.view_goal', goal_id=goal.id) }}">
+                            {{ goal.title }}
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">
+                        <i class="fas fa-{% if task %}edit{% else %}plus{% endif %} me-1"></i> 
+                        {{ 'Edit Task' if task else 'New Task' }}
+                    </li>
+                </ol>
+            </nav>
+            
+            <div class="quick-nav-menu">
+                <a href="{{ url_for('taskbud.view_goal', goal_id=goal.id) }}" class="quick-nav-link">
+                    <i class="fas fa-eye"></i> View Goal
+                </a>
+                <a href="{{ url_for('taskbud.tasks') }}" class="quick-nav-link">
+                    <i class="fas fa-tasks"></i> All Tasks
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page Title -->
+    <div class="section-header">
         <h1 class="section-title">{{ 'Edit Task' if task else 'Create New Task' }}</h1>
-        <a href="{{ url_for('taskbud.view_goal', goal_id=goal.id) }}" class="taskbud-btn taskbud-btn-outline">
-            <i class="bi bi-arrow-left me-2"></i> Back to Goal
-        </a>
     </div>
     
     <!-- Goal Info Card -->
-    <div class="goal-info-card slide-in mb-4">
+    <div class="goal-info-card slide-in">
         <div class="d-flex justify-content-between align-items-start">
             <div>
                 <h2 class="h5 mb-1">Goal: {{ goal.title }}</h2>
@@ -408,7 +437,7 @@
                 <div class="badge rounded-pill
                     {% if goal.status == 'active' %}bg-primary
                     {% elif goal.status == 'completed' %}bg-success
-                    {% elif goal.status == 'on_hold' %}bg-warning
+                    {% elif goal.status == 'on_hold' %}bg-warning text-dark
                     {% else %}bg-secondary{% endif %}">
                     {{ goal.status|title }}
                 </div>
@@ -424,54 +453,13 @@
                 style="width: {{ goal.progress }}%;">
             </div>
         </div>
-        
-        <!-- Stats Card - Using Bootstrap instead of Tailwind -->
-        <div class="row mt-4">
-            <div class="col-md-6 col-lg-3 mb-3">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="rounded-circle bg-primary bg-opacity-10 p-2 me-3">
-                                <i class="bi bi-folder text-primary"></i>
-                            </div>
-                            <div>
-                                <h3 class="text-muted small mb-1">Total Goals</h3>
-                                <p class="fs-4 fw-bold mb-0">
-                                    {% if stats %}
-                                        {{ stats.long_term_count + stats.short_term_count }}
-                                    {% else %}
-                                        -
-                                    {% endif %}
-                                </p>
-                            </div>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center small">
-                            <span class="text-muted">
-                                {% if stats %}
-                                    Long Term: {{ stats.long_term_count }}
-                                {% else %}
-                                    Long Term: -
-                                {% endif %}
-                            </span>
-                            <span class="text-muted">
-                                {% if stats %}
-                                    Short Term: {{ stats.short_term_count }}
-                                {% else %}
-                                    Short Term: -
-                                {% endif %}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
     
     <!-- Task Form Card -->
-    <div class="form-card slide-in">
-        <div class="form-header">
+    <div class="taskbud-form-card slide-in">
+        <div class="taskbud-form-header">
             <div class="d-flex align-items-center">
-                <i class="bi bi-{% if task %}pencil-square{% else %}plus-circle{% endif %} text-primary me-3 fs-4"></i>
+                <i class="fas fa-{% if task %}edit{% else %}plus-circle{% endif %} text-primary me-3" style="font-size: 1.5rem;"></i>
                 <div>
                     <h2 class="h4 mb-0">{{ 'Update task details' if task else 'Add a new task' }}</h2>
                     <p class="text-muted mb-0 small">{{ 'Edit the task information below' if task else 'Fill in the details for your new task' }}</p>
@@ -479,13 +467,13 @@
             </div>
         </div>
         
-        <div class="form-body">
-            <form method="POST" id="taskForm">
+        <div class="taskbud-form-body">
+            <form method="POST" action="{{ url_for('taskbud.edit_task', task_id=task.id) if task else url_for('taskbud.new_task', goal_id=goal.id) }}" id="taskForm">
                 <!-- CSRF Token -->
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}"/>
                 
                 <!-- Task Title (Full Width) -->
-                <div class="mb-4">
+                <div class="form-group full-width mb-4">
                     <label for="title" class="form-label">Task Title</label>
                     <input type="text" id="title" name="title" class="form-control" 
                            value="{{ task.title if task else '' }}" required
@@ -493,10 +481,9 @@
                     <div class="form-help-text">A clear, specific title helps you know exactly what to do</div>
                 </div>
                 
-                <!-- Form Grid (2 columns on desktop) -->
-                <div class="row">
+                <div class="form-grid">
                     <!-- Priority Selection -->
-                    <div class="col-md-6 mb-3">
+                    <div class="form-group">
                         <label class="form-label">Priority Level</label>
                         <div class="priority-selector">
                             <div class="priority-option">
@@ -527,7 +514,7 @@
                     </div>
                     
                     <!-- Due Date -->
-                    <div class="col-md-6 mb-3">
+                    <div class="form-group">
                         <label for="due_date" class="form-label">Due Date</label>
                         <input type="date" id="due_date" name="due_date" class="form-control" 
                                value="{{ task.due_date.strftime('%Y-%m-%d') if task and task.due_date else '' }}">
@@ -535,7 +522,7 @@
                     </div>
                     
                     <!-- Estimated Hours -->
-                    <div class="col-md-6 mb-3">
+                    <div class="form-group">
                         <label for="estimated_hours" class="form-label">Estimated Hours</label>
                         <input type="number" id="estimated_hours" name="estimated_hours" class="form-control" 
                                min="0.1" step="0.1" max="40"
@@ -544,7 +531,7 @@
                     </div>
                     
                     <!-- Difficulty -->
-                    <div class="col-md-6 mb-3">
+                    <div class="form-group">
                         <label for="difficulty" class="form-label">Difficulty Level</label>
                         <select id="difficulty" name="difficulty" class="form-select">
                             <option value="1" {% if task and task.difficulty == 1 %}selected{% endif %}>Easy</option>
@@ -556,7 +543,7 @@
                     
                     <!-- Status - only for editing -->
                     {% if task %}
-                    <div class="col-md-6 mb-3">
+                    <div class="form-group">
                         <label for="status" class="form-label">Status</label>
                         <select id="status" name="status" class="form-select">
                             <option value="pending" {{ 'selected' if task and task.status == 'pending' else '' }}>Pending</option>
@@ -567,7 +554,7 @@
                     {% endif %}
                     
                     <!-- Tags -->
-                    <div class="col-12 mb-3">
+                    <div class="form-group full-width">
                         <label for="tags" class="form-label">Tags</label>
                         <div class="tags-input-wrapper">
                             <input type="text" id="tags-input" class="form-control" 
@@ -581,7 +568,7 @@
                     </div>
                     
                     <!-- Description -->
-                    <div class="col-12 mb-3">
+                    <div class="form-group full-width">
                         <label for="description" class="form-label">Description</label>
                         <textarea id="description" name="description" class="form-control" rows="4" 
                                   placeholder="Add more details about this task...">{{ task.description if task else '' }}</textarea>
@@ -594,7 +581,7 @@
                     <div>
                         {% if task %}
                         <div class="form-help-text mb-2">
-                            <i class="bi bi-info-circle"></i> Created on: {{ task.created_at.strftime('%b %d, %Y') }}
+                            <i class="fas fa-info-circle"></i> Created on: {{ task.created_at.strftime('%b %d, %Y') }}
                             {% if task.updated_at %}
                             | Last updated: {{ task.updated_at.strftime('%b %d, %Y') }}
                             {% endif %}
@@ -602,9 +589,11 @@
                         {% endif %}
                     </div>
                     <div class="d-flex gap-2">
-                        <a href="{{ url_for('taskbud.view_goal', goal_id=goal.id) }}" class="btn btn-outline-secondary">Cancel</a>
+                        <a href="{{ url_for('taskbud.view_goal', goal_id=goal.id) }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i> Cancel
+                        </a>
                         <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-{% if task %}save{% else %}plus{% endif %} me-2"></i>
+                            <i class="fas fa-{% if task %}save{% else %}plus{% endif %} me-2"></i>
                             {{ 'Update Task' if task else 'Create Task' }}
                         </button>
                     </div>

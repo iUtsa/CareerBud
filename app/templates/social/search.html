@@ -1,50 +1,137 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="search-container">
-    <h1 class="section-title">Find Students</h1>
-    
-    <div class="card mb-4">
-        <div class="card-body">
-            <form action="{{ url_for('social.search') }}" method="GET" class="d-flex">
-                <input type="text" name="q" class="form-control me-2" placeholder="Search by name, university, or major..." value="{{ query }}" minlength="3" required>
-                <button type="submit" class="btn btn-primary">Search</button>
-            </form>
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12 mb-4">
+            <h1 class="fw-bold border-start border-4 border-primary ps-3">Find Students</h1>
         </div>
-    </div>
-    
-    {% if query %}
-        <div class="card">
-            <div class="card-header">
-                <h2 class="card-title-primary">Search Results</h2>
+        
+        <div class="col-lg-8 mx-auto">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <form action="{{ url_for('social.search') }}" method="GET" class="mb-0">
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-end-0">
+                                <i class="fas fa-search text-primary"></i>
+                            </span>
+                            <input type="text" name="q" class="form-control border-start-0" placeholder="Search by name, university, or major..." value="{{ query }}" minlength="3" required>
+                            <button type="submit" class="btn btn-primary px-4">Search</button>
+                        </div>
+                        <div class="form-text text-center mt-2">
+                            Enter at least 3 characters to search for students
+                        </div>
+                    </form>
+                </div>
             </div>
-            <div class="card-body">
-                {% if results %}
-                    <div class="row">
-                        {% for user in results %}
-                            <div class="col-md-6 col-lg-4 mb-4">
-                                <div class="card h-100">
-                                    <div class="card-body">
-                                        <h5 class="card-title">{{ user.first_name }} {{ user.last_name }}</h5>
-                                        <p class="card-text text-muted">{{ user.major }} at {{ user.university }}</p>
-                                        <div class="d-grid">
-                                            <a href="{{ url_for('social.view_profile', user_id=user.id) }}" class="btn btn-outline-primary">View Profile</a>
-
+            
+            {% if query %}
+                <div class="mb-4">
+                    <h2 class="h4 fw-bold mb-3">Search Results for "{{ query }}"</h2>
+                    
+                    {% if results %}
+                        <div class="row g-4">
+                            {% for user in results %}
+                                <div class="col-md-6">
+                                    <div class="card border-0 shadow-sm h-100">
+                                        <div class="card-body p-4">
+                                            <div class="d-flex">
+                                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 64px; height: 64px; font-size: 1.5rem;">
+                                                    {{ user.first_name[0] }}{{ user.last_name[0] }}
+                                                </div>
+                                                <div>
+                                                    <h3 class="h5 fw-bold mb-1">{{ user.first_name }} {{ user.last_name }}</h3>
+                                                    <p class="text-muted mb-2">{{ user.major }} at {{ user.university }}</p>
+                                                    
+                                                    <!-- Connection Status Badge (if implemented) -->
+                                                    {% if user.connection_status == 'connected' %}
+                                                        <span class="badge bg-success">
+                                                            <i class="fas fa-check me-1"></i> Connected
+                                                        </span>
+                                                    {% elif user.connection_status == 'pending' %}
+                                                        <span class="badge bg-warning text-dark">
+                                                            <i class="fas fa-clock me-1"></i> Request Pending
+                                                        </span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="d-grid mt-3">
+                                                <a href="{{ url_for('social.view_profile', user_id=user.id) }}" class="btn btn-outline-primary">
+                                                    <i class="fas fa-user me-2"></i> View Profile
+                                                </a>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body p-5 text-center">
+                                <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                                    <i class="fas fa-search fa-2x text-muted"></i>
+                                </div>
+                                <h4 class="h5 mb-2">No results found</h4>
+                                <p class="text-muted mb-4">We couldn't find any students matching "{{ query }}"</p>
+                                <p class="mb-0">Try different keywords or less specific terms</p>
                             </div>
-                        {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-5 text-center">
+                        <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                            <i class="fas fa-users fa-2x text-muted"></i>
+                        </div>
+                        <h4 class="h5 mb-2">Find students to connect with</h4>
+                        <p class="text-muted mb-4">Search by name, university, or major to find students with similar interests</p>
+                        <p class="mb-0">Enter a search term above to get started</p>
                     </div>
-                {% else %}
-                    <div class="text-center py-4">
-                        <i class="fas fa-search fa-3x mb-3 text-muted"></i>
-                        <h4>No results found</h4>
-                        <p>Try different keywords or less specific terms</p>
-                    </div>
-                {% endif %}
-            </div>
+                </div>
+            {% endif %}
         </div>
-    {% endif %}
+    </div>
 </div>
+
+<style>
+/* Modern Search Page Styles */
+.form-control:focus,
+.form-select:focus {
+    box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+    border-color: rgba(var(--bs-primary-rgb), 0.5);
+}
+
+.input-group-text {
+    color: #6c757d;
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .card {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .card-header {
+    background-color: #1e293b !important;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select,
+[data-theme="dark"] .input-group-text {
+    background-color: #0f172a;
+    border-color: #334155;
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .bg-light {
+    background-color: #334155 !important;
+}
+
+[data-theme="dark"] .text-muted {
+    color: #94a3b8 !important;
+}
+</style>
 {% endblock %}

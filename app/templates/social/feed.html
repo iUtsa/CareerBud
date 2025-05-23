@@ -19,6 +19,9 @@
     z-index: 90;
     transition: box-shadow 0.3s ease;
     background: var(--card-bg, white);
+    border-radius: 10px;
+    border: 1px solid var(--border-color, #e0e0e0);
+    margin-bottom: 20px;
 }
 
 .post-creator-card.sticky {
@@ -82,9 +85,69 @@
     font-size: 1.1rem;
 }
 
+/* Post card styling */
+.post-card {
+    border-radius: 10px;
+    border: 1px solid var(--border-color, #e0e0e0);
+    background: var(--card-bg, white);
+    margin-bottom: 20px;
+    overflow: hidden;
+    transition: box-shadow 0.3s ease;
+}
+
+.post-card:hover {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.post-card .card-header {
+    padding: 15px;
+    background: var(--card-bg, white);
+    border-bottom: 1px solid var(--border-color, #e0e0e0);
+}
+
+.post-card .card-body {
+    padding: 15px;
+}
+
+.post-card .card-footer {
+    padding: 10px 15px;
+    background: var(--card-bg, white);
+    border-top: 1px solid var(--border-color, #e0e0e0);
+}
+
+.post-image {
+    margin-top: 10px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.post-image img {
+    width: 100%;
+    max-height: 500px;
+    object-fit: cover;
+}
+
+/* Comment section */
+.comments-section {
+    padding: 10px 0;
+}
+
+.comment-bubble {
+    background-color: var(--hover-overlay, rgba(0, 0, 0, 0.05));
+    padding: 10px 15px;
+    border-radius: 18px;
+    margin-bottom: 5px;
+}
+
+/* Like button active state */
+.post-action-btn.liked {
+    color: var(--primary-color, #4ade80);
+    font-weight: 500;
+}
+
 /* Mobile Footer Navigation */
 .mobile-footer {
-    display: block;
+    display: none;
     position: fixed;
     bottom: 0;
     left: 0;
@@ -94,6 +157,11 @@
     z-index: 999;
     border-top: 1px solid var(--border-color, #e0e0e0);
     padding-bottom: env(safe-area-inset-bottom, 0);
+    transition: transform 0.3s ease;
+}
+
+.mobile-footer-hidden {
+    transform: translateY(100%);
 }
 
 .mobile-footer-nav {
@@ -163,104 +231,18 @@
     border: 1px solid var(--card-bg, white);
 }
 
-/* Desktop Footer Navigation */
-.desktop-footer-nav {
-    display: flex;
-    justify-content: center;
-    background: var(--card-bg, white);
-    border-top: 1px solid var(--border-color, #e0e0e0);
-    padding: 10px 0;
-    margin-top: 30px;
-}
-
-.desktop-footer-item {
-    display: flex;
-    align-items: center;
-    color: var(--text-secondary, #6c757d);
-    text-decoration: none;
-    padding: 8px 20px;
-    position: relative;
-    transition: color 0.2s;
-}
-
-.desktop-footer-item i {
-    font-size: 1.2rem;
-    margin-right: 8px;
-}
-
-.desktop-footer-item:hover {
-    color: var(--primary-color, #4ade80);
-}
-
-.desktop-footer-item.active {
-    color: var(--primary-color, #4ade80);
-}
-
-/* Hide the mobile footer on large screens */
-@media (min-width: 993px) {
-    .mobile-footer {
-        display: none;
-    }
-}
-
-/* Add padding to bottom of content for mobile */
+/* Responsive adjustments */
 @media (max-width: 992px) {
     .content-wrapper {
         padding-bottom: 70px;
     }
     
-    .desktop-footer-nav {
-        display: none;
+    .mobile-footer {
+        display: block;
     }
 }
 
-/* Mobile Footer Hide/Show on Scroll */
-.mobile-footer-hidden {
-    transform: translateY(100%);
-}
-
-/* Dark mode adjustments */
-@media (prefers-color-scheme: dark) {
-    .mobile-footer,
-    .desktop-footer-nav,
-    .post-creator-card {
-        background: var(--card-bg, #1e293b);
-    }
-    
-    .post-creator-compact .post-input-placeholder {
-        background: rgba(255, 255, 255, 0.05);
-        border-color: rgba(255, 255, 255, 0.1);
-    }
-}
-
-
-
-/* Add to your existing CSS */
-.mobile-footer {
-    transition: transform 0.3s ease;
-}
-
-.mobile-footer-hidden {
-    transform: translateY(100%);
-    transition: transform 0.3s ease;
-}
-
-/* Optimize loading indicator */
-#loading {
-    opacity: 0.8;
-    transition: opacity 0.2s ease;
-}
-
-/* Prevent layout shifts during image load */
-.post-image {
-    min-height: 30px;
-}
-
-.post-image img {
-    opacity: 1;
-    transition: opacity 0.3s ease;
-}
-
+/* Highlight effect for posts */
 .highlight-post {
     animation: highlight-fade 2s;
 }
@@ -270,21 +252,37 @@
     100% { background-color: transparent; }
 }
 
-/*.post-image img.loaded {
-    opacity: 1;
-}
-*/
-
-/* Improve scrolling performance */
-.post-card {
-    will-change: transform;
-    transform: translateZ(0);
+/* Dark mode adjustments */
+[data-theme="dark"] .post-card {
+    background: var(--card-gradient);
+    border-color: var(--border-color);
 }
 
+[data-theme="dark"] .post-card .card-header,
+[data-theme="dark"] .post-card .card-footer {
+    background: var(--card-gradient);
+    border-color: var(--border-color);
+}
 
+[data-theme="dark"] .post-creator-card {
+    background: var(--card-gradient);
+    border-color: var(--border-color);
+}
 
-/*---------------additional-----------*/
-/* Add these styles to your existing CSS */
+[data-theme="dark"] .post-creator-compact .post-input-placeholder {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--border-color);
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .mobile-footer {
+    background: var(--card-gradient);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .comment-bubble {
+    background-color: rgba(255, 255, 255, 0.07);
+}
 
 /* Hide welcome text on small screens */
 @media (max-width: 768px) {
@@ -451,7 +449,7 @@
     <div class="feed-container">
         <div class="row">
             <!-- Main Feed Column -->
-            <div class="col-lg-8" style="position: sticky !important; top: 15px !important; z-index: 100 !important;">
+            <div class="col-lg-8">
                 <!-- LinkedIn-style Post Creator Card -->
                 <div class="card mb-4 post-creator-card">
                     <div class="card-body p-2">
@@ -491,7 +489,142 @@
                 <!-- Posts Feed -->
                 {% if posts %}
                 <div id="post-container">
-                    {% include 'social/_posts.html' %}
+                    {% for post in posts %}
+                    <div class="card mb-4 post-card" id="post-{{ post.id }}">
+                        <!-- Post Header -->
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar me-3" style="object-fit: cover; width: 40px; height: 40px;">
+                                    {% if post.user.profile_picture %}
+                                            <img src="{{ url_for('static', filename='uploads/profiles/' ~ current_user.profile_picture) }}"
+                                                alt="Profile Picture"
+                                                class="rounded-circle"
+                                                style="object-fit: cover; width: 40px; height: 40px;">
+                                    {% else %}
+                                        <h4 class="bg-primary avatar me-3 rounded-circle d-flex align-items-center justify-content-center" 
+                                            style="width: 40px; height: 40px; margin: 0;">
+                                        {{ post.user.first_name[0] }}{{ post.user.last_name[0] }}
+                                        </h4>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <h5 class="mb-0">
+                                        {% if post.user.id == user.id %}
+                                            <a href="{{ url_for('auth.profile', user_id=post.user.id) }}" class="text-reset text-decoration-none">
+                                                {{ post.user.first_name }} {{ post.user.last_name }}
+                                            </a>
+                                        {% else %}
+                                            <a href="{{ url_for('social.view_profile', user_id=post.user.id) }}" class="text-reset text-decoration-none">
+                                                {{ post.user.first_name }} {{ post.user.last_name }}
+                                            </a>
+                                        {% endif %}
+                                    </h5>
+                                    <small class="text-muted">
+                                        {{ post.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                                        {% if post.visibility != 'public' %}
+                                            {% if post.visibility == 'private' %}
+                                                <i class="fas fa-lock ms-2" title="Private"></i>
+                                            {% else %}
+                                                <i class="fas fa-user-friends ms-2" title="Connections Only"></i>
+                                            {% endif %}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            {% if post.user_id == current_user.id %}
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-link text-muted" type="button" id="postOptions{{ post.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="postOptions{{ post.id }}">
+                                        <li>
+                                            <!-- Add data attributes for the delete confirmation modal -->
+                                            <a class="dropdown-item text-danger" href="#" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#deletePostModal" 
+                                                data-post-id="{{ post.id }}">
+                                                <i class="fas fa-trash-alt me-2"></i>Delete Post
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Post Content -->
+                        <div class="card-body">
+                            <p class="card-text">{{ post.content }}</p>
+                            
+                            <!-- Display Post Image if Available -->
+                            {% if post.image_filename %}
+                                <div class="post-image mt-2">
+                                    <img src="{{ url_for('static', filename='uploads/' + post.image_filename) }}" class="img-fluid rounded" alt="Post image">
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Post Actions -->
+                        <div class="card-footer bg-transparent">
+                            <div class="d-flex justify-content-between mb-2">
+                                <div class="interaction-counter" data-post-id="{{ post.id }}">
+                                    <i class="fas fa-thumbs-up text-primary"></i> <span class="like-count">{{ post.likes|length }}</span>
+                                </div>
+                                <div>
+                                    <span class="comment-counter" data-bs-toggle="collapse" data-bs-target="#comments{{ post.id }}" aria-expanded="false">
+                                        <i class="fas fa-comment text-secondary"></i> {{ post.comments|length }}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-around border-top border-bottom py-2">
+                                <button class="btn btn-link text-decoration-none like-button {% if post.likes|selectattr('user_id', 'equalto', current_user.id)|list|length > 0 %}liked{% endif %}" 
+                                        data-post-id="{{ post.id }}">
+                                    <i class="{% if post.likes|selectattr('user_id', 'equalto', current_user.id)|list|length > 0 %}fas{% else %}far{% endif %} fa-thumbs-up me-1 like-icon"></i> Like
+                                </button>
+                                
+                                <button class="btn btn-link text-decoration-none text-muted" type="button" data-bs-toggle="collapse" data-bs-target="#comments{{ post.id }}" aria-expanded="false">
+                                    <i class="fas fa-comment me-1"></i> Comment
+                                </button>
+                                
+                                <button class="btn btn-link text-decoration-none text-muted">
+                                    <i class="fas fa-share me-1"></i> Share
+                                </button>
+                            </div>
+                            
+                            <!-- Comments Section -->
+                            <div class="collapse mt-3" id="comments{{ post.id }}">
+                                {% if post.comments %}
+                                    <div class="comments-section mb-3">
+                                        {% for comment in post.comments %}
+                                            <div class="d-flex mb-2">
+                                                <div class="avatar bg-secondary me-2" style="width: 32px; height: 32px; font-size: 0.7rem;">
+                                                    {{ comment.user.first_name[0] }}{{ comment.user.last_name[0] }}
+                                                </div>
+                                                <div class="comment-bubble">
+                                                    <div class="fw-bold">{{ comment.user.first_name }} {{ comment.user.last_name }}</div>
+                                                    <p class="mb-0">{{ comment.content }}</p>
+                                                    <small class="text-muted">{{ comment.created_at.strftime('%b %d, %Y') }}</small>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                
+                                <!-- Comment Form -->
+                                <form method="POST" action="{{ url_for('social.comment_post', post_id=post.id) }}" class="comment-form">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" name="content" placeholder="Write a comment..." required>
+                                        <button class="btn btn-primary" type="submit">
+                                            <i class="fas fa-paper-plane"></i>
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
                 <div id="loading" class="text-center my-4" style="display: none;">
                     <div class="spinner-border text-primary" role="status"></div>
@@ -747,6 +880,24 @@
         </div>
     </div>
 </div>
+
+<!-- Fullscreen Image Modal -->
+<div class="fullscreen-modal" id="imageModal">
+    <span class="fullscreen-close">&times;</span>
+    <div class="fullscreen-image-container">
+        <img class="fullscreen-image" id="fullscreenImage">
+        <div class="fullscreen-caption" id="imageCaption"></div>
+    </div>
+</div>
+
+<!-- Likes Popup -->
+<div class="post-interaction-popup" id="likesPopup">
+    <div class="popup-triangle"></div>
+    <h6>Likes</h6>
+    <ul class="post-interaction-list" id="likesList">
+        <!-- Likes will be loaded here -->
+    </ul>
+</div>
 {% endblock %}
 
 {% block extra_scripts %}
@@ -781,9 +932,9 @@ $(document).ready(function() {
     }
     
     // Image preview functionality
-    $('#image, #modalImage').change(function() {
+    $('#modalImage').change(function() {
         const file = this.files[0];
-        const previewId = this.id === 'image' ? '#imagePreview' : '#modalImagePreview';
+        const previewId = '#modalImagePreview';
         
         if (file) {
             const reader = new FileReader();
@@ -796,13 +947,10 @@ $(document).ready(function() {
     });
     
     // Remove image button functionality
-    $('#removeImage, #modalRemoveImage').click(function() {
-        const inputId = this.id === 'removeImage' ? '#image' : '#modalImage';
-        const previewId = this.id === 'removeImage' ? '#imagePreview' : '#modalImagePreview';
-        
-        $(inputId).val('');
-        $(previewId).addClass('d-none');
-        $(previewId + ' img').attr('src', '');
+    $('#modalRemoveImage').click(function() {
+        $('#modalImage').val('');
+        $('#modalImagePreview').addClass('d-none');
+        $('#modalImagePreview img').attr('src', '');
     });
     
     // Throttled scroll handler to improve performance
@@ -873,9 +1021,11 @@ $(document).ready(function() {
                     $('#loading').fadeOut(200);
                     page += 1;
                     loading = false;
+                    
+                    // Initialize like buttons for new posts
+                    initializeLikeButtons();
                 } else {
                     // If has images, preload them first
-                    // Continuation of loadMorePosts function
                     images.each(function() {
                         const img = new Image();
                         img.onload = img.onerror = function() {
@@ -885,6 +1035,9 @@ $(document).ready(function() {
                                 $('#loading').fadeOut(200);
                                 page += 1;
                                 loading = false;
+                                
+                                // Initialize like buttons for new posts
+                                initializeLikeButtons();
                             }
                         };
                         img.src = this.src;
@@ -897,6 +1050,9 @@ $(document).ready(function() {
                             $('#loading').fadeOut(200);
                             page += 1;
                             loading = false;
+                            
+                            // Initialize like buttons for new posts
+                            initializeLikeButtons();
                         }
                     }, 3000);
                 }
@@ -966,90 +1122,210 @@ $(document).ready(function() {
             form.action = "{{ url_for('social.delete_post_route', post_id=0) }}".replace('/0', '/' + postId);
         });
     }
-});
-
-
-// Add this to your existing JavaScript in the extra_scripts block
-
-$(document).ready(function() {
-    // Event delegation for like buttons
-    $(document).on('click', '.like-button', function(e) {
+    
+    // Initialize like buttons
+    function initializeLikeButtons() {
+        $('.like-button').off('click').on('click', function(e) {
+            e.preventDefault();
+            
+            const button = $(this);
+            const postId = button.data('post-id');
+            const likeCount = button.closest('.card-footer').find('.like-count');
+            const likeIcon = button.find('.like-icon');
+            
+            // Prevent multiple clicks
+            if (button.hasClass('processing')) {
+                return;
+            }
+            
+            button.addClass('processing');
+            
+            // Visual feedback immediately
+            if (button.hasClass('liked')) {
+                // Unlike action
+                likeCount.text(parseInt(likeCount.text()) - 1);
+                likeIcon.removeClass('fas').addClass('far');
+                button.removeClass('liked');
+                
+                // Send AJAX request
+                $.ajax({
+                    url: "{{ url_for('social.unlike_post_route', post_id=0) }}".replace('0', postId),
+                    type: 'POST',
+                    headers: {
+                        'X-CSRFToken': $('input[name="csrf_token"]').val()
+                    },
+                    success: function(response) {
+                        button.removeClass('processing');
+                    },
+                    error: function() {
+                        // Revert on error
+                        likeCount.text(parseInt(likeCount.text()) + 1);
+                        likeIcon.removeClass('far').addClass('fas');
+                        button.addClass('liked');
+                        button.removeClass('processing');
+                    }
+                });
+            } else {
+                // Like action
+                likeCount.text(parseInt(likeCount.text()) + 1);
+                likeIcon.removeClass('far').addClass('fas');
+                button.addClass('liked');
+                
+                // Send AJAX request
+                $.ajax({
+                    url: "{{ url_for('social.like_post_route', post_id=0) }}".replace('0', postId),
+                    type: 'POST',
+                    headers: {
+                        'X-CSRFToken': $('input[name="csrf_token"]').val()
+                    },
+                    success: function(response) {
+                        button.removeClass('processing');
+                    },
+                    error: function() {
+                        // Revert on error
+                        likeCount.text(parseInt(likeCount.text()) - 1);
+                        likeIcon.removeClass('fas').addClass('far');
+                        button.removeClass('liked');
+                        button.removeClass('processing');
+                    }
+                });
+            }
+        });
+    }
+    
+    // Initialize like buttons on page load
+    initializeLikeButtons();
+    
+    // Handle comment form submission with AJAX
+    $('.comment-form').submit(function(e) {
         e.preventDefault();
         
-        const button = $(this);
-        const postId = button.data('post-id');
-        const likeCount = button.find('.like-count');
-        const likeIcon = button.find('.like-icon');
+        const form = $(this);
+        const url = form.attr('action');
+        const formData = form.serialize();
+        const commentInput = form.find('input[name="content"]');
+        const commentsSection = form.prev('.comments-section');
+        const commentCounter = form.closest('.card-footer').find('.comment-counter');
         
-        // Prevent multiple clicks
-        if (button.hasClass('processing')) {
-            return;
-        }
+        // Disable input during submission
+        commentInput.prop('disabled', true);
         
-        button.addClass('processing');
-        
-        // Visual feedback immediately
-        if (button.hasClass('liked')) {
-            // Unlike action
-            likeCount.text(parseInt(likeCount.text()) - 1);
-            likeIcon.removeClass('fas text-primary').addClass('far');
-            button.removeClass('liked');
-        } else {
-            // Like action
-            likeCount.text(parseInt(likeCount.text()) + 1);
-            likeIcon.removeClass('far').addClass('fas text-primary');
-            button.addClass('liked');
-        }
-        
-        // Send AJAX request to server
         $.ajax({
-            url: `/social/like/${postId}`,
+            url: url,
             type: 'POST',
-            headers: {
-                'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
-            },
+            data: formData,
             success: function(response) {
-                // Update like count with actual server count
-                likeCount.text(response.likes_count);
+                // Create a new comment element
+                const commentHtml = `
+                    <div class="d-flex mb-2">
+                        <div class="avatar bg-secondary me-2" style="width: 32px; height: 32px; font-size: 0.7rem;">
+                            {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
+                        </div>
+                        <div class="comment-bubble">
+                            <div class="fw-bold">{{ current_user.first_name }} {{ current_user.last_name }}</div>
+                            <p class="mb-0">${commentInput.val()}</p>
+                            <small class="text-muted">Just now</small>
+                        </div>
+                    </div>
+                `;
                 
-                // Update the like button state
-                if (response.liked) {
-                    likeIcon.removeClass('far').addClass('fas text-primary');
-                    button.addClass('liked');
-                } else {
-                    likeIcon.removeClass('fas text-primary').addClass('far');
-                    button.removeClass('liked');
+                // If comments section doesn't exist, create it
+                if (commentsSection.length === 0) {
+                    form.before('<div class="comments-section mb-3"></div>');
+                    commentsSection = form.prev('.comments-section');
                 }
                 
-                button.removeClass('processing');
+                // Add the new comment
+                commentsSection.append(commentHtml);
+                
+                // Update comment count
+                const currentCount = parseInt(commentCounter.text().trim());
+                commentCounter.html(`<i class="fas fa-comment text-secondary"></i> ${currentCount + 1}`);
+                
+                // Clear and enable input
+                commentInput.val('').prop('disabled', false).focus();
             },
             error: function() {
-                // Revert visual changes on error
-                alert('Unable to process your like. Please try again.');
-                
-                // Reset to previous state
-                if (button.hasClass('liked')) {
-                    likeCount.text(parseInt(likeCount.text()) - 1);
-                    likeIcon.removeClass('fas text-primary').addClass('far');
-                    button.removeClass('liked');
-                } else {
-                    likeCount.text(parseInt(likeCount.text()) + 1);
-                    likeIcon.removeClass('far').addClass('fas text-primary');
-                    button.addClass('liked');
-                }
-                
-                button.removeClass('processing');
+                alert('Error posting comment. Please try again.');
+                commentInput.prop('disabled', false);
             }
         });
     });
     
-    // Optional: Add visual tooltip for like button
-    $('.like-button').tooltip({
-        title: function() {
-            return $(this).hasClass('liked') ? 'Unlike' : 'Like';
-        },
-        placement: 'top',
-        trigger: 'hover'
+    // Image modal functionality
+    $('.post-image img').click(function() {
+        const modal = document.getElementById('imageModal');
+        const modalImg = document.getElementById('fullscreenImage');
+        const captionText = document.getElementById('imageCaption');
+        
+        modal.classList.add('active');
+        modalImg.src = this.src;
+        captionText.innerHTML = this.alt || '';
+    });
+    
+    $('.fullscreen-close').click(function() {
+        document.getElementById('imageModal').classList.remove('active');
+    });
+    
+    // Close modal when clicking outside the image
+    $('#imageModal').click(function(e) {
+        if (e.target === this) {
+            $(this).removeClass('active');
+        }
+    });
+    
+    // Likes popup functionality
+    $('.interaction-counter').click(function() {
+        const postId = $(this).data('post-id');
+        const popup = $('#likesPopup');
+        const likesList = $('#likesList');
+        
+        // Position the popup
+        const rect = this[0].getBoundingClientRect();
+        popup.css({
+            top: rect.bottom + window.scrollY + 10,
+            left: rect.left + window.scrollX
+        });
+        
+        // Show loading
+        likesList.html('<li class="text-center py-2"><div class="spinner-border spinner-border-sm text-primary" role="status"></div></li>');
+        popup.addClass('visible');
+        
+        // Load likes
+        $.ajax({
+            url: `/social/post/${postId}/likes`,
+            type: 'GET',
+            success: function(response) {
+                if (response.likes && response.likes.length > 0) {
+                    let html = '';
+                    response.likes.forEach(like => {
+                        html += `
+                            <li class="post-interaction-item">
+                                <div class="interaction-user-avatar bg-primary">
+                                    ${like.user.first_name[0]}${like.user.last_name[0]}
+                                </div>
+                                <span>${like.user.first_name} ${like.user.last_name}</span>
+                            </li>
+                        `;
+                    });
+                    likesList.html(html);
+                } else {
+                    likesList.html('<li class="text-center py-2">No likes yet</li>');
+                }
+            },
+            error: function() {
+                likesList.html('<li class="text-center py-2 text-danger">Error loading likes</li>');
+            }
+        });
+        
+        // Close popup when clicking outside
+        $(document).one('click', function(e) {
+            if (!$(e.target).closest('.post-interaction-popup, .interaction-counter').length) {
+                popup.removeClass('visible');
+            }
+        });
+        
+        return false; // Prevent event propagation
     });
 });
 </script>
